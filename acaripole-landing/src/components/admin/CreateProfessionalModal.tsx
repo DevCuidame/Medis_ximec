@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react'
+import React, { useState } from 'react'
 import {
   X, ChevronRight, ChevronLeft, Check, Eye, EyeOff,
   Mail, Phone, Lock, AtSign, Shield, Clock, Plus, Trash2,
@@ -7,14 +7,14 @@ import { AnimatePresence, motion } from 'framer-motion'
 
 // ─── Design tokens (same as AdminProfessionals) ───────────────────────────────
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  bg: '#FFFFFF', bgPanel: '#F3F0FB', bgSecondary: '#F3F0FB',
-  white: '#FFFFFF', text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  bg: '#FFFBF5', bgPanel: '#F5EDE1', bgSecondary: '#F5EDE1',
+  white: '#FFFFFF', text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 const STEPS = [
   { n: 1, label: 'Identidad' },
@@ -31,8 +31,8 @@ const STEP_TITLES: Record<number, string> = {
 }
 
 const DISCIPLINES = [
-  'Pole Exotic', 'Pole Sport', 'Flexibilidad',
-  'Core y Fuerza', 'Flow Principiante', 'Coreografía Sensual',
+  'Medicina Bioreguladora', 'Salud Ocupacional', 'Medicina Laboral',
+  'Consultoría en SG-SST', 'Salud en el Trabajo', 'Valoración Médica',
 ]
 
 const DIAS = [
@@ -49,17 +49,20 @@ interface ScheduleSlot { dayOfWeek: number; startTime: string; endTime: string }
 
 const ID_TYPES = [
   'Cédula de Ciudadanía',
+  'Tarjeta de Identidad',
   'Cédula de Extranjería',
   'Pasaporte',
   'RUC',
+  'Otro'
 ]
 
-const DEFAULT_AVATAR_URL = 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&q=80&w=600'
+const DEFAULT_AVATAR_URL = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'
 
-type AccountRole = 'USER' | 'PROFESSIONAL' | 'ADMIN'
+type AccountRole = 'USER' | 'PROFESSIONAL' | 'COMPANY' | 'ADMIN'
 
 interface FormData {
   firstName: string; lastName: string; idType: string; idNumber: string
+  companyName: string; legalRepresentative: string;
   email: string; phone: string
   specialties: string[]; bio: string; instagramUrl: string
   password: string; confirmPassword: string
@@ -105,9 +108,11 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
     try { return JSON.parse(localStorage.getItem('MEDIS_hidden_specialties') || '[]') }
     catch { return [] }
   })
+  const [customIdType, setCustomIdType]       = useState('')
 
   const [form, setForm] = useState<FormData>({
     firstName: '', lastName: '', idType: ID_TYPES[0], idNumber: '',
+    companyName: '', legalRepresentative: '',
     email: '', phone: '',
     specialties: [], bio: '', instagramUrl: '',
     password: '', confirmPassword: '',
@@ -161,9 +166,20 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
   const validate = (s: number) => {
     const e: Record<string, string> = {}
     if (s === 1) {
-      if (!form.firstName.trim())  e.firstName = 'Requerido'
-      if (!form.lastName.trim())   e.lastName  = 'Requerido'
-      if (!form.idNumber.trim())   e.idNumber  = 'Requerido'
+      if (role === 'COMPANY') {
+        if (!form.companyName.trim()) e.companyName = 'Requerido'
+        if (!form.legalRepresentative.trim()) e.legalRepresentative = 'Requerido'
+        if (!form.idNumber.trim()) e.idNumber = 'Requerido'
+      } else {
+        if (!form.firstName.trim())  e.firstName = 'Requerido'
+        if (!form.lastName.trim())   e.lastName  = 'Requerido'
+        if (form.idType === 'Otro' && !customIdType.trim()) e.idType = 'Requerido'
+        if (!form.idNumber.trim())   e.idNumber  = 'Requerido'
+      }
+      
+      if (role === 'PROFESSIONAL' && professionalType === 'independiente' && schedule.length === 0) {
+        e.schedule = 'Requerido'
+      }
     }
     if (s === 2) {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email inválido'
@@ -209,8 +225,10 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
           email:            form.email.toLowerCase().trim(),
           password:         form.password,
           role,
-          firstName:        form.firstName.trim(),
-          lastName:         form.lastName.trim(),
+          firstName:        role === 'COMPANY' ? form.companyName.trim() : form.firstName.trim(),
+          lastName:         role === 'COMPANY' ? form.legalRepresentative.trim() : form.lastName.trim(),
+          idType:           form.idType === 'Otro' ? customIdType.trim() : form.idType,
+          idNumber:         form.idNumber.trim(),
           phone:            form.phone.trim()        || undefined,
           avatarUrl:        DEFAULT_AVATAR_URL,
           bio:              form.bio.trim()          || undefined,
@@ -320,38 +338,11 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
           </div>
 
           {/* ── Content ────────────────────────────────────────────────── */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 18px' }}>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '26px 26px 40px' }}>
 
             {/* PASO 1 — Identidad */}
             {step === 1 && (
               <div className="sp-step" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  {/* Nombres */}
-                  <div>
-                    <label style={LABEL}>Nombres <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input
-                      type="text" value={form.firstName} placeholder="María"
-                      onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
-                      onFocus={e => (e.target.style.borderColor = C.gold)}
-                      onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
-                      style={INPUT(errors.firstName)}
-                    />
-                    {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
-                  </div>
-                  {/* Apellidos */}
-                  <div>
-                    <label style={LABEL}>Apellidos <span style={{ color: '#ef4444' }}>*</span></label>
-                    <input
-                      type="text" value={form.lastName} placeholder="González"
-                      onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
-                      onFocus={e => (e.target.style.borderColor = C.gold)}
-                      onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
-                      style={INPUT(errors.lastName)}
-                    />
-                    {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
-                  </div>
-                </div>
-
                 <div>
                   <label style={LABEL}>Tipo de cuenta <span style={{ color: '#ef4444' }}>*</span></label>
                   <select
@@ -361,10 +352,67 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     onBlur={e => (e.target.style.borderColor = C.border)}
                     style={{ ...INPUT(), cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}
                   >
-                    <option value="PROFESSIONAL">Profesional</option>
-                    <option value="USER">Usuario normal</option>
+                    <option value="USER">Paciente</option>
+                    <option value="PROFESSIONAL">Médico Profesional</option>
+                    <option value="COMPANY">Empresa</option>
                     <option value="ADMIN">Administrador</option>
                   </select>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  {role === 'COMPANY' ? (
+                    <>
+                      <div>
+                        <label style={LABEL}>Razón Social <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input
+                          type="text" value={form.companyName} placeholder="Ej. Industrias San José S.A."
+                          onChange={e => { set('companyName', e.target.value); clearErr('companyName') }}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = errors.companyName ? '#ef4444' : C.border)}
+                          style={INPUT(errors.companyName)}
+                        />
+                        {errors.companyName && <p style={ERR}>{errors.companyName}</p>}
+                      </div>
+                      <div>
+                        <label style={LABEL}>Representante Legal <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input
+                          type="text" value={form.legalRepresentative} placeholder="Ej. Carlos Martínez"
+                          onChange={e => { set('legalRepresentative', e.target.value); clearErr('legalRepresentative') }}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = errors.legalRepresentative ? '#ef4444' : C.border)}
+                          style={INPUT(errors.legalRepresentative)}
+                        />
+                        {errors.legalRepresentative && <p style={ERR}>{errors.legalRepresentative}</p>}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Nombres */}
+                      <div>
+                        <label style={LABEL}>Nombres <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input
+                          type="text" value={form.firstName} placeholder="Ej. María"
+                          onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
+                          style={INPUT(errors.firstName)}
+                        />
+                        {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
+                      </div>
+                      {/* Apellidos */}
+                      <div>
+                        <label style={LABEL}>Apellidos <span style={{ color: '#ef4444' }}>*</span></label>
+                        <input
+                          type="text" value={form.lastName} placeholder="Ej. González"
+                          onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
+                          style={INPUT(errors.lastName)}
+                        />
+                        {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Professional type — only for PROFESSIONAL role */}
@@ -376,7 +424,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                         <button
                           key={t} type="button"
                           onClick={() => { setProfType(t); if (t === 'dependiente') setSchedule([]) }}
-                          style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: `2px solid ${professionalType === t ? C.gold : C.border}`, background: professionalType === t ? 'rgba(139,92,246,0.07)' : 'transparent', color: professionalType === t ? C.gold : C.textBrown, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.18s', fontFamily: FONT_INTER }}
+                          style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: `2px solid ${professionalType === t ? C.gold : C.border}`, background: professionalType === t ? 'rgba(92,58,40,0.07)' : 'transparent', color: professionalType === t ? C.gold : C.textBrown, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.18s', fontFamily: FONT_INTER }}
                         >
                           <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 3 }}>
                             {t === 'dependiente' ? '🏢 Dependiente' : '🕒 Independiente'}
@@ -389,38 +437,126 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                         </button>
                       ))}
                     </div>
+                    
+                    {professionalType === 'independiente' && (
+                      <div style={{ marginTop: 14 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <Clock size={14} color={C.gold} />
+                          <label style={{ ...LABEL, margin: 0 }}>Horario disponible</label>
+                        </div>
+                        
+                        <div style={{ background: 'rgba(92,58,40,0.04)', border: `1.5px solid ${C.borderLight}`, borderRadius: 12, padding: '14px', marginBottom: 12 }}>
+                          <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                            {DIAS.map(d => (
+                              <button key={d.code} type="button" title={d.name}
+                                onClick={() => setNewSlotDay(d.code)}
+                                style={{ width: 34, height: 34, borderRadius: 8, border: `2px solid ${newSlotDay === d.code ? C.gold : C.border}`, background: newSlotDay === d.code ? `linear-gradient(135deg, ${C.gold}, ${C.goldLight})` : 'transparent', color: newSlotDay === d.code ? '#fff' : C.textMuted, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: FONT_INTER }}>
+                                {d.label}
+                              </button>
+                            ))}
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                            <input type="time" value={newSlotStart} onChange={e => setNewSlotStart(e.target.value)}
+                              style={{ ...INPUT(), padding: '10px 12px' }}
+                              onFocus={e => (e.target.style.borderColor = C.gold)}
+                              onBlur={e => (e.target.style.borderColor = C.border)}
+                            />
+                            <input type="time" value={newSlotEnd} onChange={e => setNewSlotEnd(e.target.value)}
+                              style={{ ...INPUT(), padding: '10px 12px' }}
+                              onFocus={e => (e.target.style.borderColor = C.gold)}
+                              onBlur={e => (e.target.style.borderColor = C.border)}
+                            />
+                            <button type="button"
+                              onClick={() => {
+                                if (!newSlotStart || !newSlotEnd || newSlotEnd <= newSlotStart) return
+                                setSchedule([...schedule, { dayOfWeek: newSlotDay, startTime: newSlotStart, endTime: newSlotEnd }])
+                                setNewSlotStart(''); setNewSlotEnd('')
+                              }}
+                              style={{ padding: '10px 14px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: FONT_INTER, whiteSpace: 'nowrap' }}>
+                              <Plus size={13} strokeWidth={3} /> Agregar
+                            </button>
+                          </div>
+                        </div>
+                        
+                        {schedule.length === 0 ? (
+                            <p style={{ fontSize: 12, color: errors.schedule ? '#ef4444' : C.textMuted, fontStyle: 'italic', margin: 0 }}>
+                              Sin horarios registrados. Agrega al menos un bloque.
+                            </p>
+                          ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {schedule
+                              .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+                              .map((s, i) => {
+                                const day = DIAS.find(d => d.code === s.dayOfWeek)
+                                return (
+                                  <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.white, border: `1px solid ${C.borderLight}`, borderRadius: 9, padding: '8px 12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                      <span style={{ fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 6 }}>{day?.name}</span>
+                                      <Clock size={12} color={C.textMuted} />
+                                      <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{s.startTime} – {s.endTime}</span>
+                                    </div>
+                                    <button type="button" onClick={() => setSchedule(schedule.filter((_, j) => j !== i))}
+                                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 6 }}>
+                                      <Trash2 size={13} />
+                                    </button>
+                                  </div>
+                                )
+                              })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
-                {/* Tipo ID */}
-                <div>
-                  <label style={LABEL}>Tipo de Identificación</label>
-                  <select
-                    value={form.idType}
-                    onChange={e => set('idType', e.target.value)}
-                    onFocus={e => (e.target.style.borderColor = C.gold)}
-                    onBlur={e => (e.target.style.borderColor = C.border)}
-                    style={{
-                      ...INPUT(), cursor: 'pointer', appearance: 'none',
-                      backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                      backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36,
-                    }}
-                  >
-                    {ID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
-                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  {/* Tipo ID */}
+                  <div>
+                    <label style={LABEL}>Tipo de Identificación</label>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      <select
+                        value={role === 'COMPANY' ? 'NIT' : form.idType}
+                        onChange={e => { set('idType', e.target.value); clearErr('idType') }}
+                        disabled={role === 'COMPANY'}
+                        onFocus={e => (e.target.style.borderColor = C.gold)}
+                        onBlur={e => (e.target.style.borderColor = C.border)}
+                        style={{
+                          ...INPUT(), cursor: role === 'COMPANY' ? 'not-allowed' : 'pointer', appearance: 'none',
+                          backgroundImage: role === 'COMPANY' ? 'none' : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: role === 'COMPANY' ? 14 : 36,
+                          opacity: role === 'COMPANY' ? 0.7 : 1
+                        }}
+                      >
+                        {role === 'COMPANY' ? <option value="NIT">NIT</option> : ID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                      
+                      {form.idType === 'Otro' && role !== 'COMPANY' && (
+                        <div>
+                          <input
+                            type="text" value={customIdType} placeholder="Ej. Registro Civil"
+                            onChange={e => { setCustomIdType(e.target.value); clearErr('idType') }}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = errors.idType ? '#ef4444' : C.border)}
+                            style={INPUT(errors.idType)}
+                          />
+                          {errors.idType && <p style={ERR}>{errors.idType}</p>}
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                {/* Número ID */}
-                <div>
-                  <label style={LABEL}>Número de Identificación <span style={{ color: '#ef4444' }}>*</span></label>
-                  <input
-                    type="text" value={form.idNumber} placeholder="1720456789"
-                    onChange={e => { set('idNumber', e.target.value); clearErr('idNumber') }}
-                    onFocus={e => (e.target.style.borderColor = C.gold)}
-                    onBlur={e => (e.target.style.borderColor = errors.idNumber ? '#ef4444' : C.border)}
-                    style={INPUT(errors.idNumber)}
-                  />
-                  {errors.idNumber && <p style={ERR}>{errors.idNumber}</p>}
+                  {/* Número ID */}
+                  <div>
+                    <label style={LABEL}>Número de Identificación <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input
+                      type="text" value={form.idNumber} placeholder={role === 'COMPANY' ? "Ej. 900.123.456-7" : "Ej. 1012345678"}
+                      onChange={e => { set('idNumber', e.target.value); clearErr('idNumber') }}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = errors.idNumber ? '#ef4444' : C.border)}
+                      style={INPUT(errors.idNumber)}
+                    />
+                    {errors.idNumber && <p style={ERR}>{errors.idNumber}</p>}
+                  </div>
                 </div>
               </div>
             )}
@@ -434,7 +570,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                   <div style={{ position: 'relative' }}>
                     <Mail size={14} color={C.textMuted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                     <input
-                      type="email" value={form.email} placeholder="maria@MEDIS.com"
+                      type="email" value={form.email} placeholder={role === 'COMPANY' ? "contacto@empresa.com" : "juan.perez@correo.com"}
                       onChange={e => { set('email', e.target.value); clearErr('email') }}
                       onFocus={e => (e.target.style.borderColor = C.gold)}
                       onBlur={e => (e.target.style.borderColor = errors.email ? '#ef4444' : C.border)}
@@ -495,14 +631,14 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                             setForm(f => ({ ...f, specialties: on ? f.specialties.filter(x => x !== d) : [...f.specialties, d] }))
                             clearErr('specialties')
                           }}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '8px 8px 8px 16px', borderRadius: 9999, border: `1.5px solid ${on ? C.gold : C.border}`, background: on ? 'rgba(139,92,246,0.09)' : 'transparent', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 600, color: on ? C.gold : C.textBrown, cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s ease' }}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '8px 8px 8px 16px', borderRadius: 9999, border: `1.5px solid ${on ? C.gold : C.border}`, background: on ? 'rgba(92,58,40,0.09)' : 'transparent', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 600, color: on ? C.gold : C.textBrown, cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s ease' }}
                         >
                           {on && <Check size={11} strokeWidth={3} />}
                           {d}
                           <button type="button"
                             onClick={e => { e.stopPropagation(); handleDeleteSpecialty(d) }}
                             title="Eliminar especialidad"
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: '50%', border: 'none', background: on ? 'rgba(139,92,246,0.15)' : 'rgba(0,0,0,0.06)', color: on ? C.gold : C.textMuted, cursor: 'pointer', padding: 0, flexShrink: 0 }}>
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 18, height: 18, borderRadius: '50%', border: 'none', background: on ? 'rgba(92,58,40,0.15)' : 'rgba(0,0,0,0.06)', color: on ? C.gold : C.textMuted, cursor: 'pointer', padding: 0, flexShrink: 0 }}>
                             <X size={10} />
                           </button>
                         </div>
@@ -510,7 +646,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     })}
                     {!showAddSpecialty && (
                       <button type="button" onClick={() => setShowAddSpecialty(true)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 9999, border: `1.5px dashed ${C.gold}`, background: 'rgba(139,92,246,0.04)', color: C.gold, cursor: 'pointer', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700 }}>
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '8px 16px', borderRadius: 9999, border: `1.5px dashed ${C.gold}`, background: 'rgba(92,58,40,0.04)', color: C.gold, cursor: 'pointer', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700 }}>
                         <Plus size={13} /> Nueva especialidad
                       </button>
                     )}
@@ -581,7 +717,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     </div>
 
                     {/* Add slot form */}
-                    <div style={{ background: 'rgba(139,92,246,0.04)', border: `1.5px solid ${C.borderLight}`, borderRadius: 12, padding: '14px', marginBottom: 12 }}>
+                    <div style={{ background: 'rgba(92,58,40,0.04)', border: `1.5px solid ${C.borderLight}`, borderRadius: 12, padding: '14px', marginBottom: 12 }}>
                       {/* Day chips */}
                       <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
                         {DIAS.map(d => (
@@ -628,7 +764,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                             return (
                               <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.white, border: `1px solid ${C.borderLight}`, borderRadius: 9, padding: '8px 12px' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                  <span style={{ fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(139,92,246,0.08)', padding: '3px 8px', borderRadius: 6 }}>{day?.name}</span>
+                                  <span style={{ fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 6 }}>{day?.name}</span>
                                   <Clock size={12} color={C.textMuted} />
                                   <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{s.startTime} – {s.endTime}</span>
                                 </div>
@@ -654,7 +790,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     <img src={DEFAULT_AVATAR_URL} style={{ width: 50, height: 50, borderRadius: 9, objectFit: 'cover', flexShrink: 0, border: `2px solid ${C.goldLight}` }} alt="avatar por defecto" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: FONT_BODONI, fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 2px' }}>
-                      {form.firstName} {form.lastName}
+                      {role === 'COMPANY' ? form.companyName || 'Nueva Empresa' : `${form.firstName} ${form.lastName}`.trim() || 'Nuevo Usuario'}
                     </p>
                     {role === 'PROFESSIONAL' && (
                       <p style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 5px' }}>
@@ -678,6 +814,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                       onFocus={e => (e.target.style.borderColor = C.gold)}
                       onBlur={e => (e.target.style.borderColor = errors.password ? '#ef4444' : C.border)}
                       style={{ ...INPUT(errors.password), paddingLeft: 36, paddingRight: 42 }}
+                      autoComplete="new-password"
                     />
                     <button onClick={() => setShowPass(v => !v)} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 0 }}>
                       {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -706,6 +843,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                       onFocus={e => (e.target.style.borderColor = C.gold)}
                       onBlur={e => (e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : C.border)}
                       style={{ ...INPUT(errors.confirmPassword), paddingLeft: 36, paddingRight: 42 }}
+                      autoComplete="new-password"
                     />
                     <button onClick={() => setShowConf(v => !v)} style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 0 }}>
                       {showConf ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -757,7 +895,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
               {step < 4 ? (
                 <button
                   onClick={next}
-                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 22px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 14px rgba(139,92,246,0.30)` }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '11px 22px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 14px rgba(92,58,40,0.30)` }}
                 >
                   Continuar
                   <ChevronRight size={14} strokeWidth={2.5} />
@@ -765,11 +903,11 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
               ) : (
                 <button
                   onClick={submit} disabled={loading}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: loading ? C.border : `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : `0 4px 14px rgba(139,92,246,0.30)`, transition: 'all 0.2s ease', minWidth: 170 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: loading ? C.border : `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : `0 4px 14px rgba(92,58,40,0.30)`, transition: 'all 0.2s ease', minWidth: 170 }}
                 >
                   {loading
                     ? <><span style={{ width: 14, height: 14, border: `2px solid rgba(255,255,255,0.4)`, borderTopColor: C.white, borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Creando...</>
-                    : <><Check size={14} strokeWidth={2.5} /> Crear Profesional</>
+                    : <><Check size={14} strokeWidth={2.5} /> Crear {role === 'USER' ? 'Paciente' : role === 'COMPANY' ? 'Empresa' : role === 'ADMIN' ? 'Administrador' : 'Profesional'}</>
                   }
                 </button>
               )}
@@ -782,3 +920,4 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
     </>
   )
 }
+

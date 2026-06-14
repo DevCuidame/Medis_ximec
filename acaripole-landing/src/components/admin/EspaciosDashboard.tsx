@@ -1,28 +1,29 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Users, CalendarDays, DollarSign, CreditCard, Plus, Briefcase, ChevronDown, ChevronRight, Search, X, Trash2, Edit3, Eye, Layers, LayoutDashboard, Menu, LogOut } from 'lucide-react';
 import './MainDashboard.css';
 import { FormularioEspacio } from './FormularioEspacio';
+import { DoctorSedesAnim } from './DoctorSedesAnim';
 import type { Espacio, ModalEspacioState } from './EspacioTypes';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
-  bgSecondary: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
+  bgSecondary: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 };
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', active: false },
@@ -134,11 +135,11 @@ export const EspaciosDashboard: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-              <div style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+              <div style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
             </div>
           </div>
         </div>
@@ -168,7 +169,7 @@ export const EspaciosDashboard: React.FC = () => {
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 12px', borderRadius: 8, marginBottom: 2,
-                      background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent',
+                      background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent',
                       borderLeft: isActive ? `3px solid ${C.gold}` : '3px solid transparent',
                       borderTop: 'none', borderRight: 'none', borderBottom: 'none',
                       transition: 'background 0.18s ease',
@@ -235,6 +236,27 @@ export const EspaciosDashboard: React.FC = () => {
         {/* CONTENIDO PRINCIPAL SCROLL */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '32px 28px' }}>
           
+          {/* ── Stickman Animation Header ── */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+              padding: '1.5rem', borderRadius: '1.25rem', marginBottom: '2rem',
+              border: `1px solid ${C.borderLight}`
+            }}
+          >
+            <DoctorSedesAnim size={160} color={C.goldLight} textTop="Aquí están" textBottom="tus espacios" />
+            <div>
+              <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.8rem', fontWeight: 700, color: C.text, margin: 0 }}>Gestión de Espacios</h3>
+              <p style={{ fontSize: '0.95rem', color: C.textBrown, margin: '4px 0 0', maxWidth: 500 }}>
+                Administra los consultorios, salas y recursos dentro de cada una de tus sedes.
+              </p>
+            </div>
+          </motion.div>
+          
           {/* CONTROLES SUPERIORES (Filtros de estado y Sede) */}
           <div style={{ maxWidth: 1140, margin: '0 auto 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
             <div style={{ display: 'flex', gap: 12 }}>
@@ -267,7 +289,7 @@ export const EspaciosDashboard: React.FC = () => {
                 display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                 cursor: 'pointer', minHeight: 220, transition: 'all 0.2s ease', gap: 12
               }}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.goldLight; e.currentTarget.style.background = 'rgba(139,92,246,0.02)'; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = C.goldLight; e.currentTarget.style.background = 'rgba(92,58,40,0.02)'; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.background = 'transparent'; }}
             >
               <div style={{ width: 48, height: 48, borderRadius: '50%', background: C.bgPanel, display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.goldLight }}>
@@ -478,3 +500,4 @@ export const EspaciosDashboard: React.FC = () => {
     </div>
   );
 };
+

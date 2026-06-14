@@ -1,30 +1,31 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, MapPin, User, Clock, ChevronRight, Edit2, Trash2, Repeat, Search, SlidersHorizontal, X, ToggleLeft, ToggleRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormularioServicio } from './FormularioServicio';
 import { generateOccurrences, DIA_NOMBRES } from './servicioSchema';
+import { DoctorSedesAnim } from './DoctorSedesAnim';
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  bg: '#FFFFFF', bgPanel: '#F3F0FB', white: '#FFFFFF',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  bg: '#FFFBF5', bgPanel: '#F5EDE1', white: '#FFFFFF',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 };
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif';
 
 const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon→Sun display order
 
 const OFFER_TYPE_LABEL: Record<string, string> = {
-  class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller',
+  class: 'Consulta', open_pole: 'Examen', event: 'Corporativo', workshop: 'Taller',
 };
 const OFFER_TYPE_COLOR: Record<string, { bg: string; color: string }> = {
-  class:      { bg: 'rgba(139,92,246,0.1)',    color: '#8B5CF6' },
-  open_pole:  { bg: 'rgba(124,58,237,0.1)',  color: '#7C3AED' },
-  event:      { bg: 'rgba(59,130,246,0.1)',  color: '#2563EB' },
-  workshop:   { bg: 'rgba(236,72,153,0.1)',  color: '#3B82F6' },
+  class:      { bg: 'rgba(92,58,40,0.1)',    color: '#5C3A28' },
+  open_pole:  { bg: 'rgba(124,58,237,0.1)',  color: '#9C4A2E' },
+  event:      { bg: 'rgba(59,130,246,0.1)',  color: '#C97B5A' },
+  workshop:   { bg: 'rgba(236,72,153,0.1)',  color: '#9C4A2E' },
 };
 
 interface ServiceGroup {
@@ -235,8 +236,8 @@ export const ServiciosDashboard: React.FC = () => {
   // ── Save (create or update group) ─────────────────────────────────────────
   const handleFormSuccess = async (data: any) => {
     const offerTypeMap: Record<string, string> = {
-      'Clases de Pole': 'class', 'Disciplinas Complementarias': 'class',
-      'Práctica Libre': 'open_pole', 'Eventos': 'event', 'Otros': 'workshop',
+      'Medicina Bioreguladora': 'class', 'Medicina Laboral': 'class',
+      'Exámenes Médico Ocupacionales': 'open_pole', 'Consultoría en SG-SST': 'event', 'Salud en el Trabajo': 'event', 'Otros': 'workshop',
     };
     const headers = authH();
 
@@ -315,16 +316,32 @@ export const ServiciosDashboard: React.FC = () => {
 
             {/* ── HEADER ── */}
             <div style={{ marginBottom: 28, paddingBottom: 24, borderBottom: `1px solid ${C.borderLight}` }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 }}>
+              
+              {/* ── Stickman Animation Header ── */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '1.5rem',
+                  background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+                  padding: '1.5rem', borderRadius: '1.25rem', marginBottom: '1.5rem',
+                  border: `1px solid ${C.borderLight}`
+                }}
+              >
+                <DoctorSedesAnim size={160} color={C.goldLight} textTop="Aquí están" textBottom="tus servicios" />
                 <div>
-                  <h1 style={{ fontFamily: FONT_BODONI, fontSize: 42, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Gestión de Servicios</h1>
+                  <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Gestión de Servicios</h1>
                   <p style={{ fontFamily: FONT_INTER, color: C.textMedium, marginTop: 8, fontWeight: 500 }}>
                     Administra el catálogo, horarios y disponibilidad de la academia.
                   </p>
                 </div>
+              </motion.div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-end', marginBottom: 20 }}>
                 <button
                   onClick={() => { setEditingGroup(null); setIsFormOpen(true); }}
-                  style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, padding: '12px 24px', borderRadius: 12, border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', boxShadow: `0 4px 16px rgba(139,92,246,0.2)`, fontFamily: FONT_INTER, flexShrink: 0 }}
+                  style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, padding: '12px 24px', borderRadius: 12, border: 'none', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', boxShadow: `0 4px 16px rgba(92,58,40,0.2)`, fontFamily: FONT_INTER, flexShrink: 0 }}
                 >
                   <Plus size={18} strokeWidth={3} /> Nuevo Servicio
                 </button>
@@ -359,7 +376,7 @@ export const ServiciosDashboard: React.FC = () => {
                       display: 'flex', alignItems: 'center', gap: 7,
                       padding: '10px 16px', borderRadius: 11,
                       border: `1.5px solid ${showFilters || activeFilterCount > 0 ? C.gold : C.borderLight}`,
-                      background: showFilters ? `rgba(139,92,246,0.06)` : C.white,
+                      background: showFilters ? `rgba(92,58,40,0.06)` : C.white,
                       color: showFilters || activeFilterCount > 0 ? C.gold : C.textBrown,
                       fontSize: 13, fontWeight: 700, cursor: 'pointer',
                       fontFamily: FONT_INTER, transition: 'all 0.18s', whiteSpace: 'nowrap',
@@ -404,16 +421,16 @@ export const ServiciosDashboard: React.FC = () => {
                         <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap', marginBottom: 14 }}>
                           {([
                             { v: 'all',      label: 'Todos' },
-                            { v: 'class',     label: 'Clases' },
-                            { v: 'open_pole', label: 'Práctica Libre' },
-                            { v: 'event',     label: 'Eventos' },
+                            { v: 'class',     label: 'Consultas' },
+                            { v: 'open_pole', label: 'Exámenes' },
+                            { v: 'event',     label: 'Corporativos' },
                             { v: 'workshop',  label: 'Talleres' },
                           ] as const).map(opt => {
                             const tc = opt.v !== 'all' ? OFFER_TYPE_COLOR[opt.v] : null;
                             const sel = filterType === opt.v;
                             return (
                               <button key={opt.v} onClick={() => setFilterType(opt.v)}
-                                style={{ padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, border: `1.5px solid ${sel ? (tc?.color ?? C.gold) : C.borderLight}`, background: sel ? (tc?.bg ?? `rgba(139,92,246,0.08)`) : 'transparent', color: sel ? (tc?.color ?? C.gold) : C.textBrown, cursor: 'pointer', transition: 'all 0.18s', fontFamily: FONT_INTER }}>
+                                style={{ padding: '6px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, border: `1.5px solid ${sel ? (tc?.color ?? C.gold) : C.borderLight}`, background: sel ? (tc?.bg ?? `rgba(92,58,40,0.08)`) : 'transparent', color: sel ? (tc?.color ?? C.gold) : C.textBrown, cursor: 'pointer', transition: 'all 0.18s', fontFamily: FONT_INTER }}>
                                 {opt.label}
                               </button>
                             );
@@ -439,17 +456,17 @@ export const ServiciosDashboard: React.FC = () => {
                       {groups.length} resultado{groups.length !== 1 ? 's' : ''}
                     </span>
                     {search && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(92,58,40,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
                         "{search}" <X size={10} style={{ cursor: 'pointer' }} onClick={() => setSearch('')} />
                       </span>
                     )}
                     {filterStatus !== 'all' && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(92,58,40,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
                         {filterStatus === 'published' ? 'Activo' : 'Inactivo'} <X size={10} style={{ cursor: 'pointer' }} onClick={() => setFilterStatus('all')} />
                       </span>
                     )}
                     {filterType !== 'all' && (
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(139,92,246,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: 'rgba(92,58,40,0.08)', color: C.gold, fontSize: 11, fontWeight: 700 }}>
                         {OFFER_TYPE_LABEL[filterType] ?? filterType} <X size={10} style={{ cursor: 'pointer' }} onClick={() => setFilterType('all')} />
                       </span>
                     )}
@@ -461,7 +478,7 @@ export const ServiciosDashboard: React.FC = () => {
             {/* ── EMPTY STATE ── */}
             {groups.length === 0 ? (
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: C.white, borderRadius: 24, border: `1px solid ${C.borderLight}`, padding: '80px 32px' }}>
-                <div style={{ width: 64, height: 64, background: 'rgba(139,92,246,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <div style={{ width: 64, height: 64, background: 'rgba(92,58,40,0.08)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
                   {search || activeFilterCount > 0 ? <Search size={28} color={C.gold} /> : <Calendar size={28} color={C.gold} />}
                 </div>
                 {search || activeFilterCount > 0 ? (
@@ -475,7 +492,7 @@ export const ServiciosDashboard: React.FC = () => {
                 ) : (
                   <>
                     <h3 style={{ fontFamily: FONT_BODONI, fontSize: 24, fontWeight: 700, color: C.text, marginBottom: 8 }}>No hay servicios programados</h3>
-                    <p style={{ color: C.textMedium, textAlign: 'center', maxWidth: 400, marginBottom: 24, lineHeight: 1.5 }}>Comienza a construir el catálogo de clases, prácticas libres o talleres de tu estudio.</p>
+                    <p style={{ color: C.textMedium, textAlign: 'center', maxWidth: 400, marginBottom: 24, lineHeight: 1.5 }}>Comienza a construir el catálogo de consultas, exámenes o servicios corporativos de tu consultorio.</p>
                     <button onClick={() => { setEditingGroup(null); setIsFormOpen(true); }} style={{ color: C.gold, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4, background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 15, fontFamily: FONT_INTER }}>
                       Crear primer servicio <ChevronRight size={16} />
                     </button>
@@ -516,9 +533,9 @@ export const ServiciosDashboard: React.FC = () => {
                               <button
                                 onClick={() => { setEditingGroup(g); setIsFormOpen(true); }}
                                 title="Editar todas las sesiones"
-                                style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(139,92,246,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, transition: 'background 0.2s' }}
-                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.14)'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(139,92,246,0.07)'}
+                                style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(92,58,40,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, transition: 'background 0.2s' }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'rgba(92,58,40,0.14)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'rgba(92,58,40,0.07)'}
                               >
                                 <Edit2 size={13} />
                               </button>
@@ -571,7 +588,7 @@ export const ServiciosDashboard: React.FC = () => {
 
                             {/* Sessions count + date range */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Repeat size={13} color={C.gold} />
                               </div>
                               <div>
@@ -586,19 +603,19 @@ export const ServiciosDashboard: React.FC = () => {
 
                             {/* Days */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Calendar size={13} color={C.gold} />
                               </div>
                               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                                 {g.days.map(d => (
-                                  <span key={d} style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.08)', padding: '2px 7px', borderRadius: 6 }}>{d}</span>
+                                  <span key={d} style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '2px 7px', borderRadius: 6 }}>{d}</span>
                                 ))}
                               </div>
                             </div>
 
                             {/* Time */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <Clock size={13} color={C.gold} />
                               </div>
                               <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
@@ -609,7 +626,7 @@ export const ServiciosDashboard: React.FC = () => {
 
                             {/* Location + room */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                 <MapPin size={13} color={C.gold} />
                               </div>
                               <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
@@ -621,7 +638,7 @@ export const ServiciosDashboard: React.FC = () => {
                             {/* Professional */}
                             {profName && (
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                                   <User size={13} color={C.gold} />
                                 </div>
                                 <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>{profName}</span>
@@ -671,3 +688,4 @@ export const ServiciosDashboard: React.FC = () => {
     </div>
   );
 };
+

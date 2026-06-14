@@ -1,20 +1,21 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CreditCard, CheckCircle2, Clock, Infinity as InfinityIcon,
   Loader2, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, ShieldCheck, Lock,
 } from 'lucide-react'
+import { DoctorPlansAnim } from './DoctorPlansAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
   white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
-  pink: '#8B5CF6', pinkLight: '#3B82F6',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
+  pink: '#5C3A28', pinkLight: '#9C4A2E',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 function authH(): HeadersInit {
   const t = localStorage.getItem('accessToken')
@@ -101,10 +102,6 @@ export const UserMembresias: React.FC<Props> = () => {
   const regularPlans     = plans.filter(p => p.type !== 'inscription')
 
   const openConfirm = (plan: Plan) => {
-    if (plan.type !== 'inscription' && !inscription) {
-      showToast('Necesitas una inscripción activa para adquirir planes.', false)
-      return
-    }
     setConfirmPlan(plan); setStep(0); setDirection(1); setPayMethod(null)
   }
 
@@ -170,52 +167,12 @@ export const UserMembresias: React.FC<Props> = () => {
         {/* Banner */}
         <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 28, background: `linear-gradient(135deg, ${C.gold}15, ${C.goldLight}10)`, border: `1px solid ${C.gold}30`, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>Academia MEDIS</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>MedisXime Consultorio</p>
             <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: '0 0 6px' }}>Planes</h1>
-            <p style={{ fontSize: 13, color: C.textMuted, margin: 0, fontStyle: 'italic', fontFamily: FONT_BODONI }}>Accede al arte del pole dance sin límites.</p>
+            <p style={{ fontSize: 13, color: C.textMuted, margin: 0, fontStyle: 'italic', fontFamily: FONT_BODONI }}>Accede a nuestros servicios médicos sin límites.</p>
           </div>
           <div style={{ flexShrink: 0 }}>
-            <style>{`
-              @keyframes aerialSpin   { 0%{transform:rotate(0deg)}   100%{transform:rotate(360deg)} }
-              @keyframes bodyInvert   { 0%,100%{transform:rotate(-10deg) translateY(0)} 50%{transform:rotate(10deg) translateY(-4px)} }
-              @keyframes legSplit     { 0%,100%{transform:rotate(0deg)}   50%{transform:rotate(-30deg)} }
-              @keyframes legSplitR    { 0%,100%{transform:rotate(0deg)}   50%{transform:rotate(30deg)} }
-              @keyframes starPulse    { 0%,100%{opacity:0.3;r:2}   50%{opacity:1;r:3.5} }
-              @keyframes ringRotate   { 0%{transform:rotate(0deg) scaleY(0.3)}  100%{transform:rotate(360deg) scaleY(0.3)} }
-              @keyframes shimmer      { 0%,100%{opacity:0.4}  50%{opacity:1} }
-            `}</style>
-            <svg width="120" height="160" viewBox="0 0 120 160" style={{ overflow: 'visible' }}>
-              <ellipse cx="60" cy="80" rx="30" ry="9" fill="none" stroke={C.goldLight} strokeWidth="2" opacity="0.5"
-                style={{ transformOrigin: '60px 80px', animation: 'ringRotate 4s linear infinite' }} />
-              <line x1="60" y1="8" x2="60" y2="152" stroke={C.goldLight} strokeWidth="3.5" strokeLinecap="round"
-                style={{ filter: `drop-shadow(0 0 4px ${C.goldLight}88)` }} />
-              <circle cx="60" cy="10" r="5" fill={C.gold} style={{ animation: 'shimmer 2s ease-in-out infinite' }} />
-              <circle cx="60" cy="150" r="4" fill={C.gold} opacity="0.5" />
-              <g style={{ transformOrigin: '60px 75px', animation: 'bodyInvert 3s ease-in-out infinite' }}>
-                <circle cx="60" cy="75" r="5" fill={C.text} opacity="0.15" />
-                <path d="M56 75 Q52 60 53 48 Q60 44 67 48 Q68 60 64 75Z" fill={C.text} opacity="0.82" />
-                <circle cx="60" cy="42" r="8.5" fill={C.text} opacity="0.82" />
-                <path d="M60 34 Q52 22 48 15" stroke={C.text} strokeWidth="2.5" fill="none" opacity="0.7"
-                  style={{ animation: 'legSplit 2.5s ease-in-out infinite' }} />
-                <path d="M60 34 Q68 20 72 14" stroke={C.text} strokeWidth="2" fill="none" opacity="0.5"
-                  style={{ animation: 'legSplitR 2.5s ease-in-out infinite' }} />
-                <line x1="56" y1="65" x2="60" y2="60" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.82" />
-                <line x1="64" y1="65" x2="60" y2="60" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.82" />
-                <g style={{ transformOrigin: '56px 75px', animation: 'legSplit 2.8s ease-in-out infinite' }}>
-                  <line x1="56" y1="75" x2="40" y2="95" stroke={C.text} strokeWidth="4" strokeLinecap="round" opacity="0.82" />
-                  <line x1="40" y1="95" x2="28" y2="115" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.82" />
-                  <circle cx="27" cy="117" r="2.5" fill={C.text} opacity="0.75" />
-                </g>
-                <g style={{ transformOrigin: '64px 75px', animation: 'legSplitR 2.8s ease-in-out infinite' }}>
-                  <line x1="64" y1="75" x2="80" y2="93" stroke={C.text} strokeWidth="4" strokeLinecap="round" opacity="0.82" />
-                  <line x1="80" y1="93" x2="92" y2="112" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.82" />
-                  <circle cx="93" cy="114" r="2.5" fill={C.text} opacity="0.75" />
-                </g>
-              </g>
-              {[{cx:25,cy:30,d:'0s'},{cx:95,cy:45,d:'0.8s'},{cx:15,cy:110,d:'1.5s'},{cx:105,cy:120,d:'0.4s'},{cx:40,cy:145,d:'1.1s'},{cx:85,cy:20,d:'1.8s'}].map((s,i)=>(
-                <circle key={i} cx={s.cx} cy={s.cy} r="2" fill={C.goldLight} style={{ animation:`starPulse 2s ease-in-out ${s.d} infinite` }} />
-              ))}
-            </svg>
+            <DoctorPlansAnim size={160} color={C.goldLight} />
           </div>
         </div>
 
@@ -320,7 +277,7 @@ export const UserMembresias: React.FC<Props> = () => {
 
             {/* ── PLAN ACTIVO ── */}
             {active && (
-              <div style={{ marginBottom: 36, borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${C.gold}40`, boxShadow: '0 8px 32px rgba(139,92,246,0.1)' }}>
+              <div style={{ marginBottom: 36, borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${C.gold}40`, boxShadow: '0 8px 32px rgba(92,58,40,0.1)' }}>
                 <div style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, padding: '20px 24px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -339,7 +296,7 @@ export const UserMembresias: React.FC<Props> = () => {
                   </div>
                 </div>
                 {active.membership.benefits.length > 0 && (
-                  <div style={{ background: 'rgba(139,92,246,0.03)', padding: '18px 24px' }}>
+                  <div style={{ background: 'rgba(92,58,40,0.03)', padding: '18px 24px' }}>
                     <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>Beneficios incluidos</p>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                       {active.membership.benefits.map(b => (
@@ -364,20 +321,11 @@ export const UserMembresias: React.FC<Props> = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
                 {regularPlans.filter(p => p.id !== active?.membershipId).map((plan, i) => {
                   const { sessionLabel, isUnlimited, discountPct } = getPlanMeta(plan)
-                  const blocked = !inscription
 
                   return (
                     <motion.div key={plan.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                       style={{ background: C.white, borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${C.borderLight}`, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
-                      {blocked && (
-                        <div style={{ position: 'absolute', inset: 0, borderRadius: 18, background: 'rgba(245,243,241,0.35)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2 }}>
-                          <div style={{ background: C.white, borderRadius: 12, padding: '10px 18px', display: 'flex', alignItems: 'center', gap: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.12)', border: `1px solid ${C.pink}30` }}>
-                            <Lock size={14} color={C.pink} />
-                            <span style={{ fontSize: 12, fontWeight: 700, color: C.pink }}>Requiere inscripción</span>
-                          </div>
-                        </div>
-                      )}
-                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1, filter: blocked ? 'blur(5px)' : 'none', pointerEvents: blocked ? 'none' : 'auto', userSelect: blocked ? 'none' : 'auto' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
                       <div style={{ height: 4, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` }} />
                       <div style={{ padding: '20px 22px', flex: 1 }}>
                         <h3 style={{ fontFamily: FONT_BODONI, fontSize: 19, fontWeight: 700, color: C.text, margin: '0 0 4px' }}>{plan.name}</h3>
@@ -389,7 +337,7 @@ export const UserMembresias: React.FC<Props> = () => {
                             </span>
                           )}
                           {isUnlimited && (
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#7C3AED', background: 'rgba(124,58,237,0.08)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
+                            <span style={{ fontSize: 11, fontWeight: 700, color: '#9C4A2E', background: 'rgba(124,58,237,0.08)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
                               <InfinityIcon size={11} /> Ilimitadas
                             </span>
                           )}
@@ -415,9 +363,9 @@ export const UserMembresias: React.FC<Props> = () => {
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                           <span style={{ fontFamily: FONT_BODONI, fontSize: 22, fontWeight: 800, color: C.gold }}>{fmtPrice(plan.price)}</span>
                         </div>
-                        <button onClick={() => openConfirm(plan)} disabled={blocked}
-                          style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: blocked ? C.borderLight : `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: blocked ? C.textMuted : C.white, fontSize: 13, fontWeight: 700, cursor: blocked ? 'not-allowed' : 'pointer', fontFamily: FONT_INTER }}>
-                          {blocked ? 'Inscríbete primero' : 'Adquirir plan'}
+                        <button onClick={() => openConfirm(plan)}
+                          style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
+                          Adquirir plan
                         </button>
                       </div>
                       </div>
@@ -432,8 +380,8 @@ export const UserMembresias: React.FC<Props> = () => {
         {/* Bottom decoration */}
         <div style={{ marginTop: 48, borderRadius: 20, overflow: 'hidden', background: `linear-gradient(135deg, ${C.text} 0%, #2D2B29 100%)`, padding: '32px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
           <div style={{ flex: 1 }}>
-            <p style={{ fontFamily: FONT_BODONI, fontSize: 22, color: C.goldLight, margin: '0 0 8px', fontStyle: 'italic' }}>"La fuerza que no sabías que tenías."</p>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Cada clase es un paso más hacia tu mejor versión. — Academia MEDIS</p>
+            <p style={{ fontFamily: FONT_BODONI, fontSize: 22, color: C.goldLight, margin: '0 0 8px', fontStyle: 'italic' }}>"Tu bienestar es nuestra prioridad."</p>
+            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', margin: 0 }}>Cada consulta es un paso más hacia tu salud integral. — MedisXime Consultorio</p>
           </div>
         </div>
       </div>
@@ -490,7 +438,7 @@ export const UserMembresias: React.FC<Props> = () => {
                                 const { sessionLabel, isUnlimited, discountPct } = getPlanMeta(confirmPlan)
                                 const boxes = [
                                   confirmPlan.durationDays ? { icon: <Clock size={16} color={barColor} />, value: String(confirmPlan.durationDays), label: 'días de vigencia' } : null,
-                                  isUnlimited ? { icon: <InfinityIcon size={16} color="#7C3AED" />, value: '∞', label: 'acceso ilimitado', color: '#7C3AED', bg: 'rgba(124,58,237,0.06)' }
+                                  isUnlimited ? { icon: <InfinityIcon size={16} color="#7C3AED" />, value: '∞', label: 'acceso ilimitado', color: '#9C4A2E', bg: 'rgba(124,58,237,0.06)' }
                                     : sessionLabel != null ? { icon: <CreditCard size={16} color="#16A34A" />, value: String(confirmPlan.maxClasses ?? ''), label: sessionLabel, color: '#16A34A', bg: 'rgba(34,197,94,0.06)' } : null,
                                   discountPct != null ? { icon: <span style={{ fontSize: 14, fontWeight: 800, color: '#B45309' }}>%</span>, value: `-${discountPct}%`, label: 'dto. adicional', color: '#B45309', bg: 'rgba(234,179,8,0.06)' } : null,
                                 ].filter(Boolean) as { icon: React.ReactNode; value: string; label: string; color?: string; bg?: string }[]
@@ -594,3 +542,4 @@ export const UserMembresias: React.FC<Props> = () => {
     </main>
   )
 }
+

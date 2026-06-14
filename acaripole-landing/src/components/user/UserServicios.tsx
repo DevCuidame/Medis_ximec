@@ -1,19 +1,20 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, MapPin, Clock, User, X, Loader2, Repeat, CalendarDays } from 'lucide-react'
+import { DoctorServicesAnim } from './DoctorServicesAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
   white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
-const TYPE_COLOR: Record<string, string> = { class: '#8B5CF6', open_pole: '#7C3AED', event: '#2563EB', workshop: '#3B82F6' }
-const TYPE_LABEL: Record<string, string> = { class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller' }
+const TYPE_COLOR: Record<string, string> = { class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E' }
+const TYPE_LABEL: Record<string, string> = { class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen' }
 
 function authH(): HeadersInit {
   const t = localStorage.getItem('accessToken')
@@ -196,89 +197,16 @@ export const UserServicios: React.FC<Props> = () => {
         {/* Header */}
         <div style={{ marginBottom: 28, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>Academia MEDIS</p>
+            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>MedisXime Consultorio</p>
             <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0 }}>Servicios Disponibles</h1>
             <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0' }}>
               {loading ? 'Cargando…' : `${groups.length} servicio${groups.length !== 1 ? 's' : ''} · ${offers.length} sesiones`}
             </p>
           </div>
 
-          {/* Pole dancer animation */}
+          {/* Animation */}
           <div style={{ flexShrink: 0, opacity: 0.85 }}>
-            <style>{`
-              @keyframes poleFloat   { 0%,100%{transform:translateY(0)}  50%{transform:translateY(-6px)} }
-              @keyframes poleSpin    { 0%{transform:rotate(0deg)}  100%{transform:rotate(360deg)} }
-              @keyframes figureWave  { 0%,100%{transform:rotate(-8deg)} 50%{transform:rotate(8deg)} }
-              @keyframes legKick     { 0%,100%{transform:rotate(0deg)}  40%{transform:rotate(-40deg)} 80%{transform:rotate(20deg)} }
-              @keyframes armSwing    { 0%,100%{transform:rotate(-15deg)} 50%{transform:rotate(25deg)} }
-              @keyframes hairFlow    { 0%,100%{transform:rotate(-5deg)}  50%{transform:rotate(10deg)} }
-              @keyframes glitter     { 0%,100%{opacity:0;transform:scale(0.5)} 50%{opacity:1;transform:scale(1.2)} }
-              @keyframes poleGlow    { 0%,100%{filter:drop-shadow(0 0 3px rgba(59,130,246,0.4))} 50%{filter:drop-shadow(0 0 8px rgba(59,130,246,0.8))} }
-            `}</style>
-            <svg width="90" height="160" viewBox="0 0 90 160" style={{ animation: 'poleFloat 3s ease-in-out infinite', overflow: 'visible' }}>
-              {/* Pole */}
-              <line x1="45" y1="5" x2="45" y2="155" stroke={C.goldLight} strokeWidth="3.5" strokeLinecap="round"
-                style={{ animation: 'poleGlow 2s ease-in-out infinite' }} />
-              {/* Pole top cap */}
-              <circle cx="45" cy="8" r="5" fill={C.gold} />
-
-              {/* === Figure === */}
-              <g style={{ transformOrigin: '45px 80px', animation: 'figureWave 2.5s ease-in-out infinite' }}>
-                {/* Hair flowing */}
-                <path d="M45 35 Q58 28 60 22 Q55 32 52 38" fill={C.text} opacity="0.8"
-                  style={{ transformOrigin: '45px 35px', animation: 'hairFlow 2s ease-in-out infinite' }} />
-                <path d="M45 35 Q55 24 62 20" stroke={C.text} strokeWidth="2" fill="none" opacity="0.6"
-                  style={{ transformOrigin: '45px 35px', animation: 'hairFlow 2.2s ease-in-out infinite reverse' }} />
-
-                {/* Head */}
-                <circle cx="45" cy="42" r="9" fill={C.text} opacity="0.85" />
-
-                {/* Neck */}
-                <line x1="45" y1="51" x2="45" y2="57" stroke={C.text} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
-
-                {/* Torso */}
-                <path d="M45 57 Q38 65 37 78 Q45 82 53 78 Q52 65 45 57Z" fill={C.text} opacity="0.85" />
-
-                {/* Left arm (holding pole) */}
-                <line x1="45" y1="62" x2="45" y2="55" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-
-                {/* Right arm extended */}
-                <g style={{ transformOrigin: '45px 63px', animation: 'armSwing 2s ease-in-out infinite' }}>
-                  <line x1="45" y1="63" x2="65" y2="58" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                  {/* Right hand */}
-                  <circle cx="65" cy="58" r="3" fill={C.text} opacity="0.8" />
-                </g>
-
-                {/* Left leg */}
-                <g style={{ transformOrigin: '45px 78px', animation: 'legKick 2.5s ease-in-out infinite' }}>
-                  <line x1="45" y1="78" x2="36" y2="100" stroke={C.text} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
-                  <line x1="36" y1="100" x2="30" y2="118" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-                  {/* Pointed toe */}
-                  <circle cx="29" cy="120" r="2.5" fill={C.text} opacity="0.8" />
-                </g>
-
-                {/* Right leg (kick pose) */}
-                <g style={{ transformOrigin: '45px 78px', animation: 'legKick 2.5s ease-in-out infinite reverse' }}>
-                  <line x1="45" y1="78" x2="58" y2="95" stroke={C.text} strokeWidth="4" strokeLinecap="round" opacity="0.85" />
-                  <line x1="58" y1="95" x2="68" y2="112" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-                  <circle cx="69" cy="114" r="2.5" fill={C.text} opacity="0.8" />
-                </g>
-
-                {/* Skirt/tutu detail */}
-                <path d="M37 78 Q30 90 34 96" stroke={C.goldLight} strokeWidth="2" fill="none" opacity="0.7"
-                  style={{ animation: 'legKick 2.5s ease-in-out infinite' }} />
-                <path d="M53 78 Q60 88 56 95" stroke={C.goldLight} strokeWidth="2" fill="none" opacity="0.7"
-                  style={{ animation: 'legKick 2.5s ease-in-out infinite reverse' }} />
-              </g>
-
-              {/* Sparkles */}
-              {[{ x: 22, y: 45, d: '0s' }, { x: 72, y: 60, d: '0.7s' }, { x: 18, y: 95, d: '1.3s' }, { x: 75, y: 30, d: '0.4s' }].map((s, i) => (
-                <g key={i} style={{ animation: `glitter 2s ease-in-out ${s.d} infinite` }}>
-                  <line x1={s.x - 4} y1={s.y} x2={s.x + 4} y2={s.y} stroke={C.goldLight} strokeWidth="1.5" />
-                  <line x1={s.x} y1={s.y - 4} x2={s.x} y2={s.y + 4} stroke={C.goldLight} strokeWidth="1.5" />
-                </g>
-              ))}
-            </svg>
+            <DoctorServicesAnim size={190} color={C.goldLight} />
           </div>
         </div>
 
@@ -297,7 +225,7 @@ export const UserServicios: React.FC<Props> = () => {
                 )}
                 {/* Per-category credits */}
                 {Object.entries(activeMembership.categoryCredits ?? {}).map(([cat, credit]) => {
-                  const LABEL: Record<string, string> = { pole: 'Pole', complementary: 'Fuerza/Flex', general: 'Clases' }
+                  const LABEL: Record<string, string> = { pole: 'Consultas', complementary: 'Valoraciones', general: 'Servicios' }
                   const label = LABEL[cat] ?? cat
                   const ok = credit.remaining > 0
                   return (
@@ -328,7 +256,7 @@ export const UserServicios: React.FC<Props> = () => {
         {!activeMembership && inscriptionDiscount != null && (
           <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 12, background: 'rgba(190,24,93,0.05)', border: '1.5px solid rgba(190,24,93,0.2)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 18, flexShrink: 0 }}>🎉</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#8B5CF6' }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: '#5C3A28' }}>
               Tu inscripción te da {inscriptionDiscount}% de descuento en servicios
             </span>
           </div>
@@ -338,14 +266,14 @@ export const UserServicios: React.FC<Props> = () => {
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
             <Search size={14} color={C.textMuted} style={{ position: 'absolute', left: 13, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar servicio o instructor…"
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar servicio o especialista…"
               style={{ width: '100%', padding: '10px 36px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: C.white, fontSize: 13, color: C.text, outline: 'none', boxSizing: 'border-box', fontFamily: FONT_INTER }}
               onFocus={e => e.target.style.borderColor = C.gold} onBlur={e => e.target.style.borderColor = C.borderLight}
             />
             {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, display: 'flex', alignItems: 'center' }}><X size={13} /></button>}
           </div>
           <div style={{ display: 'flex', gap: 7 }}>
-            {[['all','Todos'],['class','Clases'],['open_pole','Práctica'],['event','Eventos'],['workshop','Talleres']].map(([v,l]) => (
+            {[['all','Todos'],['class','Consultas'],['open_pole','Valoración'],['event','Procedimientos'],['workshop','Exámenes']].map(([v,l]) => (
               <button key={v} onClick={() => setFilterType(v)}
                 style={{ padding: '9px 14px', borderRadius: 99, fontSize: 12, fontWeight: 700, border: `1.5px solid ${filterType === v ? C.gold : C.borderLight}`, background: filterType === v ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : 'transparent', color: filterType === v ? C.white : C.textBrown, cursor: 'pointer', fontFamily: FONT_INTER }}>
                 {l}
@@ -729,4 +657,5 @@ export const UserServicios: React.FC<Props> = () => {
     </main>
   )
 }
+
 

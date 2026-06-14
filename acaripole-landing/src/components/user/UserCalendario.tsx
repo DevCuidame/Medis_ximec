@@ -1,16 +1,17 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight, Loader2, Clock, MapPin } from 'lucide-react'
+import { DoctorGreetingAnim } from '../professional/DoctorGreetingAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  white: '#FFFFFF', bg: '#FFFBF5',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = 'Inter, system-ui, sans-serif'
 const DAY_SHORT   = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
@@ -26,24 +27,24 @@ function getMonthGrid(year: number, month: number): (Date | null)[] {
 
 const MOTIVATIONAL = [
   {
-    img: 'https://www.sportlife.es/uploads/s1/11/21/86/41/pole-dancing-istock-638507266.jpeg',
-    quote: 'El pole dance no es solo fuerza. Es arte, disciplina y confianza en una sola barra.',
-    author: '— Academia MEDIS',
+    img: 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&q=80&w=800',
+    quote: 'El bienestar no es solo la ausencia de enfermedad, es un estado de equilibrio físico y mental.',
+    author: '— MedisXime Consultorio',
   },
   {
-    img: 'https://revistadiners.com.co/wp-content/uploads/2025/07/portada_poledance_1200x800.jpg',
-    quote: 'Cada vez que subes un poco más, te demuestras que puedes ir más lejos de lo que creías.',
-    author: '— Comunidad Pole',
+    img: 'https://images.unsplash.com/photo-1505576399279-565b52d4ac71?auto=format&fit=crop&q=80&w=800',
+    quote: 'Tu salud es una inversión, no un gasto. Dedica tiempo a cuidarte cada día.',
+    author: '— Equipo Médico',
   },
   {
-    img: 'https://rollandfeel.smokingpaper.com/wp-content/uploads/2023/01/que-es-pole-dance.jpg',
-    quote: 'La disciplina supera al talento. Entrena, confía y brilla en cada giro.',
-    author: '— Academia MEDIS',
+    img: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&q=80&w=800',
+    quote: 'La prevención es el mejor tratamiento. Asiste a tus chequeos regularmente.',
+    author: '— MedisXime Consultorio',
   },
   {
-    img: 'https://nyamie.com/uploads/photos/medium/Entity-8v1SSH7kV2AOaPqx.jpg',
-    quote: 'Tu cuerpo es capaz de cosas increíbles. El pole dance te lo recuerda cada sesión.',
-    author: '— Pole Artists',
+    img: 'https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?auto=format&fit=crop&q=80&w=800',
+    quote: 'El cuidado compasivo y la medicina moderna van de la mano para tu recuperación.',
+    author: '— Salud Integral',
   },
 ]
 
@@ -108,13 +109,26 @@ export const UserCalendario: React.FC<Props> = () => {
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 32, flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>Mi Portal</p>
-            <h1 style={{ fontFamily: FONT_BODONI, fontSize: 40, fontWeight: 700, color: C.text, margin: 0 }}>Mi Calendario</h1>
-            <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0' }}>
-              {loading ? 'Cargando…' : `${bookings.length} clase${bookings.length !== 1 ? 's' : ''} confirmada${bookings.length !== 1 ? 's' : ''}`}
-            </p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+              padding: '1.5rem', borderRadius: '1.25rem',
+              border: `1px solid ${C.borderLight}`
+            }}
+          >
+            <DoctorGreetingAnim size={160} color={C.goldLight} textTop="Estas son tus" textBottom="consultas" />
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>Mi Portal</p>
+              <h1 style={{ fontFamily: FONT_BODONI, fontSize: 40, fontWeight: 700, color: C.text, margin: 0 }}>Mi Calendario</h1>
+              <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0' }}>
+                {loading ? 'Cargando…' : `${bookings.length} consulta${bookings.length !== 1 ? 's' : ''} confirmada${bookings.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+          </motion.div>
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             {/* Week / Month toggle */}
@@ -134,7 +148,7 @@ export const UserCalendario: React.FC<Props> = () => {
                   ? setWeekStart(d => addDays(d, -7))
                   : setMonthDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))}
                 style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textBrown }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F3F0FB'}
+                onMouseEnter={e => e.currentTarget.style.background = '#F5EDE1'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <ChevronLeft size={18} />
               </button>
@@ -146,14 +160,14 @@ export const UserCalendario: React.FC<Props> = () => {
                   ? setWeekStart(d => addDays(d, 7))
                   : setMonthDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))}
                 style={{ width: 34, height: 34, borderRadius: 8, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textBrown }}
-                onMouseEnter={e => e.currentTarget.style.background = '#F3F0FB'}
+                onMouseEnter={e => e.currentTarget.style.background = '#F5EDE1'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                 <ChevronRight size={18} />
               </button>
               <button
                 onClick={() => { setWeekStart(getMondayOf(new Date())); setMonthDate(new Date()) }}
                 style={{ padding: '6px 14px', borderRadius: 8, border: `1.5px solid ${C.borderLight}`, background: 'transparent', cursor: 'pointer', fontSize: 12, fontWeight: 700, color: C.gold, fontFamily: FONT_INTER }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(139,92,246,0.06)'; e.currentTarget.style.borderColor = C.gold }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(92,58,40,0.06)'; e.currentTarget.style.borderColor = C.gold }}
                 onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.borderColor = C.borderLight }}>
                 Hoy
               </button>
@@ -183,7 +197,7 @@ export const UserCalendario: React.FC<Props> = () => {
                     const isToday   = isSameDay(day, today)
                     const dayItems  = offersForDay(day)
                     return (
-                      <div key={idx} style={{ minHeight: 90, background: C.white, borderTop: `1px solid ${isToday ? C.gold : C.borderLight}`, borderRight: `1px solid ${isToday ? C.gold : C.borderLight}`, borderBottom: `1px solid ${isToday ? C.gold : C.borderLight}`, borderLeft: isToday ? `3px solid ${C.gold}` : `1px solid ${C.borderLight}`, borderRadius: 10, padding: '6px 7px', cursor: 'default', transition: 'border-color 0.15s', boxShadow: isToday ? '0 4px 12px rgba(139,92,246,0.1)' : 'none' }}>
+                      <div key={idx} style={{ minHeight: 90, background: C.white, borderTop: `1px solid ${isToday ? C.gold : C.borderLight}`, borderRight: `1px solid ${isToday ? C.gold : C.borderLight}`, borderBottom: `1px solid ${isToday ? C.gold : C.borderLight}`, borderLeft: isToday ? `3px solid ${C.gold}` : `1px solid ${C.borderLight}`, borderRadius: 10, padding: '6px 7px', cursor: 'default', transition: 'border-color 0.15s', boxShadow: isToday ? '0 4px 12px rgba(92,58,40,0.1)' : 'none' }}>
                         {/* Number */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 4 }}>
                           <span style={{ fontSize: 12, fontWeight: 700, width: 22, height: 22, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isToday ? C.gold : 'transparent', color: isToday ? C.white : C.text }}>
@@ -196,7 +210,7 @@ export const UserCalendario: React.FC<Props> = () => {
                             const parts = (b.offerTitle ?? 'Servicio').split(' — ')
                             return (
                               <div key={b.id} title={`${b.offerTitle} · ${fmtTime(b.scheduledAt, b.durationMinutes)}`}
-                                style={{ fontSize: 9, fontWeight: 600, background: 'rgba(139,92,246,0.08)', borderLeft: `2.5px solid ${C.gold}`, color: C.textBrown, padding: '2px 5px', borderRadius: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                style={{ fontSize: 9, fontWeight: 600, background: 'rgba(92,58,40,0.08)', borderLeft: `2.5px solid ${C.gold}`, color: C.textBrown, padding: '2px 5px', borderRadius: 3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                 {parts[1] || parts[0]}
                               </div>
                             )
@@ -222,7 +236,7 @@ export const UserCalendario: React.FC<Props> = () => {
                   return (
                     <div key={di}>
                       {/* Day header */}
-                      <div style={{ textAlign: 'center', marginBottom: 14, padding: '12px 8px', borderRadius: 12, background: isToday ? `linear-gradient(135deg, ${C.gold}, ${C.goldLight})` : C.white, boxShadow: isToday ? `0 4px 16px rgba(139,92,246,0.25)` : '0 1px 4px rgba(0,0,0,0.04)', border: isToday ? 'none' : `1px solid ${C.borderLight}` }}>
+                      <div style={{ textAlign: 'center', marginBottom: 14, padding: '12px 8px', borderRadius: 12, background: isToday ? `linear-gradient(135deg, ${C.gold}, ${C.goldLight})` : C.white, boxShadow: isToday ? `0 4px 16px rgba(92,58,40,0.25)` : '0 1px 4px rgba(0,0,0,0.04)', border: isToday ? 'none' : `1px solid ${C.borderLight}` }}>
                         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.16em', textTransform: 'uppercase', color: isToday ? 'rgba(255,255,255,0.8)' : C.textMuted, marginBottom: 4 }}>
                           {DAY_SHORT[di]}
                         </div>
@@ -244,7 +258,7 @@ export const UserCalendario: React.FC<Props> = () => {
                           const parts = (b.offerTitle ?? 'Servicio').split(' — ')
                           return (
                             <motion.div key={b.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                              style={{ background: C.white, borderTop: `1.5px solid ${C.borderLight}`, borderRight: `1.5px solid ${C.borderLight}`, borderBottom: `1.5px solid ${C.borderLight}`, borderLeft: `5px solid ${C.gold}`, borderRadius: 12, padding: '14px 12px', boxShadow: '0 4px 16px rgba(139,92,246,0.07)' }}>
+                              style={{ background: C.white, borderTop: `1.5px solid ${C.borderLight}`, borderRight: `1.5px solid ${C.borderLight}`, borderBottom: `1.5px solid ${C.borderLight}`, borderLeft: `5px solid ${C.gold}`, borderRadius: 12, padding: '14px 12px', boxShadow: '0 4px 16px rgba(92,58,40,0.07)' }}>
                               <div style={{ fontSize: 10, fontWeight: 700, color: C.gold, marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                                 <Clock size={10} /> {fmtTime(b.scheduledAt, b.durationMinutes)}
                               </div>
@@ -277,7 +291,7 @@ export const UserCalendario: React.FC<Props> = () => {
             <div style={{ marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
                 <div style={{ height: 1, flex: 1, background: C.borderLight }} />
-                <p style={{ fontFamily: FONT_BODONI, fontSize: 13, color: C.textMuted, fontStyle: 'italic', margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Inspiración Pole Dance</p>
+                <p style={{ fontFamily: FONT_BODONI, fontSize: 13, color: C.textMuted, fontStyle: 'italic', margin: 0, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Inspiración Médica</p>
                 <div style={{ height: 1, flex: 1, background: C.borderLight }} />
               </div>
 
@@ -287,7 +301,7 @@ export const UserCalendario: React.FC<Props> = () => {
                     style={{ borderRadius: 18, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', position: 'relative', cursor: 'default' }}>
                     {/* Image */}
                     <div style={{ height: 200, overflow: 'hidden', position: 'relative' }}>
-                      <img src={item.img} alt="pole dance inspiration"
+                      <img src={item.img} alt="medical inspiration"
                         style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.4s ease' }}
                         onMouseEnter={e => (e.currentTarget.style.transform = 'scale(1.06)')}
                         onMouseLeave={e => (e.currentTarget.style.transform = 'scale(1)')}

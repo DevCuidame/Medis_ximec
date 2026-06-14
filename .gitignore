@@ -103,6 +103,8 @@ Thumbs.db
 /fix-trigger.ps1
 /fix-vm-admin.ps1
 /fix-vm-completo.ps1
+/deploy-rapido.ps1
+/replace-colors.ps1
 
 # Temporary / dev tools files
 tmp/

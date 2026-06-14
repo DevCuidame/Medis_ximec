@@ -1,16 +1,17 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Star, Loader2 } from 'lucide-react'
+import { DoctorPatientAnim } from './DoctorPatientAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
   white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 function authH(): HeadersInit {
   const t = localStorage.getItem('accessToken')
@@ -54,10 +55,15 @@ export const UserProfesionales: React.FC<Props> = () => {
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 28px' }}>
 
-        <div style={{ marginBottom: 28 }}>
-          <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>Academia MEDIS</p>
-          <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0 }}>Profesionales</h1>
-          <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0' }}>El equipo de instructores del estudio</p>
+        <div style={{ borderRadius: 20, overflow: 'hidden', marginBottom: 28, background: `linear-gradient(135deg, ${C.gold}15, ${C.goldLight}10)`, border: `1px solid ${C.gold}30`, padding: '24px 28px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+          <div>
+            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: FONT_INTER }}>MedisXime Consultorio</p>
+            <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: '0 0 6px' }}>Profesionales</h1>
+            <p style={{ fontSize: 13, color: C.textMuted, margin: 0, fontStyle: 'italic', fontFamily: FONT_BODONI }}>El equipo médico del consultorio</p>
+          </div>
+          <div style={{ flexShrink: 0 }}>
+            <DoctorPatientAnim size={180} color={C.goldLight} />
+          </div>
         </div>
 
         {loading ? (
@@ -102,7 +108,7 @@ export const UserProfesionales: React.FC<Props> = () => {
                   {(p.specialties ?? []).length > 0 && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 10 }}>
                       {(p.specialties ?? []).slice(0, 3).map((s: string) => (
-                        <span key={s} style={{ fontSize: 10, fontWeight: 600, color: C.gold, background: 'rgba(139,92,246,0.08)', padding: '3px 8px', borderRadius: 6 }}>{s}</span>
+                        <span key={s} style={{ fontSize: 10, fontWeight: 600, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 6 }}>{s}</span>
                       ))}
                     </div>
                   )}
@@ -116,3 +122,4 @@ export const UserProfesionales: React.FC<Props> = () => {
     </main>
   )
 }
+

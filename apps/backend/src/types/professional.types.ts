@@ -8,6 +8,8 @@ export interface ProfessionalRecord {
   last_name:         string
   phone:             string | null
   role:              string
+  id_type:           string | null
+  id_number:         string | null
   bio:               string | null
   specialties:       string[] | null
   instagram_url:     string | null
@@ -29,6 +31,8 @@ export interface ProfessionalPublic {
   email:            string
   firstName:        string
   lastName:         string
+  idType:           string | null
+  idNumber:         string | null
   phone:            string | null
   bio:              string | null
   specialties:      string[]
@@ -49,6 +53,8 @@ export interface CreateProfessionalDTO {
   password:         string
   firstName:        string
   lastName:         string
+  idType?:          string
+  idNumber?:        string
   phone?:           string
   bio?:             string
   specialties?:     string[]
@@ -60,6 +66,8 @@ export interface CreateProfessionalDTO {
 export interface UpdateProfessionalDTO {
   firstName?:   string
   lastName?:    string
+  idType?:      string
+  idNumber?:    string
   phone?:       string
   bio?:         string
   specialties?: string[]

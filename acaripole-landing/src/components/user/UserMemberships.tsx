@@ -7,20 +7,20 @@ import {
 } from 'lucide-react';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 };
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif';
 
 const TYPE_LABELS: Record<string, string> = {
   per_class: 'Por Clase',
@@ -31,10 +31,10 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string; badge: string }> = {
-  per_class: { bg: 'rgba(139,92,246,0.06)', color: '#8B5CF6', badge: 'rgba(139,92,246,0.12)' },
+  per_class: { bg: 'rgba(92,58,40,0.06)', color: '#5C3A28', badge: 'rgba(92,58,40,0.12)' },
   monthly:   { bg: 'rgba(34,197,94,0.06)', color: '#16A34A', badge: 'rgba(34,197,94,0.12)' },
-  annual:    { bg: 'rgba(59,130,246,0.06)', color: '#2563EB', badge: 'rgba(59,130,246,0.12)' },
-  private:   { bg: 'rgba(168,85,247,0.06)', color: '#7C3AED', badge: 'rgba(168,85,247,0.12)' },
+  annual:    { bg: 'rgba(59,130,246,0.06)', color: '#C97B5A', badge: 'rgba(59,130,246,0.12)' },
+  private:   { bg: 'rgba(168,85,247,0.06)', color: '#9C4A2E', badge: 'rgba(168,85,247,0.12)' },
   pack:      { bg: 'rgba(234,179,8,0.06)', color: '#B45309', badge: 'rgba(234,179,8,0.12)' },
 };
 
@@ -181,7 +181,7 @@ export const UserMemberships: React.FC = () => {
   const activeBadge = () => {
     if (!active || !active.isActive || active.isExpired) return null;
     if (active.coversFreeClasses) return { label: 'Clases ilimitadas activas', color: '#16A34A', bg: 'rgba(34,197,94,0.1)' };
-    if (active.hasClassCredits) return { label: `${active.classesRemaining} clases restantes`, color: '#2563EB', bg: 'rgba(59,130,246,0.1)' };
+    if (active.hasClassCredits) return { label: `${active.classesRemaining} clases restantes`, color: '#C97B5A', bg: 'rgba(59,130,246,0.1)' };
     return null;
   };
 
@@ -286,7 +286,7 @@ export const UserMemberships: React.FC = () => {
                   <motion.div
                     key={plan.id}
                     initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
-                    style={{ background: C.white, border: `2px solid ${isCurrentPlan ? C.gold : C.borderLight}`, borderRadius: 16, padding: '1.5rem', display: 'flex', flexDirection: 'column', boxShadow: isCurrentPlan ? `0 0 0 4px rgba(139,92,246,0.08)` : '0 2px 12px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}
+                    style={{ background: C.white, border: `2px solid ${isCurrentPlan ? C.gold : C.borderLight}`, borderRadius: 16, padding: '1.5rem', display: 'flex', flexDirection: 'column', boxShadow: isCurrentPlan ? `0 0 0 4px rgba(92,58,40,0.08)` : '0 2px 12px rgba(0,0,0,0.04)', position: 'relative', overflow: 'hidden' }}
                   >
                     {isCurrentPlan && (
                       <div style={{ position: 'absolute', top: 0, right: 0, background: C.gold, color: C.white, fontSize: 10, fontWeight: 700, padding: '4px 12px', borderBottomLeftRadius: 10, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -413,7 +413,7 @@ export const UserMemberships: React.FC = () => {
                             color: i <= confirmStep ? C.white : C.textMuted,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 11, fontWeight: 700,
-                            boxShadow: i === confirmStep ? `0 0 0 4px rgba(139,92,246,0.12)` : 'none',
+                            boxShadow: i === confirmStep ? `0 0 0 4px rgba(92,58,40,0.12)` : 'none',
                             transition: 'all 0.3s',
                           }}>
                             {i < confirmStep ? '✓' : i + 1}
@@ -552,8 +552,8 @@ export const UserMemberships: React.FC = () => {
                                 style={{
                                   flex: 1, padding: '1rem', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
                                   border: `2px solid ${paymentMethod === 'cash' ? C.gold : C.borderLight}`,
-                                  background: paymentMethod === 'cash' ? 'rgba(139,92,246,0.05)' : C.bgPanel,
-                                  boxShadow: paymentMethod === 'cash' ? `0 0 0 3px rgba(139,92,246,0.1)` : 'none',
+                                  background: paymentMethod === 'cash' ? 'rgba(92,58,40,0.05)' : C.bgPanel,
+                                  boxShadow: paymentMethod === 'cash' ? `0 0 0 3px rgba(92,58,40,0.1)` : 'none',
                                   transition: 'all 0.2s',
                                 }}
                               >
@@ -567,21 +567,21 @@ export const UserMemberships: React.FC = () => {
                                 onClick={() => setPaymentMethod('wompi')}
                                 style={{
                                   flex: 1, padding: '1rem', borderRadius: 14, cursor: 'pointer', textAlign: 'left',
-                                  border: `2px solid ${paymentMethod === 'wompi' ? '#7C3AED' : C.borderLight}`,
+                                  border: `2px solid ${paymentMethod === 'wompi' ? '#9C4A2E' : C.borderLight}`,
                                   background: paymentMethod === 'wompi' ? 'rgba(124,58,237,0.05)' : C.bgPanel,
                                   boxShadow: paymentMethod === 'wompi' ? `0 0 0 3px rgba(124,58,237,0.1)` : 'none',
                                   transition: 'all 0.2s',
                                 }}
                               >
                                 <div style={{ fontSize: 22, marginBottom: 6 }}>💳</div>
-                                <p style={{ fontSize: 13, fontWeight: 700, color: paymentMethod === 'wompi' ? '#7C3AED' : C.text, margin: '0 0 3px' }}>Wompi</p>
+                                <p style={{ fontSize: 13, fontWeight: 700, color: paymentMethod === 'wompi' ? '#9C4A2E' : C.text, margin: '0 0 3px' }}>Wompi</p>
                                 <p style={{ fontSize: 11, color: C.textMuted, margin: 0, lineHeight: 1.4 }}>Pago en línea seguro con tarjeta o PSE.</p>
                               </button>
                             </div>
 
                             {/* Contextual info per method */}
                             {paymentMethod === 'cash' && (
-                              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(139,92,246,0.05)', border: `1px solid rgba(139,92,246,0.15)`, borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} style={{ background: 'rgba(92,58,40,0.05)', border: `1px solid rgba(92,58,40,0.15)`, borderRadius: 10, padding: '10px 12px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                                 <Zap size={14} color={C.goldLight} style={{ flexShrink: 0, marginTop: 1 }} />
                                 <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.5 }}>
                                   Tu solicitud quedará <strong>pendiente</strong>. Acércate al estudio y el administrador activará tu plan una vez confirmado el pago.
@@ -695,3 +695,4 @@ const navBtn: React.CSSProperties = {
   transition: 'all 0.2s',
   textAlign: 'left',
 };
+

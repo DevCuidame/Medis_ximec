@@ -7,22 +7,22 @@ import type { EspacioFormValues } from '../../lib/schemas/espacioSchema';
 import { espacioSchema } from '../../lib/schemas/espacioSchema';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
-  bgSecondary: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
+  bgSecondary: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 };
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif';
 
 interface FormularioEspacioProps {
   initialData?: EspacioFormValues;
@@ -189,7 +189,7 @@ export const FormularioEspacio: React.FC<FormularioEspacioProps> = ({ initialDat
           <button 
             type="submit" 
             disabled={isSubmitting}
-            style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', padding: '12px 32px', borderRadius: 12, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: isSubmitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: `0 4px 16px rgba(139,92,246,0.28)`, opacity: isSubmitting ? 0.7 : 1 }}
+            style={{ background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', padding: '12px 32px', borderRadius: 12, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: isSubmitting ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: 8, boxShadow: `0 4px 16px rgba(92,58,40,0.28)`, opacity: isSubmitting ? 0.7 : 1 }}
           >
             {isSubmitting ? (
               <span>Guardando...</span>
@@ -206,3 +206,4 @@ export const FormularioEspacio: React.FC<FormularioEspacioProps> = ({ initialDat
     </div>
   );
 };
+

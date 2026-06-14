@@ -1,21 +1,21 @@
-﻿import React from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, User as UserIcon, LogOut, ArrowRight, PlayCircle } from 'lucide-react';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  goldPale: '#38BDF8',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  goldPale: '#D4B896',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textMedium: '#5E5E5E',
-  border: '#DDD6FE',
+  text: '#3D2B1F',
+  textMedium: '#7A6452',
+  border: '#E6D9C7',
 };
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER = 'Inter, system-ui, sans-serif';
 
 export const UserDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -31,8 +31,8 @@ export const UserDashboard: React.FC = () => {
       {/* ─── SIDEBAR ──────────────────────────────────────────────── */}
       <aside style={{ width: 260, background: C.white, borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
         <div style={{ padding: '32px 24px', borderBottom: `1px solid ${C.border}` }}>
-          <h1 style={{ fontFamily: FONT_BODONI, fontSize: 24, fontWeight: 700, fontStyle: 'italic', color: C.gold, margin: 0, letterSpacing: '0.05em' }}>
-            MEDIS <span style={{ fontSize: 12, fontStyle: 'normal', color: C.textMedium }}>USER</span>
+          <h1 style={{ fontFamily: FONT_BODONI, fontSize: 24, fontWeight: 700, color: C.gold, margin: 0, letterSpacing: '0.05em' }}>
+            MedisXime <span style={{ fontSize: 12, color: C.textMedium }}>USER</span>
           </h1>
         </div>
         
@@ -80,7 +80,7 @@ export const UserDashboard: React.FC = () => {
                 <h3 style={{ fontFamily: FONT_BODONI, fontSize: 20, margin: 0, color: C.text }}>Tu Próxima Clase</h3>
               </div>
               <p style={{ color: C.textMedium, fontSize: 15, marginBottom: 32, lineHeight: 1.5 }}>
-                Aún no tienes clases programadas. Regístrate en tu primera clase y comienza tu viaje en MEDIS.
+                Aún no tienes clases programadas. Regístrate en tu primera clase y comienza tu viaje en MedisXime.
               </p>
               
               <button 

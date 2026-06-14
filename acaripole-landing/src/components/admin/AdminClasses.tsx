@@ -1,5 +1,7 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { motion } from 'framer-motion'
+import { DoctorCalendarAnim } from './DoctorCalendarAnim'
 import {
   Users, CalendarDays, DollarSign, CreditCard, CircleHelp, LogOut,
   Search, Bell, RefreshCw, ChevronDown, ChevronRight, ChevronLeft,
@@ -8,14 +10,14 @@ import {
 import './MainDashboard.css'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6', goldPale: '#38BDF8',
-  bg: '#FFFFFF', bgPanel: '#F3F0FB', bgSecondary: '#F3F0FB',
-  white: '#FFFFFF', text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E', goldPale: '#D4B896',
+  bg: '#FFFBF5', bgPanel: '#F5EDE1', bgSecondary: '#F5EDE1',
+  white: '#FFFFFF', text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard',     active: false },
@@ -29,9 +31,9 @@ const NAV_ITEMS = [
 const OFFER_TYPE_LABEL: Record<string, string> = {
   class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller',
 }
-const OFFER_COLORS = ['#8B5CF6', '#4A6FA5', '#7C6B8A', '#2563EB', '#059669', '#3B82F6']
+const OFFER_COLORS = ['#5C3A28', '#9C4A2E', '#7A6452', '#C97B5A', '#D4B896', '#3D2418']
 const TYPE_COLORS: Record<string, string> = {
-  class: '#8B5CF6', open_pole: '#7C3AED', event: '#2563EB', workshop: '#3B82F6',
+  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#7A6452',
 }
 const DAY_SHORT = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -172,7 +174,7 @@ export const AdminClasses: React.FC = () => {
       <style>{`
         .cls-search::placeholder { color: ${C.textMuted}; }
         .cls-card { transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s; cursor: pointer; }
-        .cls-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(139,92,246,0.08); border-color: ${C.goldLight} !important; }
+        .cls-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(92,58,40,0.08); border-color: ${C.goldLight} !important; }
         @keyframes spin { to { transform: rotate(360deg); } }
         .spin { animation: spin 1s linear infinite; }
       `}</style>
@@ -185,11 +187,11 @@ export const AdminClasses: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 18, fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
             </div>
           </div>
         </div>
@@ -203,7 +205,7 @@ export const AdminClasses: React.FC = () => {
             return (
               <div key={item.label} style={{ marginBottom: 4 }}>
                 <button onClick={() => handleNavClick(item.label)} onMouseEnter={() => setHoveredNav(i)} onMouseLeave={() => setHoveredNav(null)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, border: 'none', background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s' }}
                 >
                   <Icon size={16} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} strokeWidth={isActive ? 2.5 : 2} />
                   <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: isActive ? C.white : isHovered ? C.gold : C.textBrown, transition: 'color 0.18s' }}>{item.label}</span>
@@ -241,12 +243,12 @@ export const AdminClasses: React.FC = () => {
       <div className="main-content">
 
         {/* TOPBAR */}
-        <header style={{ height: 68, background: C.white, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 16px', flexShrink: 0 }}>
+        <header style={{ height: 72, background: 'rgba(255, 255, 255, 0.8)', backdropFilter: 'blur(12px)', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', flexShrink: 0, position: 'sticky', top: 0, zIndex: 30 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
             <button className="menu-toggle" onClick={() => setIsMobileMenuOpen(v => !v)}>
               <Menu size={20} />
             </button>
-            <h2 style={{ fontFamily: FONT_BODONI, fontSize: 22, fontWeight: 600, color: C.gold, margin: 0, whiteSpace: 'nowrap' }}>MEDIS</h2>
+            <h2 style={{ fontFamily: FONT_BODONI, fontSize: 24, fontWeight: 600, color: C.gold, margin: 0, letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>MedisXime</h2>
             <div className="topbar-search" style={{ position: 'relative' }}>
               <Search size={15} color={C.textMuted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
               <input className="cls-search" type="text" placeholder="Buscar servicio o instructor..." value={search} onChange={e => setSearch(e.target.value)}
@@ -269,7 +271,7 @@ export const AdminClasses: React.FC = () => {
         </header>
 
         {/* CONTENT */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '24px 20px', background: C.bg }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', background: 'radial-gradient(circle at top right, rgba(92, 58, 40, 0.03), transparent 400px)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
             {/* Mobile search */}
@@ -284,15 +286,33 @@ export const AdminClasses: React.FC = () => {
               </div>
             </div>
 
-            {/* Page header + controls */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
+            {/* ── Stickman Animation Header ── */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '1.5rem',
+                background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+                padding: '1.5rem', borderRadius: '1.25rem', marginBottom: '2rem',
+                border: `1px solid ${C.borderLight}`
+              }}
+            >
+              <DoctorCalendarAnim size={110} color={C.goldLight} />
               <div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Portal de Gestión</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: C.goldLight, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Portal de Gestión</p>
                 <h1 className="page-title-lg" style={{ fontFamily: FONT_BODONI, fontSize: 38, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Calendario de Servicios</h1>
-                <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0', fontWeight: 500 }}>
-                  {loading ? 'Cargando…' : `${offers.length} sesión${offers.length !== 1 ? 'es' : ''} programada${offers.length !== 1 ? 's' : ''}`}
+                <p style={{ fontSize: '0.95rem', color: C.textBrown, margin: '6px 0 0', maxWidth: 500 }}>
+                  Organiza y gestiona todos los servicios programados.
+                  <span style={{ display: 'block', marginTop: 4, fontWeight: 600 }}>
+                    {loading ? 'Cargando…' : `${offers.length} sesión${offers.length !== 1 ? 'es' : ''} programada${offers.length !== 1 ? 's' : ''}`}
+                  </span>
                 </p>
               </div>
+            </motion.div>
+
+            {/* Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
 
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
                 {/* Semana / Mes */}
@@ -333,7 +353,7 @@ export const AdminClasses: React.FC = () => {
                   <button
                     onClick={() => { setWeekStart(getMondayOf(new Date())); setMonthDate(new Date()) }}
                     style={{ padding: '4px 10px', borderRadius: 7, border: `1px solid ${C.borderLight}`, background: 'transparent', cursor: 'pointer', fontSize: 11, fontWeight: 700, color: C.gold, fontFamily: FONT_INTER, transition: 'background 0.15s' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.06)'}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(92,58,40,0.06)'}
                     onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                   >
                     Hoy
@@ -410,7 +430,7 @@ export const AdminClasses: React.FC = () => {
                                 )}
                                 {/* Capacity + Price */}
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: 9.5, fontWeight: 700, color: isFull ? '#ef4444' : C.gold, background: isFull ? 'rgba(239,68,68,0.08)' : 'rgba(139,92,246,0.06)', padding: '3px 7px', borderRadius: 5 }}>
+                                  <span style={{ fontSize: 9.5, fontWeight: 700, color: isFull ? '#ef4444' : C.gold, background: isFull ? 'rgba(239,68,68,0.08)' : 'rgba(92,58,40,0.06)', padding: '3px 7px', borderRadius: 5 }}>
                                     {offer.enrolledCount ?? 0}/{offer.capacity} {isFull ? '• Lleno' : ''}
                                   </span>
                                   {offer.price > 0 && (
@@ -548,10 +568,10 @@ export const AdminClasses: React.FC = () => {
 
                 {/* Summary card */}
                 <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', minHeight: 260 }}>
-                  <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?auto=format&fit=crop&q=80&w=600" alt="MEDIS" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.2))' }} />
+                  <div style={{ position: 'absolute', inset: 0, background: `linear-gradient(135deg, #3D2418, #5C3A28)` }} />
+                  <div style={{ position: 'absolute', top: '-20%', right: '-10%', width: '300px', height: '300px', background: 'rgba(255,255,255,0.05)', borderRadius: '50%', filter: 'blur(40px)' }} />
                   <div style={{ position: 'absolute', inset: 0, padding: 24, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: C.goldLight, marginBottom: 6, textTransform: 'uppercase' }}>Resumen</div>
+                    <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', color: C.goldPale, marginBottom: 6, textTransform: 'uppercase' }}>Resumen</div>
                     <h3 style={{ fontFamily: FONT_BODONI, fontSize: 22, fontWeight: 700, color: C.white, margin: '0 0 10px', lineHeight: 1.2 }}>
                       {offers.length} sesión{offers.length !== 1 ? 'es' : ''} en total
                     </h3>
@@ -576,7 +596,7 @@ export const AdminClasses: React.FC = () => {
             {/* Footer */}
             <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
               <p style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>
-                © 2026 MEDIS Estudio · Todos los derechos reservados
+                © 2026 MedisXime Consultorio · Todos los derechos reservados
               </p>
             </div>
 

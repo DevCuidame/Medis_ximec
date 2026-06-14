@@ -1,22 +1,41 @@
-﻿    import React, { useRef, useState } from 'react'
+    import React, { useRef, useState } from 'react'
 import {
   X, Edit2, Check, Phone, Mail, AtSign, Star,
-  Calendar, ShieldCheck, AlertCircle, Trash2, Save, XCircle,
+  Calendar, ShieldCheck, AlertCircle, Trash2, Save, XCircle, Clock, Plus
 } from 'lucide-react'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6', goldPale: '#38BDF8',
-  bg: '#FFFFFF', bgPanel: '#F3F0FB', bgSecondary: '#F3F0FB',
-  white: '#FFFFFF', text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E', goldPale: '#D4B896',
+  bg: '#FFFBF5', bgPanel: '#F5EDE1', bgSecondary: '#F5EDE1',
+  white: '#FFFFFF', text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 const DISCIPLINES = [
-  'Pole Exotic', 'Pole Sport', 'Flexibilidad',
-  'Core y Fuerza', 'Flow Principiante', 'Coreografía Sensual',
+  'Medicina Bioreguladora', 'Salud Ocupacional', 'Medicina Laboral',
+  'Consultoría en SG-SST', 'Salud en el Trabajo', 'Valoración Médica',
+]
+
+const ID_TYPES = [
+  'Cédula de Ciudadanía',
+  'Tarjeta de Identidad',
+  'Cédula de Extranjería',
+  'Pasaporte',
+  'RUC',
+  'Otro'
+]
+
+const DIAS = [
+  { code: 1, label: 'L', name: 'Lunes' },
+  { code: 2, label: 'M', name: 'Martes' },
+  { code: 3, label: 'X', name: 'Miércoles' },
+  { code: 4, label: 'J', name: 'Jueves' },
+  { code: 5, label: 'V', name: 'Viernes' },
+  { code: 6, label: 'S', name: 'Sábado' },
+  { code: 0, label: 'D', name: 'Domingo' },
 ]
 
 const STATUS_OPTIONS = [
@@ -25,7 +44,7 @@ const STATUS_OPTIONS = [
   { value: 'offline',    label: 'No Disponible', color: '#94a3b8' },
 ] as const
 
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&q=80&w=600'
+const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'
 
 export interface Professional {
   id: string
@@ -43,12 +62,20 @@ export interface Professional {
   avgScore?: number
   totalReviews?: number
   createdAt: string
-  role?: 'USER' | 'PROFESSIONAL' | 'ADMIN'
+  role?: 'USER' | 'PROFESSIONAL' | 'COMPANY' | 'ADMIN'
+  idType?: string
+  idNumber?: string
+  professionalType?: 'dependiente' | 'independiente'
+  schedule?: { dayOfWeek: number; startTime: string; endTime: string }[]
 }
 
 interface EditForm {
   firstName: string
   lastName: string
+  companyName: string
+  legalRepresentative: string
+  idType: string
+  idNumber: string
   email: string
   phone: string
   bio: string
@@ -60,6 +87,8 @@ interface EditForm {
   isActive: boolean
   password: string
   confirmPassword: string
+  professionalType: 'dependiente' | 'independiente'
+  schedule: { dayOfWeek: number; startTime: string; endTime: string }[]
 }
 
 interface Props {
@@ -101,7 +130,7 @@ function ToggleBtn({ on, onChange, labelOn, labelOff }: { on: boolean, onChange:
       onClick={() => onChange(!on)}
       style={{
         width: '100%', padding: '11px 14px',
-        background: on ? 'rgba(139,92,246,0.09)' : C.bgPanel,
+        background: on ? 'rgba(92,58,40,0.09)' : C.bgPanel,
         border: `1.5px solid ${on ? C.gold : C.border}`,
         borderRadius: 10, cursor: 'pointer',
         fontFamily: FONT_INTER, fontSize: 13, fontWeight: 600,
@@ -131,9 +160,15 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
   const specialties = Array.isArray(pro.specialties) ? pro.specialties : []
   const isProfessional = pro.role === 'PROFESSIONAL'
 
+  const isCompany = pro.role === 'COMPANY'
+
   const [form, setForm] = useState<EditForm>({
-    firstName:   pro.firstName,
-    lastName:    pro.lastName,
+    firstName:   pro.firstName || '',
+    lastName:    pro.lastName || '',
+    companyName: isCompany ? pro.firstName || '' : '',
+    legalRepresentative: isCompany ? pro.lastName || '' : '',
+    idType:      pro.idType || ID_TYPES[0],
+    idNumber:    pro.idNumber || '',
     email:       pro.email,
     phone:       pro.phone ?? '',
     bio:         pro.bio ?? '',
@@ -145,7 +180,19 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
     isActive:    pro.isActive,
     password:    '',
     confirmPassword: '',
+    professionalType: pro.professionalType ?? 'dependiente',
+    schedule:    pro.schedule ? [...pro.schedule] : [],
   })
+
+  const [customIdType, setCustomIdType] = useState(() => {
+    if (pro.idType && !ID_TYPES.includes(pro.idType)) return pro.idType
+    return ''
+  })
+  
+  // Custom states for new schedule slots
+  const [newSlotDay, setNewSlotDay]       = useState<number>(1)
+  const [newSlotStart, setNewSlotStart]   = useState('')
+  const [newSlotEnd, setNewSlotEnd]       = useState('')
 
   const set = <K extends keyof EditForm>(k: K, v: EditForm[K]) =>
     setForm(f => ({ ...f, [k]: v }))
@@ -174,8 +221,16 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
 
   const validate = () => {
     const e: Record<string, string> = {}
-    if (!form.firstName.trim()) e.firstName = 'Requerido'
-    if (!form.lastName.trim())  e.lastName  = 'Requerido'
+    if (isCompany) {
+      if (!form.companyName.trim()) e.companyName = 'Requerido'
+      if (!form.legalRepresentative.trim()) e.legalRepresentative = 'Requerido'
+    } else {
+      if (!form.firstName.trim()) e.firstName = 'Requerido'
+      if (!form.lastName.trim())  e.lastName  = 'Requerido'
+    }
+    if (!form.idNumber.trim()) e.idNumber = 'Requerido'
+    if (form.idType === 'Otro' && !customIdType.trim()) e.idType = 'Requerido'
+    
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Email inválido'
     if (form.password || form.confirmPassword) {
       if (form.password.length < 8) e.password = 'Mínimo 8 caracteres'
@@ -190,15 +245,17 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
     setLoading(true)
     setError(null)
     try {
-      const { password, confirmPassword, ...restForm } = form
+      const { password, confirmPassword, companyName, legalRepresentative, ...restForm } = form
       const basePayload = {
         email:        restForm.email.toLowerCase().trim(),
-        firstName:    restForm.firstName.trim(),
-        lastName:     restForm.lastName.trim(),
+        firstName:    isCompany ? companyName.trim() : restForm.firstName.trim(),
+        lastName:     isCompany ? legalRepresentative.trim() : restForm.lastName.trim(),
+        idType:       restForm.idType === 'Otro' ? customIdType.trim() : restForm.idType,
+        idNumber:     restForm.idNumber.trim(),
         phone:        restForm.phone.trim()        || undefined,
         bio:          restForm.bio.trim()          || undefined,
         instagramUrl: restForm.instagramUrl.trim() || undefined,
-        avatarUrl:    restForm.avatarUrl.trim()    || undefined,
+        avatarUrl:    restForm.avatarUrl.trim() === '' ? '' : restForm.avatarUrl.trim(),
         isVerified:   restForm.isVerified,
         isActive:     restForm.isActive,
         password:     password ? password : undefined,
@@ -210,6 +267,8 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
         body: JSON.stringify(isProfessional ? {
           ...basePayload,
           specialties: form.specialties.length ? form.specialties : undefined,
+          professionalType: form.professionalType,
+          schedule: form.professionalType === 'independiente' ? form.schedule : [],
         } : basePayload),
       })
       const data = await res.json()
@@ -230,10 +289,16 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
       const updated: Professional = {
         ...pro,
         ...restForm,
+        firstName:    isCompany ? companyName.trim() : restForm.firstName.trim(),
+        lastName:     isCompany ? legalRepresentative.trim() : restForm.lastName.trim(),
+        idType:       restForm.idType === 'Otro' ? customIdType.trim() : restForm.idType,
+        idNumber:     restForm.idNumber.trim(),
         phone:        restForm.phone.trim()        || undefined,
         bio:          restForm.bio.trim()          || undefined,
         instagramUrl: restForm.instagramUrl.trim() || undefined,
         avatarUrl:    restForm.avatarUrl.trim()    || undefined,
+        professionalType: form.professionalType,
+        schedule:     form.professionalType === 'independiente' ? form.schedule : [],
       }
       onUpdated(updated)
       setMode('view')
@@ -267,7 +332,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
 
   const cancelEdit = () => { setMode('view'); setErrors({}); setError(null) }
 
-  const img         = form.avatarUrl || pro.avatarUrl || PLACEHOLDER_IMG
+  const img         = mode === 'edit' ? (form.avatarUrl || PLACEHOLDER_IMG) : (pro.avatarUrl || PLACEHOLDER_IMG)
   const name        = `${pro.firstName} ${pro.lastName}`
   const statusInfo  = isProfessional ? (STATUS_OPTIONS.find(s => s.value === pro.status) ?? STATUS_OPTIONS[2]) : null
   const joinedDate  = new Date(pro.createdAt).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -375,7 +440,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                 {isProfessional && specialties.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 7, marginBottom: 18 }}>
                     {specialties.map(tag => (
-                      <span key={tag} style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.gold, background: 'rgba(139,92,246,0.09)', border: `1px solid rgba(139,92,246,0.22)`, padding: '5px 14px', borderRadius: 9999, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      <span key={tag} style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.gold, background: 'rgba(92,58,40,0.09)', border: `1px solid rgba(92,58,40,0.22)`, padding: '5px 14px', borderRadius: 9999, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                         {tag}
                       </span>
                     ))}
@@ -399,7 +464,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
 
                 {/* Account badges */}
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9999, background: pro.isVerified ? 'rgba(139,92,246,0.08)' : C.bgSecondary, border: `1px solid ${pro.isVerified ? 'rgba(139,92,246,0.25)' : C.border}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 9999, background: pro.isVerified ? 'rgba(92,58,40,0.08)' : C.bgSecondary, border: `1px solid ${pro.isVerified ? 'rgba(92,58,40,0.25)' : C.border}` }}>
                     <ShieldCheck size={13} color={pro.isVerified ? C.gold : C.textMuted} />
                     <span style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 600, color: pro.isVerified ? C.gold : C.textMuted }}>{pro.isVerified ? 'Certificada' : 'Sin certificar'}</span>
                   </div>
@@ -439,7 +504,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                 )}
                 <button
                   onClick={() => setMode('edit')}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 14px rgba(139,92,246,0.30)` }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 14px rgba(92,58,40,0.30)` }}
                 >
                   <Edit2 size={14} strokeWidth={2.5} /> Editar Perfil
                 </button>
@@ -465,29 +530,115 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
               <div style={{ flex: 1, overflowY: 'auto', padding: '22px 26px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-                  {/* Names */}
+                  {/* Account Type */}
+                  <div>
+                    <label style={LABEL}>Tipo de cuenta</label>
+                    <input
+                      type="text" value={pro.role === 'USER' ? 'Paciente' : pro.role === 'COMPANY' ? 'Empresa' : pro.role === 'ADMIN' ? 'Administrador' : 'Médico Profesional'}
+                      disabled
+                      style={{ ...INPUT(), background: 'rgba(0,0,0,0.03)', cursor: 'not-allowed', color: C.textMedium }}
+                    />
+                  </div>
+
+                  {/* Names / Company Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                    {isCompany ? (
+                      <>
+                        <div>
+                          <label style={LABEL}>Razón Social <span style={{ color: '#ef4444' }}>*</span></label>
+                          <input
+                            type="text" value={form.companyName}
+                            onChange={e => { set('companyName', e.target.value); clearErr('companyName') }}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = errors.companyName ? '#ef4444' : C.border)}
+                            style={INPUT(errors.companyName)}
+                          />
+                          {errors.companyName && <p style={ERR}>{errors.companyName}</p>}
+                        </div>
+                        <div>
+                          <label style={LABEL}>Representante Legal <span style={{ color: '#ef4444' }}>*</span></label>
+                          <input
+                            type="text" value={form.legalRepresentative}
+                            onChange={e => { set('legalRepresentative', e.target.value); clearErr('legalRepresentative') }}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = errors.legalRepresentative ? '#ef4444' : C.border)}
+                            style={INPUT(errors.legalRepresentative)}
+                          />
+                          {errors.legalRepresentative && <p style={ERR}>{errors.legalRepresentative}</p>}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div>
+                          <label style={LABEL}>Nombres <span style={{ color: '#ef4444' }}>*</span></label>
+                          <input
+                            type="text" value={form.firstName}
+                            onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
+                            style={INPUT(errors.firstName)}
+                          />
+                          {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
+                        </div>
+                        <div>
+                          <label style={LABEL}>Apellidos <span style={{ color: '#ef4444' }}>*</span></label>
+                          <input
+                            type="text" value={form.lastName}
+                            onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
+                            style={INPUT(errors.lastName)}
+                          />
+                          {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Identity Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <div>
-                      <label style={LABEL}>Nombres <span style={{ color: '#ef4444' }}>*</span></label>
-                      <input
-                        type="text" value={form.firstName}
-                        onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
-                        onFocus={e => (e.target.style.borderColor = C.gold)}
-                        onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
-                        style={INPUT(errors.firstName)}
-                      />
-                      {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
+                      <label style={LABEL}>Tipo de Identificación</label>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        <select
+                          value={isCompany ? 'NIT' : form.idType}
+                          onChange={e => { set('idType', e.target.value); clearErr('idType') }}
+                          disabled={isCompany}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = C.border)}
+                          style={{
+                            ...INPUT(), cursor: isCompany ? 'not-allowed' : 'pointer', appearance: 'none',
+                            backgroundImage: isCompany ? 'none' : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: isCompany ? 14 : 36,
+                            opacity: isCompany ? 0.7 : 1
+                          }}
+                        >
+                          {isCompany ? <option value="NIT">NIT</option> : ID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        {form.idType === 'Otro' && !isCompany && (
+                          <div>
+                            <input
+                              type="text" value={customIdType} placeholder="Ej. Registro Civil"
+                              onChange={e => { setCustomIdType(e.target.value); clearErr('idType') }}
+                              onFocus={e => (e.target.style.borderColor = C.gold)}
+                              onBlur={e => (e.target.style.borderColor = errors.idType ? '#ef4444' : C.border)}
+                              style={INPUT(errors.idType)}
+                            />
+                            {errors.idType && <p style={ERR}>{errors.idType}</p>}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div>
-                      <label style={LABEL}>Apellidos <span style={{ color: '#ef4444' }}>*</span></label>
+                      <label style={LABEL}>Número de Identificación <span style={{ color: '#ef4444' }}>*</span></label>
                       <input
-                        type="text" value={form.lastName}
-                        onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
+                        type="text" value={form.idNumber}
+                        onChange={e => { set('idNumber', e.target.value); clearErr('idNumber') }}
                         onFocus={e => (e.target.style.borderColor = C.gold)}
-                        onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
-                        style={INPUT(errors.lastName)}
+                        onBlur={e => (e.target.style.borderColor = errors.idNumber ? '#ef4444' : C.border)}
+                        style={INPUT(errors.idNumber)}
                       />
-                      {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
+                      {errors.idNumber && <p style={ERR}>{errors.idNumber}</p>}
                     </div>
                   </div>
 
@@ -577,6 +728,98 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                     />
                   </div>
 
+                  {/* Professional Vinculacion & Schedule */}
+                  {isProfessional && (
+                    <>
+                      <div>
+                        <label style={LABEL}>Tipo de vinculación</label>
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          {(['dependiente', 'independiente'] as const).map(t => (
+                            <button
+                              key={t} type="button"
+                              onClick={() => { set('professionalType', t); if (t === 'dependiente') set('schedule', []) }}
+                              style={{ flex: 1, padding: '12px 16px', borderRadius: 10, border: `2px solid ${form.professionalType === t ? C.gold : C.border}`, background: form.professionalType === t ? 'rgba(92,58,40,0.07)' : 'transparent', color: form.professionalType === t ? C.gold : C.textBrown, fontWeight: 700, fontSize: 13, cursor: 'pointer', transition: 'all 0.18s', fontFamily: FONT_INTER }}
+                            >
+                              <div style={{ fontSize: 14, fontWeight: 800, marginBottom: 3 }}>
+                                {t === 'dependiente' ? '🏢 Dependiente' : '🕒 Independiente'}
+                              </div>
+                              <div style={{ fontSize: 10, fontWeight: 500, color: form.professionalType === t ? C.gold : C.textMuted, lineHeight: 1.4 }}>
+                                {t === 'dependiente' ? 'Disponible cualquier día/hora' : 'Solo en su horario registrado'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {form.professionalType === 'independiente' && (
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                            <Clock size={14} color={C.gold} />
+                            <label style={{ ...LABEL, margin: 0 }}>Horario disponible</label>
+                          </div>
+                          
+                          <div style={{ background: 'rgba(92,58,40,0.04)', border: `1.5px solid ${C.borderLight}`, borderRadius: 12, padding: '14px', marginBottom: 12 }}>
+                            <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
+                              {DIAS.map(d => (
+                                <button key={d.code} type="button" title={d.name}
+                                  onClick={() => setNewSlotDay(d.code)}
+                                  style={{ width: 34, height: 34, borderRadius: 8, border: `2px solid ${newSlotDay === d.code ? C.gold : C.border}`, background: newSlotDay === d.code ? `linear-gradient(135deg, ${C.gold}, ${C.goldLight})` : 'transparent', color: newSlotDay === d.code ? '#fff' : C.textMuted, fontWeight: 800, fontSize: 12, cursor: 'pointer', transition: 'all 0.15s', fontFamily: FONT_INTER }}>
+                                  {d.label}
+                                </button>
+                              ))}
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: 8, alignItems: 'center' }}>
+                              <input type="time" value={newSlotStart} onChange={e => setNewSlotStart(e.target.value)}
+                                style={{ ...INPUT(), padding: '10px 12px' }}
+                                onFocus={e => (e.target.style.borderColor = C.gold)}
+                                onBlur={e => (e.target.style.borderColor = C.border)}
+                              />
+                              <input type="time" value={newSlotEnd} onChange={e => setNewSlotEnd(e.target.value)}
+                                style={{ ...INPUT(), padding: '10px 12px' }}
+                                onFocus={e => (e.target.style.borderColor = C.gold)}
+                                onBlur={e => (e.target.style.borderColor = C.border)}
+                              />
+                              <button type="button"
+                                onClick={() => {
+                                  if (!newSlotStart || !newSlotEnd || newSlotEnd <= newSlotStart) return
+                                  set('schedule', [...form.schedule, { dayOfWeek: newSlotDay, startTime: newSlotStart, endTime: newSlotEnd }])
+                                  setNewSlotStart(''); setNewSlotEnd('')
+                                }}
+                                style={{ padding: '10px 14px', borderRadius: 9, border: 'none', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: '#fff', fontWeight: 700, fontSize: 13, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, fontFamily: FONT_INTER, whiteSpace: 'nowrap' }}>
+                                <Plus size={13} strokeWidth={3} /> Agregar
+                              </button>
+                            </div>
+                          </div>
+                          
+                          {form.schedule.length === 0 ? (
+                            <p style={{ fontSize: 12, color: C.textMuted, fontStyle: 'italic', margin: 0 }}>Sin horarios registrados. Agrega al menos un bloque.</p>
+                          ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                              {form.schedule
+                                .sort((a, b) => a.dayOfWeek - b.dayOfWeek || a.startTime.localeCompare(b.startTime))
+                                .map((s, i) => {
+                                  const day = DIAS.find(d => d.code === s.dayOfWeek)
+                                  return (
+                                    <div key={i} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: C.white, border: `1px solid ${C.borderLight}`, borderRadius: 9, padding: '8px 12px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <span style={{ fontSize: 11, fontWeight: 800, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 6 }}>{day?.name}</span>
+                                        <Clock size={12} color={C.textMuted} />
+                                        <span style={{ fontSize: 13, fontWeight: 600, color: C.text }}>{s.startTime} – {s.endTime}</span>
+                                      </div>
+                                      <button type="button" onClick={() => set('schedule', form.schedule.filter((_, j) => j !== i))}
+                                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#DC2626', display: 'flex', alignItems: 'center', padding: 4, borderRadius: 6 }}>
+                                        <Trash2 size={13} />
+                                      </button>
+                                    </div>
+                                  )
+                                })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
+                  )}
+
                   {/* Specialties */}
                   {isProfessional && (
                     <div>
@@ -588,7 +831,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                             <button
                               key={d}
                               onClick={() => setForm(f => ({ ...f, specialties: on ? f.specialties.filter(x => x !== d) : [...f.specialties, d] }))}
-                              style={{ padding: '7px 14px', borderRadius: 9999, border: `1.5px solid ${on ? C.gold : C.border}`, background: on ? 'rgba(139,92,246,0.09)' : 'transparent', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 600, color: on ? C.gold : C.textBrown, cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s ease', display: 'flex', alignItems: 'center', gap: 5 }}
+                              style={{ padding: '7px 14px', borderRadius: 9999, border: `1.5px solid ${on ? C.gold : C.border}`, background: on ? 'rgba(92,58,40,0.09)' : 'transparent', fontFamily: FONT_INTER, fontSize: 12, fontWeight: 600, color: on ? C.gold : C.textBrown, cursor: 'pointer', letterSpacing: '0.04em', transition: 'all 0.15s ease', display: 'flex', alignItems: 'center', gap: 5 }}
                             >
                               {on && <Check size={11} strokeWidth={3} />}
                               {d}
@@ -700,7 +943,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                 </button>
                 <button
                   onClick={save} disabled={loading}
-                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: loading ? C.border : `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : `0 4px 14px rgba(139,92,246,0.30)`, transition: 'all 0.2s ease', minWidth: 170 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '11px 22px', background: loading ? C.border : `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, border: 'none', borderRadius: 9, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, color: C.white, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: loading ? 'not-allowed' : 'pointer', boxShadow: loading ? 'none' : `0 4px 14px rgba(92,58,40,0.30)`, transition: 'all 0.2s ease', minWidth: 170 }}
                 >
                   {loading
                     ? <><span style={{ width: 14, height: 14, border: `2px solid rgba(255,255,255,0.4)`, borderTopColor: C.white, borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Guardando...</>
@@ -716,3 +959,4 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
     </>
   )
 }
+

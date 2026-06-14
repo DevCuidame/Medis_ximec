@@ -1,18 +1,19 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Clock, MapPin, User, Loader2, CheckCircle2, AlertCircle, XCircle } from 'lucide-react'
+import { DoctorGreetingAnim } from '../professional/DoctorGreetingAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
   white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
-const TYPE_COLOR: Record<string, string> = { class: '#8B5CF6', open_pole: '#7C3AED', event: '#2563EB', workshop: '#3B82F6' }
+const TYPE_COLOR: Record<string, string> = { class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E' }
 const TYPE_LABEL: Record<string, string> = { class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller' }
 
 function authH(): HeadersInit {
@@ -111,7 +112,10 @@ export const UserMisServicios: React.FC<Props> = () => {
             <span style={{ fontSize: 14, fontWeight: 600 }}>Cargando…</span>
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '80px 20px', background: C.white, borderRadius: 20, border: `2px dashed ${C.borderLight}` }}>
+          <div style={{ textAlign: 'center', padding: '60px 20px', background: C.white, borderRadius: 20, border: `2px dashed ${C.borderLight}`, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <div style={{ marginBottom: 16 }}>
+              <DoctorGreetingAnim size={180} color={C.goldLight} textTop="Aún no hay" textBottom="solicitudes" />
+            </div>
             <p style={{ fontFamily: FONT_BODONI, fontSize: '1.3rem', color: C.textMuted, margin: '0 0 8px' }}>
               {requests.length === 0 ? 'Sin inscripciones aún' : 'Sin resultados'}
             </p>
@@ -209,3 +213,4 @@ export const UserMisServicios: React.FC<Props> = () => {
     </main>
   )
 }
+

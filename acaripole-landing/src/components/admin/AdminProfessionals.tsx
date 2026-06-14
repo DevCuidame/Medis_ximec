@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Users, Calendar, CalendarDays, DollarSign, CreditCard, Plus, CircleHelp, LogOut, Search, Bell, Settings, Star, UserPlus, MoreVertical, CheckCircle2, AlertCircle, RefreshCw, Briefcase, ChevronDown, ChevronRight, LayoutDashboard, Menu } from 'lucide-react'
 import './MainDashboard.css'
@@ -6,23 +6,23 @@ import { CreateProfessionalModal } from './CreateProfessionalModal'
 import { ProfessionalProfileModal } from './ProfessionalProfileModal'
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  goldPale: '#38BDF8',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
-  bgSecondary: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  goldPale: '#D4B896',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
+  bgSecondary: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 }
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', active: false },
@@ -60,7 +60,7 @@ interface Stats {
   avgSatisfaction: number
 }
 
-const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1518310383802-640c2de311b2?auto=format&fit=crop&q=80&w=600'
+const PLACEHOLDER_IMG = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'
 
 function StatusDot({ status }: { status: string }) {
   if (!status) return null
@@ -218,11 +218,11 @@ export const AdminProfessionals: React.FC = () => {
           <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+                <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
               </div>
               <div>
-                <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-                <div style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+                <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+                <div style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
               </div>
             </div>
           </div>
@@ -253,7 +253,7 @@ export const AdminProfessionals: React.FC = () => {
                     style={{
                       width: '100%', display: 'flex', alignItems: 'center', gap: 10,
                       padding: '10px 12px', borderRadius: 8, marginBottom: 2,
-                      background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent',
+                      background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent',
                       borderLeft: isActive ? `3px solid ${C.gold}` : '3px solid transparent',
                       borderTop: 'none', borderRight: 'none', borderBottom: 'none',
                       transition: 'background 0.18s ease',
@@ -310,7 +310,7 @@ export const AdminProfessionals: React.FC = () => {
           <header style={{ height: 68, background: C.white, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', flexShrink: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <button className="menu-toggle" onClick={() => setIsMobileMenuOpen(v => !v)}><Menu size={20} /></button>
-              <h2 style={{ fontFamily: FONT_BODONI, fontSize: 22, fontWeight: 600, color: C.gold, margin: 0 }}>MEDIS</h2>
+              <h2 style={{ fontFamily: FONT_BODONI, fontSize: 22, fontWeight: 600, color: C.gold, margin: 0 }}>MedisXime</h2>
               <div className="topbar-search" style={{ position: 'relative' }}>
                 <Search size={15} color={C.textMuted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                 <input
@@ -350,7 +350,7 @@ export const AdminProfessionals: React.FC = () => {
                   <p style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: 6 }}>Portal de Gestión</p>
                   <h1 style={{ fontFamily: FONT_BODONI, fontSize: 42, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Usuarios</h1>
                 </div>
-                <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 8, fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 16px rgba(139,92,246,0.30)` }}>
+                <button onClick={() => setShowModal(true)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 8, fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: `0 4px 16px rgba(92,58,40,0.30)` }}>
                   <Plus size={14} strokeWidth={3} />
                   Nueva Cuenta
                 </button>
@@ -360,7 +360,7 @@ export const AdminProfessionals: React.FC = () => {
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
                 {metricCards.map(({ value, label, icon: Icon }) => (
                   <div key={label} style={{ background: C.white, border: `1px solid ${C.border}`, borderRadius: 12, padding: '20px 22px', display: 'flex', alignItems: 'center', gap: 14 }}>
-                    <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(139,92,246,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 10, background: 'rgba(92,58,40,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                       <Icon size={18} color={C.gold} strokeWidth={2} />
                     </div>
                     <div>
@@ -406,7 +406,7 @@ export const AdminProfessionals: React.FC = () => {
                     onMouseEnter={() => setHoveredCard('new')}
                     onMouseLeave={() => setHoveredCard(null)}
                     style={{
-                      background: hoveredCard === 'new' ? 'rgba(139,92,246,0.04)' : C.white,
+                      background: hoveredCard === 'new' ? 'rgba(92,58,40,0.04)' : C.white,
                       border: `2px dashed ${hoveredCard === 'new' ? C.gold : C.border}`,
                       borderRadius: 14,
                       display: 'flex',
@@ -455,7 +455,7 @@ export const AdminProfessionals: React.FC = () => {
                         overflow: 'hidden',
                         cursor: 'pointer',
                         transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-                        boxShadow: isHovered ? '0 12px 36px rgba(139,92,246,0.14)' : '0 2px 8px rgba(0,0,0,0.04)',
+                        boxShadow: isHovered ? '0 12px 36px rgba(92,58,40,0.14)' : '0 2px 8px rgba(0,0,0,0.04)',
                       }}
                     >
                       {/* Image */}
@@ -531,7 +531,7 @@ export const AdminProfessionals: React.FC = () => {
               {/* Footer */}
               <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <p style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>
-                  © 2026 MEDIS Estudio · Todos los derechos reservados
+                  © 2026 MedisXime Consultorio · Todos los derechos reservados
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   <span style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
@@ -549,3 +549,4 @@ export const AdminProfessionals: React.FC = () => {
     </>
   )
 }
+

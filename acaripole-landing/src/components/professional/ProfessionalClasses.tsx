@@ -1,25 +1,26 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalendarDays, Clock, MapPin, Users, Loader2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { DoctorGreetingAnim } from './DoctorGreetingAnim'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  white: '#FFFFFF', bg: '#FFFBF5',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 const DAY_SHORT   = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']
 
 const TYPE_COLOR: Record<string, string> = {
-  class: '#8B5CF6', open_pole: '#7C3AED', event: '#2563EB', workshop: '#3B82F6',
+  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E',
 }
 const TYPE_LABEL: Record<string, string> = {
-  class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller',
+  class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen',
 }
 
 function authH(): HeadersInit {
@@ -100,13 +101,26 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28, flexWrap: 'wrap', gap: 16 }}>
-          <div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px' }}>Portal Profesional</p>
-            <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Mis Clases</h1>
-            <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0', fontWeight: 500 }}>
-              {loading ? 'Cargando…' : `${offers.length} sesión${offers.length !== 1 ? 'es' : ''} asignada${offers.length !== 1 ? 's' : ''} · ${upcoming.length} próxima${upcoming.length !== 1 ? 's' : ''}`}
-            </p>
-          </div>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '1.5rem',
+              background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+              padding: '1.5rem', borderRadius: '1.25rem',
+              border: `1px solid ${C.borderLight}`
+            }}
+          >
+            <DoctorGreetingAnim size={160} color={C.goldLight} textTop="Estas son tus" textBottom="consultas" />
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.2em', textTransform: 'uppercase', margin: '0 0 6px' }}>Portal Profesional</p>
+              <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Mis Consultas</h1>
+              <p style={{ fontSize: 13, color: C.textMuted, margin: '8px 0 0', fontWeight: 500 }}>
+                {loading ? 'Cargando…' : `${offers.length} cita${offers.length !== 1 ? 's' : ''} asignada${offers.length !== 1 ? 's' : ''} · ${upcoming.length} próxima${upcoming.length !== 1 ? 's' : ''}`}
+              </p>
+            </div>
+          </motion.div>
 
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
             {/* View toggle */}
@@ -124,14 +138,14 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: C.white, border: `1px solid ${C.borderLight}`, borderRadius: 10, padding: '4px 6px' }}>
                 <button onClick={() => setWeekStart(d => addDays(d, -7))}
                   style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textBrown }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F3F0FB'}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F5EDE1'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <ChevronLeft size={16} />
                 </button>
                 <span style={{ fontSize: 12, fontWeight: 700, color: C.text, minWidth: 150, textAlign: 'center' }}>{weekTitle}</span>
                 <button onClick={() => setWeekStart(d => addDays(d, 7))}
                   style={{ width: 30, height: 30, borderRadius: 7, border: 'none', background: 'transparent', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textBrown }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#F3F0FB'}
+                  onMouseEnter={e => e.currentTarget.style.background = '#F5EDE1'}
                   onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
                   <ChevronRight size={16} />
                 </button>
@@ -153,12 +167,12 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
         {loading ? (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, padding: '80px 0', color: C.textMuted }}>
             <Loader2 size={20} className="spin" />
-            <span style={{ fontSize: 14, fontWeight: 600 }}>Cargando tus clases…</span>
+            <span style={{ fontSize: 14, fontWeight: 600 }}>Cargando tus consultas…</span>
           </div>
         ) : offers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', background: C.white, borderRadius: 20, border: `2px dashed ${C.borderLight}` }}>
             <CalendarDays size={44} color={C.borderLight} style={{ marginBottom: 16 }} />
-            <p style={{ fontFamily: FONT_BODONI, fontSize: '1.3rem', color: C.textMuted, margin: '0 0 8px' }}>Sin clases asignadas</p>
+            <p style={{ fontFamily: FONT_BODONI, fontSize: '1.3rem', color: C.textMuted, margin: '0 0 8px' }}>Sin consultas asignadas</p>
             <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>El administrador aún no te ha asignado ningún servicio.</p>
           </div>
         ) : view === 'week' ? (
@@ -255,7 +269,7 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
                         {o.capacity > 0 && (
                           <span style={{ fontSize: 11, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 5 }}>
-                            <Users size={12} color={C.gold} /> {o.enrolledCount ?? 0}/{o.capacity} alumnos
+                            <Users size={12} color={C.gold} /> {o.enrolledCount ?? 0}/{o.capacity} pacientes
                           </span>
                         )}
                         <span style={{ fontSize: 11, fontWeight: 700, color: color }}>{fmtPrice(o.price)}</span>
@@ -263,7 +277,7 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
                     </div>
 
                     {/* Status */}
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: isPast ? '#F0EDE8' : o.status === 'published' ? 'rgba(34,197,94,0.1)' : 'rgba(139,92,246,0.08)', color: isPast ? C.textMuted : o.status === 'published' ? '#16A34A' : C.gold, flexShrink: 0 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: '4px 10px', borderRadius: 99, background: isPast ? '#F0EDE8' : o.status === 'published' ? 'rgba(34,197,94,0.1)' : 'rgba(92,58,40,0.08)', color: isPast ? C.textMuted : o.status === 'published' ? '#16A34A' : C.gold, flexShrink: 0 }}>
                       {isPast ? 'Realizada' : o.status === 'published' ? 'Activa' : 'Borrador'}
                     </span>
                   </motion.div>

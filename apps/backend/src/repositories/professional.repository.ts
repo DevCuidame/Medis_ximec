@@ -16,6 +16,8 @@ function toPublic(r: ProfessionalRecord): ProfessionalPublic {
     email:            r.email,
     firstName:        r.first_name,
     lastName:         r.last_name,
+    idType:           r.id_type,
+    idNumber:         r.id_number,
     phone:            r.phone,
     bio:              r.bio,
     specialties:      r.specialties ?? [],
@@ -72,8 +74,8 @@ export const ProfessionalRepository = {
     const { rows } = await pool.query<ProfessionalRecord>(`
       INSERT INTO users
         (email, password_hash, first_name, last_name, phone, role,
-         bio, specialties, instagram_url, avatar_url, status, is_verified, professional_type)
-      VALUES ($1,$2,$3,$4,$5,'PROFESSIONAL',$6,$7,$8,$9,'offline',TRUE,$10)
+         id_type, id_number, bio, specialties, instagram_url, avatar_url, status, is_verified, professional_type)
+      VALUES ($1,$2,$3,$4,$5,'PROFESSIONAL',$6,$7,$8,$9,$10,$11,'offline',TRUE,$12)
       RETURNING *,
         NULL::NUMERIC AS avg_score,
         NULL::BIGINT  AS total_reviews
@@ -83,6 +85,8 @@ export const ProfessionalRepository = {
       dto.firstName.trim(),
       dto.lastName.trim(),
       dto.phone?.trim() ?? null,
+      dto.idType?.trim() ?? null,
+      dto.idNumber?.trim() ?? null,
       dto.bio?.trim() ?? null,
       dto.specialties ?? null,
       dto.instagramUrl?.trim() ?? null,
@@ -100,6 +104,8 @@ export const ProfessionalRepository = {
 
     if (dto.firstName   !== undefined) { fields.push(`first_name    = $${idx++}`); values.push(dto.firstName.trim()) }
     if (dto.lastName    !== undefined) { fields.push(`last_name     = $${idx++}`); values.push(dto.lastName.trim()) }
+    if (dto.idType      !== undefined) { fields.push(`id_type       = $${idx++}`); values.push(dto.idType?.trim() ?? null) }
+    if (dto.idNumber    !== undefined) { fields.push(`id_number     = $${idx++}`); values.push(dto.idNumber?.trim() ?? null) }
     if (dto.phone       !== undefined) { fields.push(`phone         = $${idx++}`); values.push(dto.phone?.trim() ?? null) }
     if (dto.bio         !== undefined) { fields.push(`bio           = $${idx++}`); values.push(dto.bio?.trim() ?? null) }
     if (dto.specialties !== undefined) { fields.push(`specialties   = $${idx++}`); values.push(dto.specialties) }

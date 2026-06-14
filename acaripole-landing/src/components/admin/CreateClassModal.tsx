@@ -2,23 +2,23 @@
 import { X, Check, AlertCircle, Building, DoorOpen, Calendar, Clock, User, ChevronRight, ChevronLeft, Plus, Users, Sparkles } from 'lucide-react'
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  goldPale: '#38BDF8',
-  bg: '#FFFFFF',
-  bgPanel: '#F3F0FB',
-  bgSecondary: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  goldPale: '#D4B896',
+  bg: '#FFFBF5',
+  bgPanel: '#F5EDE1',
+  bgSecondary: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 }
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif'
 
 interface Sede {
   id: string
@@ -376,7 +376,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
           priceFormatted: new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(registrationPrice),
           instructor: `${dbClass.instructor.firstName} ${dbClass.instructor.lastName.substring(0,1)}.`,
           initials: `${dbClass.instructor.firstName.charAt(0)}${dbClass.instructor.lastName.charAt(0)}`,
-          color: classType === 'privada' ? '#38BDF8' : dbClass.discipline.name.includes('Pole') ? '#8B5CF6' : dbClass.discipline.name.includes('Flex') ? '#4A6FA5' : '#7C6B8A',
+          color: classType === 'privada' ? '#D4B896' : dbClass.discipline.name.includes('Pole') ? '#5C3A28' : dbClass.discipline.name.includes('Flex') ? '#7A6452' : '#7A6452',
           current: dbClass.enrolledCount,
           max: dbClass.capacity,
           dayShort: dayOfWeekShort,
@@ -567,7 +567,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                     onClick={() => setClassType('grupal')}
                     style={{
                       padding: '16px', borderRadius: 12, border: `1px solid ${classType === 'grupal' ? C.gold : C.borderLight}`,
-                      background: classType === 'grupal' ? 'rgba(139,92,246,0.05)' : C.white,
+                      background: classType === 'grupal' ? 'rgba(92,58,40,0.05)' : C.white,
                       cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, transition: 'all 0.2s'
                     }}
                   >
@@ -798,7 +798,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   <h4 style={{ fontFamily: FONT_BODONI, fontSize: 18, fontWeight: 700, color: C.gold, margin: 0 }}>Resumen del Programa</h4>
                   <div style={{
                     padding: '4px 12px', borderRadius: 6,
-                    background: classType === 'privada' ? 'rgba(212,168,67,0.12)' : 'rgba(139,92,246,0.08)',
+                    background: classType === 'privada' ? 'rgba(212,168,67,0.12)' : 'rgba(92,58,40,0.08)',
                     fontFamily: FONT_INTER, fontSize: 9.5, fontWeight: 700, letterSpacing: '0.08em',
                     color: classType === 'privada' ? C.goldLight : C.gold, textTransform: 'uppercase'
                   }}>
@@ -910,7 +910,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   (step === 2 && (!selectedDisciplineId || !selectedInstructorId)) ||
                   (step === 3 && (!availabilityStatus.available || !classDate || !classTime))
                 ) ? 0.45 : 1,
-                boxShadow: `0 4px 16px rgba(139,92,246,0.20)`
+                boxShadow: `0 4px 16px rgba(92,58,40,0.20)`
               }}
             >
               Siguiente
@@ -938,3 +938,4 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
     </div>
   )
 }
+

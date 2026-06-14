@@ -11,18 +11,18 @@ import {
 import './MainDashboard.css';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  bgPanel: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  bgPanel: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  borderLight: '#E6D9C7',
 };
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', active: false },
@@ -75,12 +75,12 @@ const TYPE_LABELS: Record<MembershipType, string> = {
 };
 
 const TYPE_COLORS: Record<MembershipType, { bg: string; color: string }> = {
-  per_class:   { bg: 'rgba(139,92,246,0.1)',    color: '#8B5CF6' },
+  per_class:   { bg: 'rgba(92,58,40,0.1)',    color: '#5C3A28' },
   monthly:     { bg: 'rgba(34,197,94,0.1)',   color: '#16A34A' },
-  annual:      { bg: 'rgba(59,130,246,0.1)',  color: '#2563EB' },
-  private:     { bg: 'rgba(168,85,247,0.1)',  color: '#7C3AED' },
+  annual:      { bg: 'rgba(59,130,246,0.1)',  color: '#C97B5A' },
+  private:     { bg: 'rgba(168,85,247,0.1)',  color: '#9C4A2E' },
   pack:        { bg: 'rgba(234,179,8,0.1)',   color: '#B45309' },
-  inscription: { bg: 'rgba(236,72,153,0.1)',  color: '#8B5CF6' },
+  inscription: { bg: 'rgba(236,72,153,0.1)',  color: '#5C3A28' },
 };
 
 const EMPTY_FORM = {
@@ -329,11 +329,11 @@ export const MembresiasDashboard: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
             </div>
           </div>
         </div>
@@ -350,7 +350,7 @@ export const MembresiasDashboard: React.FC = () => {
                   onClick={() => handleNavClick(item.label)}
                   onMouseEnter={() => setHoveredNav(i)}
                   onMouseLeave={() => setHoveredNav(null)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent', border: 'none', transition: 'all 0.2s ease', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent', border: 'none', transition: 'all 0.2s ease', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                 >
                   {isActive && <motion.div layoutId="activeNav" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})`, zIndex: 0, borderRadius: 10 }} />}
                   <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -404,7 +404,7 @@ export const MembresiasDashboard: React.FC = () => {
               <Menu size={20} />
             </button>
             <h2 style={{ fontFamily: FONT_BODONI, fontSize: 24, fontWeight: 600, color: C.gold, margin: 0, display: 'flex', alignItems: 'center', gap: 8 }}>
-              MEDIS <span className="overview-label" style={{ fontSize: 12, fontFamily: '"Hanken Grotesk", sans-serif', color: C.textMuted, fontWeight: 500, letterSpacing: '0.1em', marginTop: 4, textTransform: 'uppercase' }}>/ Planes</span>
+              MEDIS <span className="overview-label" style={{ fontSize: 12, fontFamily: '"Inter", sans-serif', color: C.textMuted, fontWeight: 500, letterSpacing: '0.1em', marginTop: 4, textTransform: 'uppercase' }}>/ Planes</span>
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -414,14 +414,14 @@ export const MembresiasDashboard: React.FC = () => {
             <button style={{ width: 40, height: 40, borderRadius: 12, background: C.bgPanel, border: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: C.gold }} onMouseEnter={e => e.currentTarget.style.background = C.white} onMouseLeave={e => e.currentTarget.style.background = C.bgPanel}>
               <Bell size={18} />
             </button>
-            <div style={{ width: 40, height: 40, borderRadius: 12, border: `2px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(139,92,246,0.2)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, border: `2px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(92,58,40,0.2)' }}>
               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           </div>
         </header>
 
         {/* PAGE CONTENT */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', background: 'radial-gradient(circle at top right, rgba(139,92,246,0.03), transparent 400px)' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', background: 'radial-gradient(circle at top right, rgba(92,58,40,0.03), transparent 400px)' }}>
           <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '2.5rem', flexWrap: 'wrap', gap: 16 }}>
@@ -453,10 +453,10 @@ export const MembresiasDashboard: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
               {[
-                { label: 'Total planes', value: memberships.length, icon: Tag, color: C.gold, bg: 'rgba(139,92,246,0.08)' },
+                { label: 'Total planes', value: memberships.length, icon: Tag, color: C.gold, bg: 'rgba(92,58,40,0.08)' },
                 { label: 'Planes activos', value: memberships.filter(m => m.isActive).length, icon: CheckCircle2, color: '#16A34A', bg: 'rgba(34,197,94,0.08)' },
                 { label: 'Planes inactivos', value: memberships.filter(m => !m.isActive).length, icon: XCircle, color: '#DC2626', bg: 'rgba(239,68,68,0.08)' },
-                { label: 'Precio promedio', value: memberships.length ? fmt(Math.round(memberships.reduce((a, m) => a + m.price, 0) / memberships.length)) : '—', icon: CreditCard, color: '#2563EB', bg: 'rgba(59,130,246,0.08)', isText: true },
+                { label: 'Precio promedio', value: memberships.length ? fmt(Math.round(memberships.reduce((a, m) => a + m.price, 0) / memberships.length)) : '—', icon: CreditCard, color: '#C97B5A', bg: 'rgba(59,130,246,0.08)', isText: true },
               ].map((s, i) => {
                 const Icon = s.icon;
                 return (
@@ -503,7 +503,7 @@ export const MembresiasDashboard: React.FC = () => {
                             <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.25rem', color: C.text, margin: 0, lineHeight: 1.2 }}>{m.name}</h3>
                           </div>
                           <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                            <button onClick={() => openEdit(m)} style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(139,92,246,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.14)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(139,92,246,0.07)'}>
+                            <button onClick={() => openEdit(m)} style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(92,58,40,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(92,58,40,0.14)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(92,58,40,0.07)'}>
                               <Edit2 size={14} />
                             </button>
                             <button onClick={() => setDeleteConfirm(m.id)} style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(239,68,68,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.14)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.07)'}>
@@ -549,7 +549,7 @@ export const MembresiasDashboard: React.FC = () => {
                                     </span>
                                   ))}
                                   {fcBenefits.length > 1 && (
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#7C3AED', background: 'rgba(124,58,237,0.1)', padding: '2px 8px', borderRadius: 20 }}>
+                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9C4A2E', background: 'rgba(124,58,237,0.1)', padding: '2px 8px', borderRadius: 20 }}>
                                       Total: {total} ses.
                                     </span>
                                   )}
@@ -585,7 +585,7 @@ export const MembresiasDashboard: React.FC = () => {
                   {inscriptions.length > 0 && (
                     <div style={{ marginBottom: '2rem' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem' }}>
-                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#8B5CF6' }} />
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#5C3A28' }} />
                         <h2 style={{ fontFamily: FONT_BODONI, fontSize: '1.1rem', color: C.text, margin: 0 }}>Inscripción</h2>
                         <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}>— Pago único · habilita el acceso a planes y descuentos</span>
                       </div>
@@ -806,7 +806,7 @@ export const MembresiasDashboard: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => { setShowModal(false); navigate('/admin/benefits'); }}
-                            style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.07)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}
+                            style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.07)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}
                           >
                             + Gestionar catálogo
                           </button>
@@ -818,7 +818,7 @@ export const MembresiasDashboard: React.FC = () => {
                             <Gift size={32} color={C.borderLight} style={{ margin: '0 auto 10px', display: 'block' }} />
                             <p style={{ fontSize: 13, color: C.textMuted, margin: '0 0 12px', fontWeight: 600 }}>El catálogo de beneficios está vacío.</p>
                             <button type="button" onClick={() => { setShowModal(false); navigate('/admin/benefits'); }}
-                              style={{ fontSize: 12, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.1)', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer' }}>
+                              style={{ fontSize: 12, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.1)', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer' }}>
                               Ir a agregar beneficios →
                             </button>
                           </div>
@@ -828,7 +828,7 @@ export const MembresiasDashboard: React.FC = () => {
                               const selected = form.benefits.includes(b.name);
                               const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
                                 free_classes:     { icon: <CreditCard size={14} />, color: '#16A34A', bg: 'rgba(34,197,94,0.1)',    label: b.benefitValue ? `${b.benefitValue} sesiones` : 'Sesiones' },
-                                unlimited_classes:{ icon: <Infinity   size={14} />, color: '#7C3AED', bg: 'rgba(124,58,237,0.08)', label: 'Ilimitado' },
+                                unlimited_classes:{ icon: <Infinity   size={14} />, color: '#9C4A2E', bg: 'rgba(124,58,237,0.08)', label: 'Ilimitado' },
                                 discount_percent: { icon: <Percent    size={14} />, color: '#B45309', bg: 'rgba(234,179,8,0.1)',   label: b.benefitValue ? `${b.benefitValue}% dto.` : 'Descuento' },
                                 informational:    { icon: <Info       size={14} />, color: '#5E5E5E', bg: 'rgba(94,94,94,0.08)',   label: 'Info' },
                               };
@@ -885,7 +885,7 @@ export const MembresiasDashboard: React.FC = () => {
                         </p>
 
                         {/* Preview card */}
-                        <div style={{ background: `linear-gradient(135deg, rgba(139,92,246,0.03), rgba(59,130,246,0.05))`, borderRadius: 16, padding: '1rem', border: `1.5px solid ${C.borderLight}`, overflow: 'hidden' }}>
+                        <div style={{ background: `linear-gradient(135deg, rgba(92,58,40,0.03), rgba(59,130,246,0.05))`, borderRadius: 16, padding: '1rem', border: `1.5px solid ${C.borderLight}`, overflow: 'hidden' }}>
                           <span style={{ padding: '3px 10px', borderRadius: 99, background: tPreview.bg, color: tPreview.color, fontSize: 11, fontWeight: 700, letterSpacing: '0.05em', display: 'inline-block' }}>
                             {TYPE_LABELS[form.type]}
                           </span>
@@ -1056,7 +1056,7 @@ const inputStyle = (hasError: boolean): React.CSSProperties => ({
   color: '#1B1C1C',
   outline: 'none',
   boxSizing: 'border-box',
-  fontFamily: '"Hanken Grotesk", Inter, sans-serif',
+  fontFamily: '"Inter", Inter, sans-serif',
   transition: 'border-color 0.18s',
 });
 
@@ -1067,3 +1067,4 @@ const Field: React.FC<{ label: string; error?: string; children: React.ReactNode
     {error && <span style={{ fontSize: 11, color: '#DC2626', fontWeight: 600 }}>{error}</span>}
   </div>
 );
+

@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -14,22 +14,23 @@ import {
 } from './servicioSchema';
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  bg: '#FFFFFF', bgPanel: '#F3F0FB', bgSecondary: '#F3F0FB',
-  white: '#FFFFFF', text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  bg: '#FFFBF5', bgPanel: '#F5EDE1', bgSecondary: '#F5EDE1',
+  white: '#FFFFFF', text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
   red: '#EF4444', redLight: '#FEE2E2', green: '#10B981',
 };
 
-const FONT_SERIF = '"Bodoni Moda", Georgia, serif';
-const FONT_SANS  = '"Hanken Grotesk", Inter, system-ui, sans-serif';
+const FONT_SERIF = '"Cormorant Garamond", Georgia, serif';
+const FONT_SANS  = '"Inter", Inter, system-ui, sans-serif';
 
 const TIPOS_SERVICIO_POR_CATEGORIA: Record<string, string[]> = {
-  'Clase': [],
-  'Práctica Libre': [],
-  'Disciplinas Complementarias': [],
-  'Eventos': [],
+  'Medicina Bioreguladora': ['Consulta General', 'Sueroterapia', 'Acupuntura', 'Terapia Neural'],
+  'Exámenes Médico Ocupacionales': ['Ingreso', 'Egreso', 'Periódicos', 'Post-Incapacidad'],
+  'Medicina Laboral': ['Calificación de Origen', 'Pérdida de Capacidad Laboral'],
+  'Consultoría en SG-SST': ['Auditoría', 'Diseño de SG-SST', 'Capacitación'],
+  'Salud en el Trabajo': ['Asesoría Ergonómica', 'SVE'],
   'Otros': [],
 };
 
@@ -91,7 +92,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
   const { register, handleSubmit, control, formState: { errors }, setValue, watch } = useForm<ServicioFormValues>({
     resolver: zodResolver(servicioSchema) as any,
     defaultValues: initialData || {
-      categoria: 'Clase',
+      categoria: 'Medicina Bioreguladora',
       precio: 0,
       diasSemana: [],
       fechaDesde: todayStr(),
@@ -110,7 +111,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
   const horaFin        = useWatch({ control, name: 'horaFin' });
   const diasSemana     = useWatch({ control, name: 'diasSemana' }) ?? [];
 
-  const requiereInstructor = categoria === 'Clase' || categoria === 'Disciplinas Complementarias';
+  const requiereInstructor = categoria !== 'Otros';
 
   // Availability check (debounced 400ms)
   useEffect(() => {
@@ -275,7 +276,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
     border: `1.5px solid ${C.borderLight}`, borderRadius: 12,
     fontSize: 14, color: C.text, outline: 'none',
     boxSizing: 'border-box' as const, fontFamily: FONT_SANS,
-    transition: 'all 0.2s ease', boxShadow: '0 2px 8px rgba(139,92,246,0.02)',
+    transition: 'all 0.2s ease', boxShadow: '0 2px 8px rgba(92,58,40,0.02)',
   };
   const activeInputStyle = (hasError: boolean) => ({
     ...inputStyle, borderColor: hasError ? C.red : C.border,
@@ -283,13 +284,13 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
 
   return (
     <div style={{ fontFamily: FONT_SANS, padding: '40px 20px', background: C.bg }}>
-      <div style={{ maxWidth: 800, margin: '0 auto', background: C.white, borderRadius: 24, boxShadow: '0 16px 48px rgba(139,92,246,0.06)', overflow: 'hidden', border: `1px solid ${C.borderLight}` }}>
+      <div style={{ maxWidth: 800, margin: '0 auto', background: C.white, borderRadius: 24, boxShadow: '0 16px 48px rgba(92,58,40,0.06)', overflow: 'hidden', border: `1px solid ${C.borderLight}` }}>
 
-        <div style={{ padding: '32px 40px', background: `linear-gradient(90deg, rgba(139,92,246,0.04), ${C.white})`, borderBottom: `1px solid ${C.borderLight}` }}>
+        <div style={{ padding: '32px 40px', background: `linear-gradient(90deg, rgba(92,58,40,0.04), ${C.white})`, borderBottom: `1px solid ${C.borderLight}` }}>
           <h2 style={{ fontFamily: FONT_SERIF, fontSize: 32, fontWeight: 700, color: C.text, margin: 0, letterSpacing: '-0.02em' }}>
             {initialData ? 'Editar Servicio' : 'Catálogo de Servicios'}
           </h2>
-          <p style={{ color: C.textMedium, fontSize: 14, marginTop: 6 }}>Configura una nueva experiencia de Pole Dance y disciplinas de forma fluida.</p>
+          <p style={{ color: C.textMedium, fontSize: 14, marginTop: 6 }}>Configura una nueva consulta médica, examen o servicio corporativo.</p>
         </div>
 
         <form onSubmit={handleSubmit(handleFormSubmit as any)} style={{ padding: 40 }}>
@@ -375,7 +376,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                     {/* Add button chip */}
                     {!showAddTipo && (
                       <button type="button" onClick={() => setShowAddTipo(true)}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 99, border: `1.5px dashed ${C.gold}`, background: 'rgba(139,92,246,0.04)', color: C.gold, cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all 0.15s' }}>
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '6px 14px', borderRadius: 99, border: `1.5px dashed ${C.gold}`, background: 'rgba(92,58,40,0.04)', color: C.gold, cursor: 'pointer', fontSize: 12, fontWeight: 700, transition: 'all 0.15s' }}>
                         <Plus size={13} /> Agregar tipo
                       </button>
                     )}
@@ -389,7 +390,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                             value={newTipoText}
                             onChange={e => setNewTipoText(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddTipo())}
-                            placeholder={`Ej: ${categoria === 'Clase' ? 'Exotic de fuerza' : categoria === 'Eventos' ? 'Showcasing' : 'Nuevo tipo'}...`}
+                            placeholder={`Ej: ${categoria === 'Medicina Bioreguladora' ? 'Consulta de Valoración' : categoria === 'Consultoría en SG-SST' ? 'Capacitación de Brigadas' : 'Nuevo tipo'}...`}
                             style={{ ...inputStyle, flex: 1 }}
                             autoFocus
                           />
@@ -419,7 +420,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                       </label>
                       <div style={{ display: 'flex', gap: 12 }}>
                         {modalidadEnum.options.map(mod => (
-                          <label key={mod} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 20px', borderRadius: 12, border: `1.5px solid ${modalidad === mod ? C.gold : C.borderLight}`, background: modalidad === mod ? 'rgba(139,92,246,0.06)' : C.white, color: modalidad === mod ? C.gold : C.textBrown, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
+                          <label key={mod} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '14px 20px', borderRadius: 12, border: `1.5px solid ${modalidad === mod ? C.gold : C.borderLight}`, background: modalidad === mod ? 'rgba(92,58,40,0.06)' : C.white, color: modalidad === mod ? C.gold : C.textBrown, cursor: 'pointer', fontWeight: 600, transition: 'all 0.2s' }}>
                             <input type="radio" value={mod} {...register('modalidad')} style={{ display: 'none' }} />
                             {mod}
                           </label>
@@ -437,14 +438,14 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                               {nivelEnum.options.map(n => <option key={n} value={n}>{n}</option>)}
                             </select>
                           </InputField>
-                          <InputField label="Capacidad (Alumnos)" icon={Users} error={errors.capacidad}>
-                            <input type="number" {...register('capacidad', { setValueAs: (v) => v === '' ? undefined : Number(v) })} style={activeInputStyle(!!errors.capacidad)} placeholder="Límite 2 a 5 alumnos" />
+                          <InputField label="Capacidad (Personas/Pacientes)" icon={Users} error={errors.capacidad}>
+                            <input type="number" {...register('capacidad', { setValueAs: (v) => v === '' ? undefined : Number(v) })} style={activeInputStyle(!!errors.capacidad)} placeholder="Ej. Límite de 2 a 5 asistentes" />
                           </InputField>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
-                    <InputField label="Instructor a cargo" icon={UserCheck} error={errors.instructorId}>
+                    <InputField label="Profesional a cargo" icon={UserCheck} error={errors.instructorId}>
                       <select {...register('instructorId')} style={activeInputStyle(!!errors.instructorId)}>
                         <option value="">Asignar profesional...</option>
                         {instructores.map(i => <option key={i.id} value={i.id}>{i.name}</option>)}
@@ -456,7 +457,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                       {availStatus !== 'idle' && (
                         <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}
                           style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 16px', borderRadius: 12, marginTop: -8,
-                            background: availStatus === 'available' ? 'rgba(16,185,129,0.08)' : availStatus === 'conflict' ? 'rgba(239,68,68,0.07)' : 'rgba(139,92,246,0.05)',
+                            background: availStatus === 'available' ? 'rgba(16,185,129,0.08)' : availStatus === 'conflict' ? 'rgba(239,68,68,0.07)' : 'rgba(92,58,40,0.05)',
                             border: `1.5px solid ${availStatus === 'available' ? 'rgba(16,185,129,0.3)' : availStatus === 'conflict' ? 'rgba(239,68,68,0.25)' : C.borderLight}`,
                           }}
                         >
@@ -543,7 +544,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                         color: sel ? C.white : C.textMuted,
                         fontWeight: 700, fontSize: 14, cursor: 'pointer',
                         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                        transition: 'all 0.18s', boxShadow: sel ? `0 4px 12px rgba(139,92,246,0.25)` : 'none',
+                        transition: 'all 0.18s', boxShadow: sel ? `0 4px 12px rgba(92,58,40,0.25)` : 'none',
                         fontFamily: FONT_SANS,
                       }}
                     >
@@ -586,7 +587,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
             <AnimatePresence>
               {diasSemana.length > 0 && fechaDesde && fechaHasta && horaInicio && horaFin && occurrenceCount > 0 && (
                 <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, background: 'rgba(139,92,246,0.06)', border: `1.5px solid rgba(139,92,246,0.15)`, marginBottom: 20 }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 12, background: 'rgba(92,58,40,0.06)', border: `1.5px solid rgba(92,58,40,0.15)`, marginBottom: 20 }}
                 >
                   <CalendarIcon size={16} color={C.gold} />
                   <div>
@@ -620,7 +621,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
                 color: C.white, border: 'none', borderRadius: 12, fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 cursor: (isSubmitting || availStatus === 'conflict') ? 'not-allowed' : 'pointer',
-                boxShadow: availStatus === 'conflict' ? 'none' : `0 8px 24px rgba(139,92,246,0.15)`,
+                boxShadow: availStatus === 'conflict' ? 'none' : `0 8px 24px rgba(92,58,40,0.15)`,
                 fontFamily: FONT_SANS, opacity: (isSubmitting || availStatus === 'conflict') ? 0.8 : 1,
                 transition: 'all 0.2s',
               }}
@@ -636,3 +637,4 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, editingOfferI
     </div>
   );
 };
+

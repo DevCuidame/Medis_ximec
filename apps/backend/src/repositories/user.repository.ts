@@ -9,6 +9,8 @@ function toPublic(u: UserRecord): UserPublic {
     email:       u.email,
     firstName:   u.first_name,
     lastName:    u.last_name,
+    idType:      u.id_type,
+    idNumber:    u.id_number,
     phone:       u.phone,
     role:        u.role,
     bio:         u.bio,
@@ -47,8 +49,8 @@ export const UserRepository = {
   async create(dto: RegisterDTO & { passwordHash: string }): Promise<UserPublic> {
     const { rows } = await pool.query<UserRecord>(
       `INSERT INTO users
-        (email, password_hash, first_name, last_name, phone, role)
-       VALUES ($1, $2, $3, $4, $5, $6)
+        (email, password_hash, first_name, last_name, phone, role, id_type, id_number)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         dto.email.toLowerCase().trim(),
@@ -57,6 +59,8 @@ export const UserRepository = {
         dto.lastName.trim(),
         dto.phone?.trim() ?? null,
         dto.role ?? 'USER',
+        dto.idType?.trim() ?? null,
+        dto.idNumber?.trim() ?? null,
       ]
     );
     return toPublic(rows[0]);
@@ -94,6 +98,8 @@ export const UserRepository = {
     if (dto.email        !== undefined) { fields.push(`email         = $${idx++}`); values.push(dto.email.toLowerCase().trim()) }
     if (dto.firstName    !== undefined) { fields.push(`first_name    = $${idx++}`); values.push(dto.firstName.trim()) }
     if (dto.lastName     !== undefined) { fields.push(`last_name     = $${idx++}`); values.push(dto.lastName.trim()) }
+    if (dto.idType       !== undefined) { fields.push(`id_type       = $${idx++}`); values.push(dto.idType?.trim() ?? null) }
+    if (dto.idNumber     !== undefined) { fields.push(`id_number     = $${idx++}`); values.push(dto.idNumber?.trim() ?? null) }
     if (dto.phone        !== undefined) { fields.push(`phone         = $${idx++}`); values.push(dto.phone?.trim() ?? null) }
     if (dto.bio          !== undefined) { fields.push(`bio           = $${idx++}`); values.push(dto.bio?.trim() ?? null) }
     if (dto.instagramUrl !== undefined) { fields.push(`instagram_url = $${idx++}`); values.push(dto.instagramUrl?.trim() ?? null) }

@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -9,17 +9,18 @@ import {
   Banknote, Wallet, Trash2,
 } from 'lucide-react';
 import './MainDashboard.css';
+import { DoctorFinanceAnim } from './DoctorFinanceAnim';
 
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
-  bgPanel: '#F3F0FB',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
+  bgPanel: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  borderLight: '#E6D9C7',
 };
 
 const NAV_ITEMS = [
@@ -293,11 +294,11 @@ export const FinanzasDashboard: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: '"Bodoni Moda", Georgia, serif', fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: '"Bodoni Moda", Georgia, serif', fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
             </div>
           </div>
         </div>
@@ -318,7 +319,7 @@ export const FinanzasDashboard: React.FC = () => {
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', gap: 12,
                     padding: '12px 14px', borderRadius: 10,
-                    background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent',
+                    background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent',
                     border: 'none', transition: 'all 0.2s ease', cursor: 'pointer', position: 'relative', overflow: 'hidden',
                   }}
                 >
@@ -382,8 +383,8 @@ export const FinanzasDashboard: React.FC = () => {
             }}>
               <Menu size={20} />
             </button>
-            <h2 style={{ fontFamily: '"Bodoni Moda", Georgia, serif', fontSize: 24, fontWeight: 600, color: C.gold, margin: 0, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
-              MEDIS <span className="overview-label" style={{ fontSize: 12, fontFamily: '"Hanken Grotesk", sans-serif', color: C.textMuted, fontWeight: 500, letterSpacing: '0.1em', marginTop: 4, textTransform: 'uppercase' }}>/ Finanzas</span>
+            <h2 style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 24, fontWeight: 600, color: C.gold, margin: 0, letterSpacing: '-0.01em', display: 'flex', alignItems: 'center', gap: 8 }}>
+              MEDIS <span className="overview-label" style={{ fontSize: 12, fontFamily: '"Inter", sans-serif', color: C.textMuted, fontWeight: 500, letterSpacing: '0.1em', marginTop: 4, textTransform: 'uppercase' }}>/ Finanzas</span>
             </h2>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -395,7 +396,7 @@ export const FinanzasDashboard: React.FC = () => {
               >
                 <Bell size={18} />
                 {pendingPayments.length > 0 && (
-                  <span style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff', fontFamily: '"Hanken Grotesk", sans-serif', lineHeight: 1 }}>
+                  <span style={{ position: 'absolute', top: -5, right: -5, width: 18, height: 18, borderRadius: '50%', background: '#DC2626', color: '#fff', fontSize: 10, fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff', fontFamily: '"Inter", sans-serif', lineHeight: 1 }}>
                     {pendingPayments.length > 9 ? '9+' : pendingPayments.length}
                   </span>
                 )}
@@ -415,7 +416,7 @@ export const FinanzasDashboard: React.FC = () => {
                     <div style={{ padding: '1rem 1.1rem 0.75rem', borderBottom: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <Bell size={15} color={C.gold} />
-                        <span style={{ fontFamily: '"Bodoni Moda", serif', fontSize: '1rem', fontWeight: 600, color: C.text }}>Pagos pendientes</span>
+                        <span style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1rem', fontWeight: 600, color: C.text }}>Pagos pendientes</span>
                       </div>
                       {pendingPayments.length > 0 && (
                         <span style={{ background: '#FEE2E2', color: '#DC2626', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 99 }}>
@@ -436,7 +437,7 @@ export const FinanzasDashboard: React.FC = () => {
                         pendingPayments.map((pm, i) => (
                           <div key={pm.id} style={{ padding: '0.85rem 1.1rem', borderBottom: i < pendingPayments.length - 1 ? `1px solid ${C.borderLight}` : 'none', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
                             {/* Icon */}
-                            <div style={{ width: 34, height: 34, borderRadius: 9, background: pm.paymentMethod === 'cash' ? 'rgba(139,92,246,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                            <div style={{ width: 34, height: 34, borderRadius: 9, background: pm.paymentMethod === 'cash' ? 'rgba(92,58,40,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
                               {pm.paymentMethod === 'cash' ? <Banknote size={15} color={C.gold} /> : <Wallet size={15} color="#7C3AED" />}
                             </div>
 
@@ -481,115 +482,27 @@ export const FinanzasDashboard: React.FC = () => {
                 )}
               </AnimatePresence>
             </div>
-            <div style={{ width: 40, height: 40, borderRadius: 12, border: `2px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(139,92,246,0.2)' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, border: `2px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(92,58,40,0.2)' }}>
               <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             </div>
           </div>
         </header>
 
         {/* PAGE CONTENT */}
-        <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', background: 'radial-gradient(circle at top right, rgba(139,92,246,0.03), transparent 400px)' }}>
+        <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.5rem', background: 'radial-gradient(circle at top right, rgba(92,58,40,0.03), transparent 400px)' }}>
           <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
             {/* Page heading */}
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, borderRadius: 20, background: 'linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(59,130,246,0.04) 100%)', border: '1px solid rgba(139,92,246,0.12)', padding: '20px 28px' }}>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20, borderRadius: 20, background: 'linear-gradient(135deg, rgba(92,58,40,0.06) 0%, rgba(59,130,246,0.04) 100%)', border: '1px solid rgba(92,58,40,0.12)', padding: '20px 28px' }}>
               <div>
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: '"Hanken Grotesk", sans-serif' }}>Gestión Financiera</p>
-                <h1 style={{ fontFamily: '"Bodoni Moda", serif', fontSize: '2.5rem', color: C.text, marginBottom: '0.4rem', lineHeight: 1.1 }}>Finanzas</h1>
-                <p style={{ color: C.textMuted, fontSize: '1rem', margin: 0 }}>Resumen financiero de MEDIS Studio — Mayo 2026.</p>
+                <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: '"Inter", sans-serif' }}>Gestión Financiera</p>
+                <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '2.5rem', color: C.text, marginBottom: '0.4rem', lineHeight: 1.1 }}>Finanzas</h1>
+                <p style={{ color: C.textMuted, fontSize: '1rem', margin: 0 }}>Resumen financiero de MedisXime Consultorio — Mayo 2026.</p>
               </div>
 
-              {/* Pole dance coin/balance animation */}
+              {/* Finance Stickman Animation */}
               <div style={{ flexShrink: 0, opacity: 0.9 }}>
-                <style>{`
-                  @keyframes fn_float   { 0%,100%{transform:translateY(0)}   50%{transform:translateY(-7px)} }
-                  @keyframes fn_spin    { 0%{transform:rotate(0deg) scaleX(1)} 25%{transform:rotate(0deg) scaleX(0.15)} 50%{transform:rotate(0deg) scaleX(-1)} 75%{transform:rotate(0deg) scaleX(0.15)} 100%{transform:rotate(0deg) scaleX(1)} }
-                  @keyframes fn_coinSpin{ 0%{transform:rotateY(0deg)}  100%{transform:rotateY(360deg)} }
-                  @keyframes fn_glow    { 0%,100%{filter:drop-shadow(0 0 3px rgba(59,130,246,0.5))} 50%{filter:drop-shadow(0 0 10px rgba(59,130,246,0.9))} }
-                  @keyframes fn_pulse   { 0%,100%{opacity:0.3;transform:scale(0.8)} 50%{opacity:1;transform:scale(1.2)} }
-                  @keyframes fn_bodyWave{ 0%,100%{transform:rotate(-6deg)} 50%{transform:rotate(6deg)} }
-                  @keyframes fn_legBack { 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(-28deg)} }
-                  @keyframes fn_legFront{ 0%,100%{transform:rotate(0deg)} 50%{transform:rotate(22deg)} }
-                  @keyframes fn_arm     { 0%,100%{transform:rotate(-12deg)} 50%{transform:rotate(20deg)} }
-                  @keyframes fn_coinBob { 0%,100%{transform:translateY(0) rotate(0deg)} 33%{transform:translateY(-10px) rotate(-8deg)} 66%{transform:translateY(-4px) rotate(5deg)} }
-                `}</style>
-                <svg width="170" height="130" viewBox="0 0 170 130" style={{ overflow: 'visible' }}>
-
-                  {/* ── Gold coins raining ── */}
-                  {[
-                    { x: 130, y: 15, d: '0s',   s: 14 },
-                    { x: 148, y: 38, d: '0.6s',  s: 11 },
-                    { x: 118, y: 55, d: '1.1s',  s: 9  },
-                    { x: 155, y: 70, d: '0.3s',  s: 12 },
-                  ].map((c, i) => (
-                    <g key={i} style={{ animation: `fn_coinBob 2.4s ease-in-out ${c.d} infinite` }}>
-                      <ellipse cx={c.x} cy={c.y} rx={c.s/2} ry={c.s*0.35} fill="none" stroke={C.goldLight} strokeWidth="2" opacity="0.5" />
-                      <ellipse cx={c.x} cy={c.y} rx={c.s/2 - 1} ry={c.s*0.3} fill={C.gold} opacity="0.35" />
-                      <text x={c.x} y={c.y + 3.5} textAnchor="middle" fontSize={c.s * 0.55} fill={C.goldLight} fontWeight="800" opacity="0.8">$</text>
-                    </g>
-                  ))}
-
-                  {/* ── Pole ── */}
-                  <line x1="55" y1="5" x2="55" y2="122" stroke={C.goldLight} strokeWidth="3" strokeLinecap="round"
-                    style={{ animation: 'fn_glow 2.5s ease-in-out infinite' }} />
-                  <circle cx="55" cy="7" r="4.5" fill={C.gold} style={{ animation: 'fn_pulse 2s ease-in-out infinite' }} />
-                  <circle cx="55" cy="120" r="3" fill={C.gold} opacity="0.4" />
-
-                  {/* ── Figure: standing → extended pose ── */}
-                  <g style={{ animation: 'fn_float 3s ease-in-out infinite' }}>
-                    <g style={{ transformOrigin: '55px 65px', animation: 'fn_bodyWave 2.8s ease-in-out infinite' }}>
-                      {/* Hair */}
-                      <path d="M55 30 Q64 22 68 16" stroke={C.text} strokeWidth="2" fill="none" opacity="0.75" />
-                      <path d="M55 30 Q60 20 66 13" stroke={C.text} strokeWidth="1.5" fill="none" opacity="0.5" />
-                      {/* Head */}
-                      <circle cx="55" cy="37" r="8" fill={C.text} opacity="0.85" />
-                      {/* Neck + torso */}
-                      <line x1="55" y1="45" x2="55" y2="52" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-                      <path d="M50 52 Q47 63 48 73 Q55 77 62 73 Q63 63 60 52Z" fill={C.text} opacity="0.85" />
-                      {/* Left arm (holding pole up) */}
-                      <line x1="50" y1="57" x2="55" y2="50" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                      {/* Right arm (extended with coin) */}
-                      <g style={{ transformOrigin: '60px 58px', animation: 'fn_arm 2.5s ease-in-out infinite' }}>
-                        <line x1="60" y1="58" x2="82" y2="53" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                        {/* Coin in hand */}
-                        <g style={{ animation: 'fn_coinBob 1.8s ease-in-out 0.2s infinite' }}>
-                          <circle cx="86" cy="52" r="7" fill={C.gold} opacity="0.9" />
-                          <circle cx="86" cy="52" r="5" fill="none" stroke={C.goldLight} strokeWidth="1.5" opacity="0.8" />
-                          <text x="86" y="55.5" textAnchor="middle" fontSize="7" fill={C.white} fontWeight="900" opacity="0.95">$</text>
-                        </g>
-                      </g>
-                      {/* Left leg */}
-                      <g style={{ transformOrigin: '50px 73px', animation: 'fn_legBack 3s ease-in-out infinite' }}>
-                        <line x1="50" y1="73" x2="43" y2="93" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-                        <line x1="43" y1="93" x2="38" y2="112" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                        <circle cx="37" cy="114" r="2.5" fill={C.text} opacity="0.8" />
-                      </g>
-                      {/* Right leg */}
-                      <g style={{ transformOrigin: '60px 73px', animation: 'fn_legFront 3s ease-in-out infinite' }}>
-                        <line x1="60" y1="73" x2="67" y2="91" stroke={C.text} strokeWidth="3.5" strokeLinecap="round" opacity="0.85" />
-                        <line x1="67" y1="91" x2="72" y2="110" stroke={C.text} strokeWidth="3" strokeLinecap="round" opacity="0.85" />
-                        <circle cx="73" cy="112" r="2.5" fill={C.text} opacity="0.8" />
-                      </g>
-                      {/* Skirt accent */}
-                      <path d="M48 73 Q40 82 43 91" stroke={C.goldLight} strokeWidth="1.5" fill="none" opacity="0.5"
-                        style={{ animation: 'fn_legBack 3s ease-in-out infinite' }} />
-                      <path d="M62 73 Q70 80 67 89" stroke={C.goldLight} strokeWidth="1.5" fill="none" opacity="0.5"
-                        style={{ animation: 'fn_legFront 3s ease-in-out infinite' }} />
-                    </g>
-                  </g>
-
-                  {/* Sparkles */}
-                  {[
-                    { x: 20, y: 40, d: '0s'   },
-                    { x: 100, y: 105, d: '0.8s' },
-                    { x: 15, y: 90, d: '1.4s'  },
-                  ].map((s, i) => (
-                    <g key={i} style={{ animation: `fn_pulse 2s ease-in-out ${s.d} infinite` }}>
-                      <line x1={s.x-4} y1={s.y} x2={s.x+4} y2={s.y} stroke={C.goldLight} strokeWidth="1.5" />
-                      <line x1={s.x} y1={s.y-4} x2={s.x} y2={s.y+4} stroke={C.goldLight} strokeWidth="1.5" />
-                    </g>
-                  ))}
-                </svg>
+                <DoctorFinanceAnim size={160} color={C.goldLight} />
               </div>
             </motion.div>
 
@@ -598,7 +511,7 @@ export const FinanzasDashboard: React.FC = () => {
               {[
                 { label: 'Ingresos del mes', value: kpis.ingresos, icon: TrendingUp, color: '#16A34A', bg: 'rgba(34,197,94,0.06)', trend: '+18% vs. abril', up: true },
                 { label: 'Egresos del mes', value: kpis.egresos, icon: TrendingDown, color: '#DC2626', bg: 'rgba(239,68,68,0.06)', trend: '+8% vs. abril', up: false },
-                { label: 'Balance neto', value: kpis.balance, icon: DollarSign, color: C.gold, bg: 'rgba(139,92,246,0.06)', trend: '+34% vs. abril', up: true },
+                { label: 'Balance neto', value: kpis.balance, icon: DollarSign, color: C.gold, bg: 'rgba(92,58,40,0.06)', trend: '+34% vs. abril', up: true },
                 { label: 'Cobros pendientes', value: kpis.pendientes, icon: Clock, color: '#B45309', bg: 'rgba(234,179,8,0.06)', trend: '2 transacciones', up: null },
               ].map((kpi, i) => {
                 const Icon = kpi.icon;
@@ -662,7 +575,7 @@ export const FinanzasDashboard: React.FC = () => {
                       color: isActive ? C.white : C.textBrown,
                       fontSize: 13, fontWeight: 700, cursor: 'pointer',
                       transition: 'all 0.2s',
-                      boxShadow: isActive ? '0 4px 14px rgba(139,92,246,0.2)' : 'none',
+                      boxShadow: isActive ? '0 4px 14px rgba(92,58,40,0.2)' : 'none',
                     }}
                   >
                     {tab.label}
@@ -687,16 +600,16 @@ export const FinanzasDashboard: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
               className="glass-card"
-              style={{ padding: '1.5rem 1.75rem', marginBottom: '2rem', border: `1.5px solid rgba(139,92,246,0.2)` }}
+              style={{ padding: '1.5rem 1.75rem', marginBottom: '2rem', border: `1.5px solid rgba(92,58,40,0.2)` }}
             >
               {/* Header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(139,92,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 42, height: 42, borderRadius: 12, background: 'rgba(92,58,40,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <CreditCard size={20} color={C.gold} />
                   </div>
                   <div>
-                    <h2 style={{ fontFamily: '"Bodoni Moda", serif', fontSize: '1.3rem', color: C.text, margin: 0 }}>Gestión de Planes</h2>
+                    <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.3rem', color: C.text, margin: 0 }}>Gestión de Planes</h2>
                     <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>
                       {activeMemberships.length} activo{activeMemberships.length !== 1 ? 's' : ''}
                       {pendingPayments.length > 0 && ` · ${pendingPayments.length} pendiente${pendingPayments.length !== 1 ? 's' : ''} de aprobación`}
@@ -716,8 +629,8 @@ export const FinanzasDashboard: React.FC = () => {
                   Planes Activos
                 </p>
                 {activeMemberships.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '1.25rem 1rem', background: 'rgba(139,92,246,0.03)', borderRadius: 10, border: `1px dashed ${C.borderLight}` }}>
-                    <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>Ningún alumno tiene un plan activo aún.</p>
+                  <div style={{ textAlign: 'center', padding: '1.25rem 1rem', background: 'rgba(92,58,40,0.03)', borderRadius: 10, border: `1px dashed ${C.borderLight}` }}>
+                    <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>Ningún paciente tiene un plan activo aún.</p>
                   </div>
                 ) : (
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 10 }}>
@@ -756,7 +669,7 @@ export const FinanzasDashboard: React.FC = () => {
                               </div>
                             )}
                             {am.classesRemaining === null && (
-                              <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.08)', padding: '3px 8px', borderRadius: 99 }}>∞ Ilimitado</span>
+                              <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 99 }}>∞ Ilimitado</span>
                             )}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 6, borderTop: `1px solid ${C.borderLight}` }}>
@@ -796,7 +709,7 @@ export const FinanzasDashboard: React.FC = () => {
                           exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0, padding: 0, overflow: 'hidden' }}
                           style={{ background: C.white, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, border: `1px solid rgba(220,38,38,0.2)`, flexWrap: 'wrap' }}
                         >
-                          <div style={{ width: 38, height: 38, borderRadius: 10, background: pm.paymentMethod === 'cash' ? 'rgba(139,92,246,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: pm.paymentMethod === 'cash' ? 'rgba(92,58,40,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             {pm.paymentMethod === 'cash' ? <Banknote size={18} color={C.gold} /> : <Wallet size={18} color="#7C3AED" />}
                           </div>
                           <div style={{ flex: 1, minWidth: 160 }}>
@@ -807,7 +720,7 @@ export const FinanzasDashboard: React.FC = () => {
                             <p style={{ fontSize: 13, fontWeight: 600, color: C.text, margin: '0 0 2px' }}>{pm.membership.name}</p>
                             <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>
                               {fmt(pm.membership.price)} ·{' '}
-                              <span style={{ fontWeight: 600, color: pm.paymentMethod === 'cash' ? C.gold : '#7C3AED' }}>
+                              <span style={{ fontWeight: 600, color: pm.paymentMethod === 'cash' ? C.gold : '#9C4A2E' }}>
                                 {pm.paymentMethod === 'cash' ? 'Efectivo' : 'Wompi'}
                               </span>
                             </p>
@@ -839,10 +752,10 @@ export const FinanzasDashboard: React.FC = () => {
               )}
 
               {activeMemberships.length === 0 && pendingPayments.length === 0 && (
-                <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(139,92,246,0.03)', borderRadius: 12, border: `1px dashed ${C.borderLight}` }}>
-                  <CheckCircle2 size={32} color="#16A34A" style={{ margin: '0 auto 10px' }} />
-                  <p style={{ fontSize: 14, fontWeight: 600, color: C.textMuted, margin: 0 }}>Sin planes registrados</p>
-                  <p style={{ fontSize: 12, color: C.textMuted, margin: '4px 0 0' }}>Cuando un alumno adquiera un plan aparecerá aquí.</p>
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(92,58,40,0.03)', borderRadius: 12, border: `1px dashed ${C.borderLight}` }}>
+                  <DoctorFinanceAnim size={120} color={C.goldLight} />
+                  <h3 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: 20, fontWeight: 700, color: C.text, margin: '16px 0 8px' }}>Sin planes registrados</h3>
+                  <p style={{ color: C.textMedium, fontSize: 13, margin: 0 }}>Cuando un paciente adquiera un plan aparecerá aquí.</p>
                 </div>
               )}
             </motion.div>}
@@ -861,7 +774,7 @@ export const FinanzasDashboard: React.FC = () => {
                     <Briefcase size={20} color="#B45309" />
                   </div>
                   <div>
-                    <h2 style={{ fontFamily: '"Bodoni Moda", serif', fontSize: '1.3rem', color: C.text, margin: 0 }}>Servicios Adicionales</h2>
+                    <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.3rem', color: C.text, margin: 0 }}>Servicios Adicionales</h2>
                     <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>
                       Sesiones extra fuera del plan — pendientes de confirmación de pago
                     </p>
@@ -895,7 +808,7 @@ export const FinanzasDashboard: React.FC = () => {
                           exit={{ opacity: 0, x: 12, height: 0, marginBottom: 0, padding: 0, overflow: 'hidden' }}
                           style={{ background: C.white, borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, border: `1px solid ${C.borderLight}`, flexWrap: 'wrap' }}
                         >
-                          <div style={{ width: 38, height: 38, borderRadius: 10, background: sv.paymentMethod === 'cash' ? 'rgba(139,92,246,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <div style={{ width: 38, height: 38, borderRadius: 10, background: sv.paymentMethod === 'cash' ? 'rgba(92,58,40,0.08)' : 'rgba(124,58,237,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                             {sv.paymentMethod === 'cash' ? <Banknote size={18} color={C.gold} /> : <Wallet size={18} color="#7C3AED" />}
                           </div>
                           <div style={{ flex: 1, minWidth: 160 }}>
@@ -909,7 +822,7 @@ export const FinanzasDashboard: React.FC = () => {
                               {fmt(sv.expectedAmount)}
                               {sv.discountPct ? <span style={{ color: '#16A34A', fontWeight: 600 }}> (-{sv.discountPct}%)</span> : null}
                               {' · '}
-                              <span style={{ fontWeight: 600, color: sv.paymentMethod === 'cash' ? C.gold : '#7C3AED' }}>
+                              <span style={{ fontWeight: 600, color: sv.paymentMethod === 'cash' ? C.gold : '#9C4A2E' }}>
                                 {sv.paymentMethod === 'cash' ? 'Efectivo' : 'Wompi'}
                               </span>
                             </p>
@@ -971,3 +884,4 @@ export const FinanzasDashboard: React.FC = () => {
     </div>
   );
 };
+

@@ -21,14 +21,14 @@ const NAV_ITEMS = [
 ];
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  bgPanel: '#F3F0FB', white: '#FFFFFF',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  bgPanel: '#F5EDE1', white: '#FFFFFF',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  borderLight: '#E6D9C7',
 };
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif';
-const FONT_INTER  = '"Hanken Grotesk", Inter, sans-serif';
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
+const FONT_INTER  = '"Inter", Inter, sans-serif';
 
 type BenefitType = 'informational' | 'free_classes' | 'discount_percent' | 'unlimited_classes';
 
@@ -49,13 +49,13 @@ const CATEGORY_META: Record<ServiceCategory, { label: string; desc: string; colo
   pole: {
     label: 'Pole',
     desc: 'Clases de pole dance',
-    color: '#8B5CF6',
-    bg: 'rgba(139,92,246,0.08)',
+    color: '#5C3A28',
+    bg: 'rgba(92,58,40,0.08)',
   },
   complementary: {
     label: 'Fuerza / Flex',
     desc: 'Fuerza o flexibilidad',
-    color: '#7C3AED',
+    color: '#9C4A2E',
     bg: 'rgba(124,58,237,0.08)',
   },
   general: {
@@ -86,7 +86,7 @@ const TYPE_META: Record<BenefitType, { label: string; icon: React.ReactNode; col
   discount_percent: {
     label: 'Descuento %',
     icon: <Percent size={16} />,
-    color: '#3B82F6',
+    color: '#9C4A2E',
     bg: 'rgba(59,130,246,0.1)',
     hint: 'Descuento sobre cualquier servicio adicional una vez agotadas las sesiones incluidas en el plan.',
     valueLabel: 'Porcentaje (%)',
@@ -95,7 +95,7 @@ const TYPE_META: Record<BenefitType, { label: string; icon: React.ReactNode; col
   unlimited_classes: {
     label: 'Acceso ilimitado',
     icon: <Infinity size={16} />,
-    color: '#7C3AED',
+    color: '#9C4A2E',
     bg: 'rgba(124,58,237,0.08)',
     hint: 'Acceso ilimitado a todos los servicios del estudio durante la vigencia del plan.',
   },
@@ -299,11 +299,11 @@ export const BeneficiosDashboard: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
             </div>
           </div>
         </div>
@@ -320,7 +320,7 @@ export const BeneficiosDashboard: React.FC = () => {
                   onClick={() => handleNavClick(item.label)}
                   onMouseEnter={() => setHoveredNav(i)}
                   onMouseLeave={() => setHoveredNav(null)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(139,92,246,0.07)' : 'transparent', border: 'none', transition: 'all 0.2s ease', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent', border: 'none', transition: 'all 0.2s ease', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
                 >
                   {isActive && <motion.div layoutId="activeNav" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})`, zIndex: 0, borderRadius: 10 }} />}
                   <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', width: '100%' }}>
@@ -390,7 +390,7 @@ export const BeneficiosDashboard: React.FC = () => {
         {/* Stats */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
-            <div style={{ width: 48, height: 48, borderRadius: 14, background: `rgba(139,92,246,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: 48, height: 48, borderRadius: 14, background: `rgba(92,58,40,0.1)`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Gift size={22} color={C.gold} />
             </div>
             <div>
@@ -404,7 +404,7 @@ export const BeneficiosDashboard: React.FC = () => {
           {/* type breakdown */}
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {[
-              { label: 'Total', value: benefits.length, color: C.gold, bg: 'rgba(139,92,246,0.08)' },
+              { label: 'Total', value: benefits.length, color: C.gold, bg: 'rgba(92,58,40,0.08)' },
               { label: 'Activos', value: benefits.filter(b => b.isActive).length, color: '#16A34A', bg: 'rgba(34,197,94,0.08)' },
               { label: 'Inactivos', value: benefits.filter(b => !b.isActive).length, color: '#DC2626', bg: 'rgba(239,68,68,0.08)' },
             ].map(s => (
@@ -493,7 +493,7 @@ export const BeneficiosDashboard: React.FC = () => {
                     </button>
 
                     {/* Edit */}
-                    <button onClick={() => openEdit(b)} style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(139,92,246,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(139,92,246,0.14)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(139,92,246,0.07)'}>
+                    <button onClick={() => openEdit(b)} style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(92,58,40,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, flexShrink: 0 }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(92,58,40,0.14)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(92,58,40,0.07)'}>
                       <Edit2 size={14} />
                     </button>
 
@@ -692,3 +692,4 @@ export const BeneficiosDashboard: React.FC = () => {
     </div>
   );
 };
+

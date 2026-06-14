@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import type { User as UserType } from './types';
 import { User, Shield, Briefcase, CheckCircle2, XCircle, Eye, Edit3, Trash2, Power } from 'lucide-react';
 
@@ -12,16 +12,16 @@ interface UsuarioCardProps {
 
 const ROLE_CONFIG: Record<string, { bg: string; border: string; color: string; icon: React.ElementType; label: string }> = {
   Administrador: {
-    bg: 'linear-gradient(135deg, rgba(139,92,246,0.12), rgba(59,130,246,0.08))',
-    border: 'rgba(139,92,246,0.2)',
-    color: '#8B5CF6',
+    bg: 'linear-gradient(135deg, rgba(92,58,40,0.12), rgba(59,130,246,0.08))',
+    border: 'rgba(92,58,40,0.2)',
+    color: '#5C3A28',
     icon: Shield,
     label: 'Admin',
   },
   Profesional: {
     bg: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.08))',
     border: 'rgba(59,130,246,0.2)',
-    color: '#2563EB',
+    color: '#C97B5A',
     icon: Briefcase,
     label: 'Profesional',
   },
@@ -65,7 +65,7 @@ const ActionBtn: React.FC<ActionBtnProps> = ({ icon: Icon, label, onClick, color
         fontWeight: 700,
         letterSpacing: '0.04em',
         textTransform: 'uppercase' as const,
-        fontFamily: '"Hanken Grotesk", Inter, system-ui, sans-serif',
+        fontFamily: '"Inter", Inter, system-ui, sans-serif',
       }}
     >
       <Icon size={13} strokeWidth={2.2} />
@@ -87,9 +87,9 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
       style={{
         background: '#FFFFFF',
         borderRadius: '1.25rem',
-        border: `1px solid ${hovered ? 'rgba(139,92,246,0.2)' : '#F0EDE8'}`,
+        border: `1px solid ${hovered ? 'rgba(92,58,40,0.2)' : '#F0EDE8'}`,
         boxShadow: hovered
-          ? '0 20px 50px rgba(139,92,246,0.1), 0 4px 12px rgba(0,0,0,0.04)'
+          ? '0 20px 50px rgba(92,58,40,0.1), 0 4px 12px rgba(0,0,0,0.04)'
           : '0 4px 16px rgba(0,0,0,0.04)',
         transform: hovered ? 'translateY(-4px)' : 'translateY(0)',
         transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -117,7 +117,7 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
             width: 72, height: 72,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #F3F0FB, #E9E8E7)',
-            border: `3px solid ${hovered ? 'rgba(139,92,246,0.25)' : '#F0EDE8'}`,
+            border: `3px solid ${hovered ? 'rgba(92,58,40,0.25)' : '#F0EDE8'}`,
             overflow: 'hidden',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             transition: 'border-color 0.3s ease',
@@ -143,7 +143,7 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
 
         {/* Name */}
         <h3 style={{
-          fontFamily: '"Bodoni Moda", Georgia, serif',
+          fontFamily: '"Cormorant Garamond", Georgia, serif',
           fontSize: '1rem', fontWeight: 600, color: '#1B1C1C',
           margin: '0 0 0.15rem', lineHeight: 1.3,
         }}>{user.nombre}</h3>
@@ -184,7 +184,7 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
             ))}
             {user.especialidades.length > 3 && (
               <span style={{
-                fontSize: '0.65rem', color: '#3B82F6',
+                fontSize: '0.65rem', color: '#9C4A2E',
                 background: 'rgba(59,130,246,0.08)', padding: '2px 7px',
                 borderRadius: 5, border: '1px solid rgba(59,130,246,0.2)', fontWeight: 600,
               }}>+{user.especialidades.length - 3}</span>
@@ -202,7 +202,7 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
         background: '#FAFAFA',
       }}>
         <ActionBtn
-          icon={Eye} label="Ver" color="#94A3B8" hoverBg="rgba(139,92,246,0.08)" hoverColor="#8B5CF6"
+          icon={Eye} label="Ver" color="#94A3B8" hoverBg="rgba(92,58,40,0.08)" hoverColor="#5C3A28"
           onClick={(e) => { e.stopPropagation(); onView?.(); }}
         />
         <ActionBtn
@@ -225,3 +225,4 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
     </div>
   );
 };
+

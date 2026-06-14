@@ -1,10 +1,11 @@
 import { z } from 'zod';
 
 export const categoriaEnum = z.enum([
-  'Clase',
-  'Práctica Libre',
-  'Disciplinas Complementarias',
-  'Eventos',
+  'Medicina Bioreguladora',
+  'Exámenes Médico Ocupacionales',
+  'Medicina Laboral',
+  'Consultoría en SG-SST',
+  'Salud en el Trabajo',
   'Otros'
 ]);
 
@@ -45,8 +46,7 @@ const baseSchema = z.object({
 
 export const servicioSchema = baseSchema.superRefine((data, ctx) => {
   const requiereInstructor =
-    data.categoria === 'Clase' ||
-    data.categoria === 'Disciplinas Complementarias';
+    data.categoria !== 'Otros';
 
   if (requiereInstructor) {
     if (!data.modalidad) {

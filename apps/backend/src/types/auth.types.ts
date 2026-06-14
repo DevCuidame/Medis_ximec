@@ -11,6 +11,8 @@ export interface UserRecord {
   last_name: string;
   phone: string | null;
   role: UserRole;
+  id_type: string | null;
+  id_number: string | null;
   bio: string | null;
   specialties: string[] | null;
   instagram_url: string | null;
@@ -29,6 +31,8 @@ export interface UserPublic {
   lastName: string;
   phone: string | null;
   role: UserRole;
+  idType: string | null;
+  idNumber: string | null;
   bio: string | null;
   specialties: string[] | null;
   instagramUrl: string | null;
@@ -45,6 +49,8 @@ export interface RegisterDTO {
   password: string;
   firstName: string;
   lastName: string;
+  idType?: string;
+  idNumber?: string;
   phone?: string;
   role?: 'USER' | 'PROFESSIONAL' | 'ADMIN';
 }
@@ -53,6 +59,8 @@ export interface UpdateUserDTO {
   email?: string;
   firstName?: string;
   lastName?: string;
+  idType?: string;
+  idNumber?: string;
   phone?: string | null;
   bio?: string | null;
   instagramUrl?: string | null;

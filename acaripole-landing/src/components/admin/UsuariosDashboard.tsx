@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
@@ -12,24 +12,25 @@ import { ConfirmationModal } from './ConfirmationModal'
 import { ProfessionalProfileModal } from './ProfessionalProfileModal'
 import type { User as UserType } from './types'
 import { UsuarioCard } from './UsuarioCard'
+import { StickmanForm } from './StickmanForm'
 
 // ── Design Tokens ───────────────────────────────────────────────────────────
 const C = {
-  gold: '#8B5CF6',
-  goldLight: '#3B82F6',
+  gold: '#5C3A28',
+  goldLight: '#9C4A2E',
   bg: '#FAFAFA',
-  bgPanel: '#F3F0FB',
+  bgPanel: '#F5EDE1',
   white: '#FFFFFF',
-  text: '#1B1C1C',
-  textBrown: '#475569',
-  textMedium: '#5E5E5E',
-  textMuted: '#94A3B8',
-  border: '#DDD6FE',
-  borderLight: '#DDD6FE',
+  text: '#3D2B1F',
+  textBrown: '#7A6452',
+  textMedium: '#7A6452',
+  textMuted: '#B0A08C',
+  border: '#E6D9C7',
+  borderLight: '#E6D9C7',
 }
 
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER = '"Inter", Inter, system-ui, sans-serif'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', active: false },
@@ -132,7 +133,7 @@ const FilterPill: React.FC<FilterPillProps> = ({ label, active, onClick }) => (
       cursor: 'pointer',
       whiteSpace: 'nowrap',
       transition: 'all 0.2s ease',
-      boxShadow: active ? `0 4px 12px rgba(139,92,246,0.25)` : '0 1px 4px rgba(0,0,0,0.04)',
+      boxShadow: active ? `0 4px 12px rgba(92,58,40,0.25)` : '0 1px 4px rgba(0,0,0,0.04)',
       letterSpacing: '0.03em',
     }}
   >
@@ -294,8 +295,8 @@ export const UsuariosDashboard: React.FC = () => {
         @keyframes toastOut { to{opacity:0;transform:translateY(16px)} }
         ::-webkit-scrollbar{width:6px;height:6px}
         ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:rgba(139,92,246,0.2);border-radius:99px}
-        ::-webkit-scrollbar-thumb:hover{background:rgba(139,92,246,0.35)}
+        ::-webkit-scrollbar-thumb{background:rgba(92,58,40,0.2);border-radius:99px}
+        ::-webkit-scrollbar-thumb:hover{background:rgba(92,58,40,0.35)}
       `}</style>
 
       {/* Modals */}
@@ -382,12 +383,12 @@ export const UsuariosDashboard: React.FC = () => {
           {/* Logo */}
           <div style={{ padding: '28px 20px 22px', borderBottom: `1px solid ${C.borderLight}` }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 48, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 12px rgba(139,92,246,0.3)` }}>
-                <span style={{ fontFamily: FONT_BODONI, fontSize: 22, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <div style={{ width: 40, height: 48, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 12px rgba(92,58,40,0.3)` }}>
+                <span style={{ fontFamily: FONT_BODONI, fontSize: 22, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
               </div>
               <div>
-                <div style={{ fontFamily: FONT_BODONI, fontSize: 18, fontWeight: 700, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>Estudio Admin</div>
+                <div style={{ fontFamily: FONT_BODONI, fontSize: 18, fontWeight: 700, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
               </div>
             </div>
           </div>
@@ -420,7 +421,7 @@ export const UsuariosDashboard: React.FC = () => {
                       padding: '11px 14px', borderRadius: 10,
                       background: isActive
                         ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})`
-                        : isHov ? 'rgba(139,92,246,0.07)' : 'transparent',
+                        : isHov ? 'rgba(92,58,40,0.07)' : 'transparent',
                       border: 'none',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -458,7 +459,7 @@ export const UsuariosDashboard: React.FC = () => {
           <div style={{ padding: '12px 16px' }}>
             <button
               onClick={() => setShowModal(true)}
-              style={{ width: '100%', padding: '12px 0', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 10, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 16px rgba(139,92,246,0.3)` }}
+              style={{ width: '100%', padding: '12px 0', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 10, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 16px rgba(92,58,40,0.3)` }}
             >
               <Plus size={15} strokeWidth={3} />
               Nuevo Usuario
@@ -521,15 +522,35 @@ export const UsuariosDashboard: React.FC = () => {
               >
                 <Bell size={17} />
               </button>
-              <div style={{ width: 40, height: 40, borderRadius: 12, border: `2.5px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(139,92,246,0.2)' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, border: `2.5px solid ${C.gold}`, overflow: 'hidden', cursor: 'pointer', flexShrink: 0, boxShadow: '0 4px 10px rgba(92,58,40,0.2)' }}>
                 <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=100&h=100" alt="Admin" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
             </div>
           </header>
 
-          {/* SCROLL CONTENT */}
-          <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.75rem', background: 'radial-gradient(circle at top right, rgba(139,92,246,0.03), transparent 500px)' }}>
+          <main style={{ flex: 1, overflowY: 'auto', padding: '2rem 1.75rem', background: 'radial-gradient(circle at top right, rgba(92,58,40,0.03), transparent 500px)' }}>
             <div style={{ maxWidth: '100%', margin: '0 auto' }}>
+
+              {/* ── Stickman Animation Header ── */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '1.5rem',
+                  background: 'linear-gradient(135deg, rgba(92,58,40,0.04), rgba(59,130,246,0.04))',
+                  padding: '1.5rem', borderRadius: '1.25rem', marginBottom: '2rem',
+                  border: `1px solid ${C.borderLight}`
+                }}
+              >
+                <StickmanForm size={100} color={C.goldLight} />
+                <div>
+                  <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.8rem', fontWeight: 700, color: C.text, margin: 0 }}>Gestión de Personal</h3>
+                  <p style={{ fontSize: '0.95rem', color: C.textBrown, margin: '4px 0 0', maxWidth: 500 }}>
+                    Aquí puedes registrar y administrar la información de tus profesionales, administradores y pacientes de forma centralizada.
+                  </p>
+                </div>
+              </motion.div>
 
               {/* ── Stats row ── */}
               <motion.div
@@ -538,7 +559,7 @@ export const UsuariosDashboard: React.FC = () => {
                 transition={{ duration: 0.4 }}
                 style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}
               >
-                <StatCard icon={Users} label="Total de Usuarios" value={stats.total} iconBg="rgba(139,92,246,0.1)" iconColor={C.gold} accentColor="rgba(139,92,246,0.2)" />
+                <StatCard icon={Users} label="Total de Usuarios" value={stats.total} iconBg="rgba(92,58,40,0.1)" iconColor={C.gold} accentColor="rgba(92,58,40,0.2)" />
                 <StatCard icon={UserCheck} label="Usuarios Activos" value={stats.activos} iconBg="rgba(34,197,94,0.1)" iconColor="#16A34A" accentColor="rgba(34,197,94,0.2)" />
                 <StatCard icon={UserMinus} label="Usuarios Inactivos" value={stats.inactivos} iconBg="rgba(244,63,94,0.08)" iconColor="#E11D48" accentColor="rgba(244,63,94,0.15)" />
               </motion.div>
@@ -614,7 +635,7 @@ export const UsuariosDashboard: React.FC = () => {
                   {/* CTA */}
                   <button
                     onClick={() => setShowModal(true)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', boxShadow: `0 4px 14px rgba(139,92,246,0.28)`, whiteSpace: 'nowrap', transition: 'all 0.2s' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', cursor: 'pointer', boxShadow: `0 4px 14px rgba(92,58,40,0.28)`, whiteSpace: 'nowrap', transition: 'all 0.2s' }}
                     onMouseEnter={e => e.currentTarget.style.filter = 'brightness(1.1)'}
                     onMouseLeave={e => e.currentTarget.style.filter = 'none'}
                   >
@@ -683,7 +704,7 @@ export const UsuariosDashboard: React.FC = () => {
                     onClick={() => setShowModal(true)}
                     style={{
                       minHeight: 260,
-                      background: 'linear-gradient(135deg, rgba(139,92,246,0.02), rgba(59,130,246,0.03))',
+                      background: 'linear-gradient(135deg, rgba(92,58,40,0.02), rgba(59,130,246,0.03))',
                       borderRadius: '1.25rem',
                       border: `2px dashed ${C.borderLight}`,
                       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
@@ -694,13 +715,13 @@ export const UsuariosDashboard: React.FC = () => {
                     }}
                     onMouseEnter={e => {
                       e.currentTarget.style.borderColor = C.goldLight
-                      e.currentTarget.style.background = 'rgba(139,92,246,0.04)'
+                      e.currentTarget.style.background = 'rgba(92,58,40,0.04)'
                       e.currentTarget.style.transform = 'translateY(-4px)'
-                      e.currentTarget.style.boxShadow = '0 12px 36px rgba(139,92,246,0.1)'
+                      e.currentTarget.style.boxShadow = '0 12px 36px rgba(92,58,40,0.1)'
                     }}
                     onMouseLeave={e => {
                       e.currentTarget.style.borderColor = C.borderLight
-                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(139,92,246,0.02), rgba(59,130,246,0.03))'
+                      e.currentTarget.style.background = 'linear-gradient(135deg, rgba(92,58,40,0.02), rgba(59,130,246,0.03))'
                       e.currentTarget.style.transform = 'translateY(0)'
                       e.currentTarget.style.boxShadow = 'none'
                     }}
@@ -745,7 +766,7 @@ export const UsuariosDashboard: React.FC = () => {
                   <p style={{ fontSize: '0.95rem', color: C.textMuted }}>No hay usuarios que coincidan con tus filtros.</p>
                   <button
                     onClick={() => { setSearch(''); setRoleFilter('Todos'); setStatusFilter('Todos') }}
-                    style={{ marginTop: '0.5rem', padding: '10px 24px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 14px rgba(139,92,246,0.28)` }}
+                    style={{ marginTop: '0.5rem', padding: '10px 24px', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 10, fontSize: 13, fontWeight: 700, cursor: 'pointer', boxShadow: `0 4px 14px rgba(92,58,40,0.28)` }}
                   >
                     Limpiar filtros
                   </button>
@@ -755,7 +776,7 @@ export const UsuariosDashboard: React.FC = () => {
               {/* Footer */}
               <div style={{ borderTop: `1px solid ${C.borderLight}`, paddingTop: 20, paddingBottom: 8, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                 <p style={{ fontSize: 11, fontWeight: 600, color: C.textMuted, letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0 }}>
-                  © 2026 MEDIS Estudio · Todos los derechos reservados
+                  © 2026 MedisXime Consultorio · Todos los derechos reservados
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 8, height: 8, borderRadius: '50%', background: error ? '#F43F5E' : loading ? '#F59E0B' : '#22C55E', boxShadow: `0 0 0 3px ${error ? 'rgba(244,63,94,0.15)' : loading ? 'rgba(245,158,11,0.15)' : 'rgba(34,197,94,0.15)'}` }} />
@@ -772,3 +793,4 @@ export const UsuariosDashboard: React.FC = () => {
     </>
   )
 }
+

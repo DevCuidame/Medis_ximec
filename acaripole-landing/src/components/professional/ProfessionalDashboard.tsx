@@ -1,18 +1,18 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CalendarDays, User, LogOut, ChevronRight } from 'lucide-react'
 import { ProfessionalClasses } from './ProfessionalClasses'
 import { ProfessionalProfile } from './ProfessionalProfile'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  bgPanel: '#F3F0FB', white: '#FFFFFF',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  bgPanel: '#F5EDE1', white: '#FFFFFF',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 interface Me {
   id: string; firstName: string; lastName: string
@@ -23,7 +23,7 @@ interface Me {
 }
 
 const NAV = [
-  { icon: CalendarDays, label: 'Mis Clases',  path: '/professional/classes' },
+  { icon: CalendarDays, label: 'Mis Consultas',  path: '/professional/classes' },
   { icon: User,         label: 'Mi Perfil',   path: '/professional/profile' },
 ]
 
@@ -89,10 +89,10 @@ export const ProfessionalDashboard: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
               <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Portal Profesional</div>
             </div>
           </div>
@@ -129,7 +129,7 @@ export const ProfessionalDashboard: React.FC = () => {
                 onClick={() => navigate(item.path)}
                 onMouseEnter={() => setHovered(i)}
                 onMouseLeave={() => setHovered(null)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 10, border: 'none', marginBottom: 4, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHov ? 'rgba(139,92,246,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s' }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '11px 12px', borderRadius: 10, border: 'none', marginBottom: 4, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHov ? 'rgba(92,58,40,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s' }}
               >
                 <Icon size={17} color={isActive ? C.white : isHov ? C.gold : C.textMedium} strokeWidth={isActive ? 2.5 : 2} />
                 <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.04em', color: isActive ? C.white : isHov ? C.gold : C.textBrown, transition: 'color 0.18s' }}>

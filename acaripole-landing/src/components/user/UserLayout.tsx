@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useNavigate, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CalendarDays, LayoutGrid, BookOpen, CreditCard, Users, LogOut, ChevronRight, Sparkles } from 'lucide-react'
 import { UserCalendario }    from './UserCalendario'
@@ -8,15 +8,15 @@ import { UserMembresias }    from './UserMembresias'
 import { UserProfesionales } from './UserProfesionales'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  pink: '#8B5CF6', pinkLight: '#3B82F6',
-  bgPanel: '#F3F0FB', white: '#FFFFFF',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  pink: '#5C3A28', pinkLight: '#9C4A2E',
+  bgPanel: '#F5EDE1', white: '#FFFFFF',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 interface Me { id: string; firstName?: string; lastName?: string; email: string; avatarUrl?: string }
 
@@ -26,11 +26,11 @@ function authH(): HeadersInit {
 }
 
 const NAV = [
-  { icon: CalendarDays, label: 'Calendario',     path: '/user/calendario',     desc: 'Tus clases inscritas' },
-  { icon: LayoutGrid,   label: 'Servicios',       path: '/user/servicios',      desc: 'Oferta del estudio' },
-  { icon: BookOpen,     label: 'Mis Servicios',   path: '/user/mis-servicios',  desc: 'Tus inscripciones' },
-  { icon: CreditCard,   label: 'Planes',      path: '/user/membresias',     desc: 'Planes disponibles' },
-  { icon: Users,        label: 'Profesionales',   path: '/user/profesionales',  desc: 'El equipo' },
+  { icon: CalendarDays, label: 'Calendario',     path: '/user/calendario',     desc: 'Tus consultas' },
+  { icon: LayoutGrid,   label: 'Servicios',       path: '/user/servicios',      desc: 'Nuestra oferta médica' },
+  { icon: BookOpen,     label: 'Mis Servicios',   path: '/user/mis-servicios',  desc: 'Tus citas activas' },
+  { icon: CreditCard,   label: 'Planes',      path: '/user/membresias',     desc: 'Planes de salud' },
+  { icon: Users,        label: 'Profesionales',   path: '/user/profesionales',  desc: 'El equipo médico' },
 ]
 
 export const UserLayout: React.FC = () => {
@@ -71,10 +71,10 @@ export const UserLayout: React.FC = () => {
         <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>A</span>
+              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
             </div>
             <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MEDIS</div>
+              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
               <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Mi Portal</div>
             </div>
           </div>
@@ -92,7 +92,7 @@ export const UserLayout: React.FC = () => {
             <p style={{ fontFamily: FONT_BODONI, fontSize: 13, fontWeight: 600, color: C.text, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {displayName}
             </p>
-            <p style={{ fontSize: 10, fontWeight: 600, color: C.gold, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '2px 0 0' }}>Alumna</p>
+            <p style={{ fontSize: 10, fontWeight: 600, color: C.gold, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '2px 0 0' }}>Paciente</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ export const UserLayout: React.FC = () => {
                 onClick={() => navigate(item.path)}
                 onMouseEnter={() => setHovered(i)}
                 onMouseLeave={() => setHovered(null)}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px', borderRadius: 10, border: 'none', marginBottom: 3, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHov ? 'rgba(139,92,246,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s', textAlign: 'left' }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 11, padding: '10px 12px', borderRadius: 10, border: 'none', marginBottom: 3, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHov ? 'rgba(92,58,40,0.07)' : 'transparent', cursor: 'pointer', transition: 'background 0.18s', textAlign: 'left' }}
               >
                 <Icon size={16} color={isActive ? C.white : isHov ? C.gold : C.textMedium} strokeWidth={isActive ? 2.5 : 2} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -146,7 +146,7 @@ export const UserLayout: React.FC = () => {
               fontSize: 12.5, fontWeight: 700, fontFamily: FONT_INTER, textAlign: 'center',
             }}>
             <Sparkles size={14} />
-            <span>Las inscritas en MEDIS desbloquean descuentos exclusivos en servicios</span>
+            <span>Los pacientes inscritos en MedisXime desbloquean beneficios exclusivos en consultas</span>
             <span style={{ textDecoration: 'underline', whiteSpace: 'nowrap' }}>Inscríbete →</span>
           </button>
         )}
@@ -162,3 +162,4 @@ export const UserLayout: React.FC = () => {
     </div>
   )
 }
+

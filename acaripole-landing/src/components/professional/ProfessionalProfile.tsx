@@ -1,15 +1,15 @@
-﻿import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { AtSign, Phone, FileText, Star, Loader2, Mail, Clock } from 'lucide-react'
 
 const C = {
-  gold: '#8B5CF6', goldLight: '#3B82F6',
-  white: '#FFFFFF', bg: '#F5F3F1',
-  text: '#1B1C1C', textBrown: '#475569',
-  textMedium: '#5E5E5E', textMuted: '#94A3B8',
-  border: '#DDD6FE', borderLight: '#DDD6FE',
+  gold: '#5C3A28', goldLight: '#9C4A2E',
+  white: '#FFFFFF', bg: '#FFFBF5',
+  text: '#3D2B1F', textBrown: '#7A6452',
+  textMedium: '#7A6452', textMuted: '#B0A08C',
+  border: '#E6D9C7', borderLight: '#E6D9C7',
 }
-const FONT_BODONI = '"Bodoni Moda", Georgia, serif'
-const FONT_INTER  = '"Hanken Grotesk", Inter, system-ui, sans-serif'
+const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
+const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 interface Me {
   id: string; firstName: string; lastName: string
@@ -33,7 +33,7 @@ interface Props { me: Me | null; onUpdated?: (m: Me) => void }
 function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value?: string | null }) {
   return (
     <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(139,92,246,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
         <Icon size={15} color={C.gold} />
       </div>
       <div style={{ flex: 1 }}>
@@ -98,7 +98,7 @@ export const ProfessionalProfile: React.FC<Props> = ({ me }) => {
                   {me.firstName} {me.lastName}
                 </h2>
                 <p style={{ fontSize: 12, color: C.textMuted, margin: '0 0 8px' }}>{me.email}</p>
-                <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.1)', padding: '4px 12px', borderRadius: 99, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.1)', padding: '4px 12px', borderRadius: 99, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                   {me.professionalType === 'independiente' ? '🕒 Independiente' : '🏢 Dependiente'}
                 </span>
               </div>
@@ -116,7 +116,7 @@ export const ProfessionalProfile: React.FC<Props> = ({ me }) => {
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {(me.specialties ?? []).map(s => (
-                  <span key={s} style={{ padding: '6px 14px', borderRadius: 99, background: 'rgba(139,92,246,0.08)', color: C.gold, fontSize: 12, fontWeight: 700 }}>{s}</span>
+                  <span key={s} style={{ padding: '6px 14px', borderRadius: 99, background: 'rgba(92,58,40,0.08)', color: C.gold, fontSize: 12, fontWeight: 700 }}>{s}</span>
                 ))}
               </div>
             )}
@@ -140,7 +140,7 @@ export const ProfessionalProfile: React.FC<Props> = ({ me }) => {
                     .filter(({ slots }) => slots.length > 0)
                     .map(({ dow, slots }) => (
                       <div key={dow} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: C.gold, background: 'rgba(139,92,246,0.08)', padding: '4px 12px', borderRadius: 8, minWidth: 90, textAlign: 'center', flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '4px 12px', borderRadius: 8, minWidth: 90, textAlign: 'center', flexShrink: 0 }}>
                           {DAY_NAMES[dow]}
                         </span>
                         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -172,7 +172,7 @@ export const ProfessionalProfile: React.FC<Props> = ({ me }) => {
         </div>
 
         {/* Note */}
-        <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(139,92,246,0.04)', borderRadius: 12, border: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ marginTop: 16, padding: '14px 18px', background: 'rgba(92,58,40,0.04)', borderRadius: 12, border: `1px solid ${C.borderLight}`, display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontSize: 18 }}>ℹ️</span>
           <p style={{ fontSize: 12, color: C.textMuted, margin: 0, lineHeight: 1.6, fontFamily: FONT_INTER }}>
             Esta información solo puede ser modificada por el administrador del estudio.
