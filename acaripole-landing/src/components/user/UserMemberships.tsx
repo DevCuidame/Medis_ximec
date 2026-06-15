@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -23,11 +23,11 @@ const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
 const FONT_INTER = '"Inter", Inter, system-ui, sans-serif';
 
 const TYPE_LABELS: Record<string, string> = {
-  per_class: 'Por Clase',
+  per_class: 'Por Consulta',
   monthly: 'Mensual',
   annual: 'Anual',
-  private: 'Clase Privada',
-  pack: 'Pack de Clases',
+  private: 'Consulta Privada',
+  pack: 'Pack de Consultas',
 };
 
 const TYPE_COLORS: Record<string, { bg: string; color: string; badge: string }> = {

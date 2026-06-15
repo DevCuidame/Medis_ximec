@@ -1,5 +1,6 @@
 import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
@@ -30,6 +31,7 @@ export default function Footer() {
   const year = new Date().getFullYear()
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
+  const navigate = useNavigate()
 
   return (
     <footer
@@ -127,15 +129,23 @@ export default function Footer() {
               Consultorio
             </h4>
             <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              {['Inicio', 'Sobre la Doctora', 'Servicios', 'Agendar Cita', 'Contacto'].map((item, i) => (
+              {[
+                { label: 'Inicio', href: '#inicio' },
+                { label: 'Sobre la Doctora', href: '#sobre-la-doctora' },
+                { label: 'Servicios', href: '#servicios' },
+                { label: 'Agendar Cita', href: '/login' },
+                { label: 'Contacto', href: '#contacto' },
+              ].map(({ label, href }, i) => (
                 <motion.li
-                  key={item}
+                  key={label}
                   initial={{ opacity: 0, x: -10 }}
                   animate={inView ? { opacity: 1, x: 0 } : {}}
                   transition={{ duration: 0.45, delay: 0.2 + i * 0.06, ease: EASE }}
                 >
                   <a
-                    href="#"
+                    href={href}
+                    target={undefined}
+                    rel={undefined}
                     className="luxury-link"
                     style={{
                       fontFamily: 'Inter, sans-serif', fontSize: '0.84rem',
@@ -145,7 +155,7 @@ export default function Footer() {
                     onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#D4B896')}
                     onMouseLeave={(e) => ((e.target as HTMLElement).style.color = 'rgba(245,237,225,0.6)')}
                   >
-                    {item}
+                    {label}
                   </a>
                 </motion.li>
               ))}
@@ -226,8 +236,8 @@ export default function Footer() {
             </div>
 
             {/* CTA in footer */}
-            <motion.a
-              href="#contacto"
+            <motion.button
+              onClick={() => navigate('/login')}
               initial={{ opacity: 0, y: 12 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.55, delay: 0.65, ease: EASE }}
@@ -239,7 +249,8 @@ export default function Footer() {
                 padding: '0.75rem 1.75rem',
                 borderRadius: '9999px',
                 color: '#fff',
-                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.72rem',
                 letterSpacing: '0.12em',
@@ -250,7 +261,7 @@ export default function Footer() {
               }}
             >
               Agendar Cita
-            </motion.a>
+            </motion.button>
           </motion.div>
         </div>
 

@@ -70,13 +70,13 @@ export const AuthService = {
     // 1. Buscar usuario
     const record = await UserRepository.findByEmail(dto.email);
     if (!record) {
-      throw Object.assign(new Error('Credenciales inválidas.'), { statusCode: 401 });
+      throw Object.assign(new Error('El usuario no existe.'), { statusCode: 401 });
     }
 
     // 2. Verificar contraseña
     const valid = verifyPassword(dto.password, record.password_hash);
     if (!valid) {
-      throw Object.assign(new Error('Credenciales inválidas.'), { statusCode: 401 });
+      throw Object.assign(new Error('Usuario o contraseña incorrectas.'), { statusCode: 401 });
     }
 
     // 3. Emitir tokens

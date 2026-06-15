@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
@@ -40,6 +40,7 @@ export default function ArtistLogin({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [emailFocused, setEmailFocused] = useState(false)
   const [passFocused, setPassFocused] = useState(false)
+  const [errorModal, setErrorModal] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,9 +68,8 @@ export default function ArtistLogin({
       const userRole = payload.role
 
       if (onLoginSuccess) onLoginSuccess(userRole)
-      else alert('¡Bienvenido/a de vuelta!')
     } catch (err: any) {
-      alert(err.message || 'Error al iniciar sesión')
+      setErrorModal(err.message || 'Credenciales incorrectas o usuario no encontrado.')
     } finally {
       setIsSubmitting(false)
     }
@@ -379,6 +379,77 @@ export default function ArtistLogin({
           </div>
         </div>
       </motion.footer>
+
+      <AnimatePresence>
+        {errorModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{
+              position: 'fixed',
+              top: 0, left: 0, right: 0, bottom: 0,
+              background: 'rgba(0,0,0,0.5)',
+              backdropFilter: 'blur(4px)',
+              zIndex: 999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 24
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              style={{
+                background: C.white,
+                borderRadius: 16,
+                padding: 32,
+                maxWidth: 400,
+                width: '100%',
+                boxShadow: '0 25px 50px -12px rgba(92,58,40,0.25)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                textAlign: 'center'
+              }}
+            >
+              <div style={{
+                width: 48, height: 48, borderRadius: '50%', background: 'rgba(156,74,46,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 16
+              }}>
+                <span style={{ fontSize: 24 }}>⚠️</span>
+              </div>
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: C.textPrimary, margin: '0 0 8px' }}>
+                Atención
+              </h3>
+              <p style={{ fontSize: 14, color: C.textMedium, margin: '0 0 24px', lineHeight: 1.5 }}>
+                {errorModal}
+              </p>
+              <button
+                onClick={() => setErrorModal(null)}
+                style={{
+                  background: `linear-gradient(135deg, ${C.brand}, ${C.brandSecondary})`,
+                  color: C.white,
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: 8,
+                  fontSize: 13,
+                  fontWeight: 600,
+                  letterSpacing: '0.05em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  width: '100%',
+                  fontFamily: 'Inter, sans-serif'
+                }}
+              >
+                Intentar de nuevo
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>

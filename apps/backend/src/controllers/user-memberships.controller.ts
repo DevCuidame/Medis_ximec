@@ -52,18 +52,7 @@ export async function purchaseMembership(req: Request, res: Response): Promise<v
     );
     if (!mRows.length) { res.status(404).json({ success: false, error: 'Plan no encontrado' }); return; }
 
-    const planType = mRows[0].type as string;
-    if (planType !== 'inscription') {
-      const insc = await UserMembershipRepository.findActiveInscriptionByUserId(userId);
-      if (!insc) {
-        res.status(403).json({
-          success: false,
-          error: 'Se requiere una inscripción activa para adquirir planes. Realiza tu inscripción primero.',
-          code: 'INSCRIPTION_REQUIRED',
-        });
-        return;
-      }
-    }
+
 
     const method: 'cash' | 'wompi' = paymentMethod === 'wompi' ? 'wompi' : 'cash';
     const membership = await UserMembershipRepository.create(userId, membershipId, method);

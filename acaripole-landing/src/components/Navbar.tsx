@@ -1,5 +1,6 @@
-﻿import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
 const links = [
   { label: 'Inicio', href: '#inicio' },
@@ -16,6 +17,7 @@ interface NavbarProps {
 export default function Navbar({ onLoginClick }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 60)
@@ -129,8 +131,8 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
         </div>
 
         {/* CTA Button */}
-        <motion.a
-          href="#contacto"
+        <motion.button
+          onClick={() => navigate('/login')}
           whileHover={{ scale: 1.04, boxShadow: '0 8px 30px rgba(92,58,40,0.35)' }}
           whileTap={{ scale: 0.97 }}
           className="brand-gradient desktop-cta"
@@ -138,7 +140,8 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
             padding: '0.6rem 1.6rem',
             borderRadius: '9999px',
             color: '#fff',
-            textDecoration: 'none',
+            border: 'none',
+            cursor: 'pointer',
             fontSize: '0.75rem',
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
@@ -149,7 +152,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
           }}
         >
           Agendar Cita
-        </motion.a>
+        </motion.button>
 
         {/* Mobile Hamburger */}
         <button
@@ -245,25 +248,26 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
                 Iniciar Sesión
               </button>
             )}
-            <a
-              href="#contacto"
-              onClick={() => setMenuOpen(false)}
+            <button
+              onClick={() => { setMenuOpen(false); navigate('/login') }}
               className="brand-gradient"
               style={{
                 padding: '0.75rem',
                 borderRadius: '9999px',
                 color: '#fff',
-                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 fontSize: '0.78rem',
                 letterSpacing: '0.1em',
                 textTransform: 'uppercase',
                 fontWeight: 600,
                 fontFamily: 'Inter, sans-serif',
                 textAlign: 'center',
+                width: '100%',
               }}
             >
               Agendar Cita
-            </a>
+            </button>
           </motion.div>
         )}
       </AnimatePresence>

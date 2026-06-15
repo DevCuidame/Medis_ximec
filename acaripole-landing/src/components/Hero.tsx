@@ -1,5 +1,6 @@
-﻿import { useRef } from 'react'
+import { useRef } from 'react'
 import { motion, useScroll, useTransform } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
@@ -37,6 +38,7 @@ function BrandOrb({ size, top, left, delay, blur }: { size: number; top: string;
 
 export default function Hero() {
   const ref = useRef<HTMLElement>(null)
+  const navigate = useNavigate()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const videoY = useTransform(scrollYProgress, [0, 1], ['0%', '18%'])
   const overlayOpacity = useTransform(scrollYProgress, [0, 0.6], [1, 0])
@@ -58,7 +60,7 @@ export default function Hero() {
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center', transform: 'scale(1.18)', transformOrigin: 'center center' }}
         >
           <source
-            src="/videos/hero-clinic.mp4"
+            src="https://res.cloudinary.com/dasesxehg/video/upload/v1781479754/___title_Medicina_Bioregu_nxkbgn.mp4"
             type="video/mp4"
           />
         </video>
@@ -202,8 +204,8 @@ export default function Hero() {
             style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}
           >
             {/* Primary */}
-            <motion.a
-              href="#contacto"
+            <motion.button
+              onClick={() => navigate('/login')}
               whileHover={{ scale: 1.05, boxShadow: '0 16px 48px rgba(92,58,40,0.50)' }}
               whileTap={{ scale: 0.97 }}
               className="brand-gradient"
@@ -211,7 +213,8 @@ export default function Hero() {
                 padding: '0.95rem 2.4rem',
                 borderRadius: '9999px',
                 color: '#fff',
-                textDecoration: 'none',
+                border: 'none',
+                cursor: 'pointer',
                 fontFamily: 'Inter, sans-serif',
                 fontSize: '0.78rem',
                 letterSpacing: '0.12em',
@@ -222,7 +225,7 @@ export default function Hero() {
               }}
             >
               Agendar Cita
-            </motion.a>
+            </motion.button>
 
             {/* Secondary */}
             <motion.a

@@ -114,7 +114,7 @@ export const UserServicios: React.FC<Props> = () => {
   const [offers, setOffers]         = useState<any[]>([])
   const [loading, setLoading]       = useState(true)
   const [activeMembership, setActiveMembership] = useState<ActiveMembership | null>(null)
-  const [inscriptionDiscount, setInscriptionDiscount] = useState<number | null>(null)
+
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set())
   const [pendingIds, setPendingIds]   = useState<Set<string>>(new Set())
   const [search, setSearch]     = useState('')
@@ -135,11 +135,9 @@ export const UserServicios: React.FC<Props> = () => {
       fetch('/api/services/offers?limit=200', { headers: authH() }).then(r => r.json()),
       fetch('/api/user-memberships/me', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
       fetch('/api/services/my-requests', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-      fetch('/api/user-memberships/me/inscription', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-    ]).then(([offersData, membershipData, bookingsData, inscData]) => {
+    ]).then(([offersData, membershipData, bookingsData]) => {
       if (offersData.success) setOffers((offersData.data.offers || []).filter((o: any) => o.status === 'published'))
       if (membershipData.success && membershipData.data?.membership) setActiveMembership(membershipData.data.membership)
-      if (inscData.success && inscData.data?.inscription) setInscriptionDiscount(inscData.data.inscription.discountPercent ?? null)
       if (bookingsData.success) {
         const requests: any[] = bookingsData.data.requests || []
         setEnrolledIds(new Set(requests.filter((r: any) => r.status === 'approved').map((r: any) => r.offerId)))
@@ -178,7 +176,7 @@ export const UserServicios: React.FC<Props> = () => {
     } finally { setEnrolling(null) }
   }
 
-  const effectiveDiscountPercent = activeMembership?.discountPercent ?? inscriptionDiscount
+  const effectiveDiscountPercent = activeMembership?.discountPercent ?? null
 
   const groups = groupOffers(offers)
 
@@ -252,15 +250,7 @@ export const UserServicios: React.FC<Props> = () => {
           </div>
         )}
 
-        {/* Inscription discount banner (members without a regular plan) */}
-        {!activeMembership && inscriptionDiscount != null && (
-          <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 12, background: 'rgba(190,24,93,0.05)', border: '1.5px solid rgba(190,24,93,0.2)', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>🎉</span>
-            <span style={{ fontSize: 13, fontWeight: 700, color: '#5C3A28' }}>
-              Tu inscripción te da {inscriptionDiscount}% de descuento en servicios
-            </span>
-          </div>
-        )}
+
 
         {/* Search + filter */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>

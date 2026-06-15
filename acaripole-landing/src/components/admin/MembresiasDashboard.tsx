@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -66,11 +66,11 @@ interface Membership {
 }
 
 const TYPE_LABELS: Record<MembershipType, string> = {
-  per_class:   'Por Clase',
+  per_class:   'Por Consulta',
   monthly:     'Mensual',
   annual:      'Anual',
-  private:     'Clase Privada',
-  pack:        'Pack de Clases',
+  private:     'Consulta Privada',
+  pack:        'Pack de Consultas',
   inscription: 'Inscripción',
 };
 

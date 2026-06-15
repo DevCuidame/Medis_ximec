@@ -1,5 +1,6 @@
-﻿import { useRef } from 'react'
+import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
 const SERVICES = [
   {
@@ -61,6 +62,7 @@ const SERVICES = [
 function ClassCard({ title, level, duration, description, accent, tag, gradient, delay }: typeof SERVICES[0] & { delay: number }) {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-60px' })
+  const navigate = useNavigate()
 
   return (
     <motion.div
@@ -141,7 +143,8 @@ function ClassCard({ title, level, duration, description, accent, tag, gradient,
           </p>
 
           {/* Hover CTA */}
-          <motion.div
+          <motion.button
+            onClick={() => navigate('/login')}
             whileHover={{ x: 6 }}
             transition={{ duration: 0.3 }}
             style={{
@@ -154,13 +157,17 @@ function ClassCard({ title, level, duration, description, accent, tag, gradient,
               textTransform: 'uppercase',
               color: accent,
               fontWeight: 500,
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              padding: 0,
             }}
           >
             Agendar
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M2 7h10M8 3l4 4-4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </motion.div>
+          </motion.button>
         </div>
       </motion.div>
     </motion.div>
@@ -170,6 +177,7 @@ function ClassCard({ title, level, duration, description, accent, tag, gradient,
 export default function Classes() {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-100px' })
+  const navigate = useNavigate()
 
   return (
     <section id="servicios" style={{ background: '#F5EDE1', padding: '9rem 1.5rem' }}>
@@ -202,18 +210,19 @@ export default function Classes() {
             </motion.h2>
           </div>
 
-          <motion.a
+          <motion.button
             initial={{ opacity: 0 }}
             animate={inView ? { opacity: 1 } : {}}
             transition={{ duration: 0.7, delay: 0.3 }}
-            href="#contacto"
+            onClick={() => navigate('/login')}
             whileHover={{ scale: 1.04, boxShadow: '0 8px 32px rgba(92,58,40,0.30)' }}
             className="brand-gradient"
             style={{
               padding: '0.85rem 2rem',
               borderRadius: '9999px',
               color: '#fff',
-              textDecoration: 'none',
+              border: 'none',
+              cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
               fontSize: '0.75rem',
               letterSpacing: '0.1em',
@@ -224,7 +233,7 @@ export default function Classes() {
             }}
           >
             Agendar Cita
-          </motion.a>
+          </motion.button>
         </div>
 
         {/* Cards Grid */}

@@ -1,9 +1,11 @@
-﻿import { useRef } from 'react'
+import { useRef } from 'react'
 import { motion, useInView } from 'framer-motion'
+import { useNavigate } from 'react-router-dom'
 
 export default function FinalCTA() {
   const ref = useRef<HTMLDivElement>(null)
   const inView = useInView(ref, { once: true, margin: '-80px' })
+  const navigate = useNavigate()
 
   return (
     <section
@@ -121,8 +123,8 @@ export default function FinalCTA() {
           transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}
         >
-          <motion.a
-            href="#contacto"
+          <motion.button
+            onClick={() => navigate('/login')}
             whileHover={{ scale: 1.05, boxShadow: '0 20px 60px rgba(92,58,40,0.55)' }}
             whileTap={{ scale: 0.97 }}
             className="brand-gradient"
@@ -130,7 +132,8 @@ export default function FinalCTA() {
               padding: '1.1rem 2.8rem',
               borderRadius: '9999px',
               color: '#fff',
-              textDecoration: 'none',
+              border: 'none',
+              cursor: 'pointer',
               fontFamily: 'Inter, sans-serif',
               fontSize: '0.8rem',
               letterSpacing: '0.12em',
@@ -141,7 +144,7 @@ export default function FinalCTA() {
             }}
           >
             Agendar Cita
-          </motion.a>
+          </motion.button>
 
           <motion.a
             href="#servicios"

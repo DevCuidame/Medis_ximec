@@ -38,7 +38,7 @@ export const UserLayout: React.FC = () => {
   const location  = useLocation()
   const [me, setMe]         = useState<Me | null>(null)
   const [hovered, setHovered] = useState<number | null>(null)
-  const [hasInscription, setHasInscription] = useState<boolean | null>(null)
+
 
   useEffect(() => {
     fetch('/api/auth/me', { headers: authH() })
@@ -46,10 +46,7 @@ export const UserLayout: React.FC = () => {
       .then(d => { if (d.success) setMe(d.data.user) })
       .catch(() => {})
 
-    fetch('/api/user-memberships/me/inscription', { headers: authH() })
-      .then(r => r.json())
-      .then(d => setHasInscription(!!(d.success && d.data?.inscription)))
-      .catch(() => setHasInscription(true))
+
   }, [])
 
   const logout = () => {
@@ -135,21 +132,7 @@ export const UserLayout: React.FC = () => {
 
       {/* ── CONTENT ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-        {hasInscription === false && (
-          <button
-            onClick={() => navigate('/user/membresias', { state: { expandInscription: true } })}
-            style={{
-              flexShrink: 0, width: '100%', border: 'none', cursor: 'pointer',
-              background: `linear-gradient(90deg, ${C.pink}, ${C.pinkLight})`,
-              color: C.white, padding: '9px 20px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
-              fontSize: 12.5, fontWeight: 700, fontFamily: FONT_INTER, textAlign: 'center',
-            }}>
-            <Sparkles size={14} />
-            <span>Los pacientes inscritos en MedisXime desbloquean beneficios exclusivos en consultas</span>
-            <span style={{ textDecoration: 'underline', whiteSpace: 'nowrap' }}>Inscríbete →</span>
-          </button>
-        )}
+
         <Routes>
           <Route path="calendario"    element={<UserCalendario    userId={me?.id} />} />
           <Route path="servicios"     element={<UserServicios     userId={me?.id} />} />

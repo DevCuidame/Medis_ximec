@@ -9,23 +9,23 @@ const transporter = nodemailer.createTransport({
   auth: { user: env.EMAIL_USER, pass: env.EMAIL_PASSWORD },
 });
 
-const GOLD   = '#775A00';
-const GOLD_L = '#B08D32';
+const GOLD   = '#5C3A28';
+const GOLD_L = '#9C4A2E';
 const GOLD_G = `linear-gradient(135deg, ${GOLD}, ${GOLD_L})`;
-const BG     = '#F5F3F1';
+const BG     = '#FFFBF5';
 const WHITE  = '#FFFFFF';
-const TEXT   = '#1B1C1C';
-const MUTED  = '#7F7665';
+const TEXT   = '#3D2B1F';
+const MUTED  = '#B0A08C';
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
 
 const TYPE_LABELS: Record<string, string> = {
-  per_class: 'Por Clase',
+  per_class: 'Por Consulta',
   monthly:   'Mensual',
   annual:    'Anual',
-  private:   'Clase Privada',
-  pack:      'Pack de Clases',
+  private:   'Consulta Privada',
+  pack:      'Pack de Consultas',
 };
 
 const TYPE_COLORS: Record<string, string> = {
@@ -42,7 +42,7 @@ function base(content: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AcariPole Studio</title>
+  <title>MedisXime Consultorio</title>
 </head>
 <body style="margin:0;padding:0;background:${BG};font-family:'Helvetica Neue',Arial,sans-serif;-webkit-font-smoothing:antialiased;">
   <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background:${BG};padding:40px 20px;">
@@ -52,8 +52,8 @@ function base(content: string): string {
         <!-- HEADER -->
         <tr>
           <td style="background:${GOLD_G};padding:36px 40px;border-radius:18px 18px 0 0;text-align:center;">
-            <p style="margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;text-transform:uppercase;font-weight:600;">Studio</p>
-            <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-style:italic;color:#FFFFFF;letter-spacing:3px;font-weight:700;">ACARIPOLE</h1>
+            <p style="margin:0 0 4px;font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:3px;text-transform:uppercase;font-weight:600;">Consultorio</p>
+            <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:32px;font-style:italic;color:#FFFFFF;letter-spacing:3px;font-weight:700;">MEDISXIME</h1>
           </td>
         </tr>
 
@@ -68,7 +68,7 @@ function base(content: string): string {
         <tr>
           <td style="padding:24px 0 0;text-align:center;">
             <p style="margin:0;font-size:11px;color:${MUTED};line-height:1.6;">
-              © 2026 AcariPole Studio · Medellín, Colombia<br/>
+              © 2026 MedisXime Consultorio · Colombia<br/>
               Este correo fue generado automáticamente, no respondas a este mensaje.
             </p>
           </td>
@@ -210,7 +210,7 @@ function userConfirmHtml(p: UserConfirmParams): string {
       <div style="display:inline-block;font-size:48px;margin-bottom:12px;line-height:1;">🎉</div>
       <h2 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px;color:${TEXT};font-weight:700;">¡Tu plan está activo!</h2>
       <p style="margin:0;font-size:14px;color:${MUTED};line-height:1.6;">
-        Hola <strong>${p.userName}</strong>, tu pago fue confirmado por el equipo de AcariPole.<br/>
+        Hola <strong>${p.userName}</strong>, tu pago fue confirmado por el equipo de MedisXime Consultorio.<br/>
         Ya puedes reservar clases con tu membresía.
       </p>
     </div>
@@ -274,8 +274,8 @@ function userConfirmHtml(p: UserConfirmParams): string {
     </div>
 
     <p style="margin:0;font-size:13px;color:${MUTED};text-align:center;line-height:1.7;">
-      ¡Nos vemos en el estudio! 🥂<br/>
-      <span style="font-size:11px;color:#B0A99A;">El equipo de AcariPole Studio</span>
+      ¡Te esperamos en el consultorio! 🩺<br/>
+      <span style="font-size:11px;color:#B0A99A;">El equipo de MedisXime Consultorio</span>
     </p>
   `);
 }
@@ -305,7 +305,7 @@ function serviceConfirmHtml(p: ServiceConfirmParams): string {
       <div style="display:inline-block;font-size:48px;margin-bottom:12px;line-height:1;">🎉</div>
       <h2 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px;color:${TEXT};font-weight:700;">¡Tu inscripción está confirmada!</h2>
       <p style="margin:0;font-size:14px;color:${MUTED};line-height:1.6;">
-        Hola <strong>${p.userName}</strong>, tu pago fue confirmado por el equipo de AcariPole.<br/>
+        Hola <strong>${p.userName}</strong>, tu pago fue confirmado por el equipo de MedisXime Consultorio.<br/>
         Ya estás inscrita al servicio.
       </p>
     </div>
@@ -362,8 +362,8 @@ function serviceConfirmHtml(p: ServiceConfirmParams): string {
     </div>
 
     <p style="margin:0;font-size:13px;color:${MUTED};text-align:center;line-height:1.7;">
-      ¡Nos vemos en el estudio! 🥂<br/>
-      <span style="font-size:11px;color:#B0A99A;">El equipo de AcariPole Studio</span>
+      ¡Te esperamos en el consultorio! 🩺<br/>
+      <span style="font-size:11px;color:#B0A99A;">El equipo de MedisXime Consultorio</span>
     </p>
   `);
 }
@@ -375,9 +375,9 @@ export async function sendServicePaymentConfirmation(
 ): Promise<void> {
   if (!env.EMAIL_USER || !env.EMAIL_PASSWORD) return;
   await transporter.sendMail({
-    from: `"AcariPole Studio" <${env.EMAIL_FROM}>`,
+    from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: toEmail,
-    subject: `✅ ¡Tu inscripción a ${params.serviceName} está confirmada! — AcariPole`,
+    subject: `✅ ¡Tu inscripción a ${params.serviceName} está confirmada! — MedisXime`,
     html: serviceConfirmHtml(params),
   });
 }
@@ -385,7 +385,7 @@ export async function sendServicePaymentConfirmation(
 export async function sendAdminPaymentNotification(params: AdminNotifParams): Promise<void> {
   if (!env.EMAIL_USER || !env.EMAIL_PASSWORD) return;
   await transporter.sendMail({
-    from: `"AcariPole Studio" <${env.EMAIL_FROM}>`,
+    from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: env.ADMIN_EMAIL,
     subject: `🔔 Nuevo pago pendiente — ${params.planName} (${params.userName})`,
     html: adminNotifHtml(params),
@@ -398,9 +398,9 @@ export async function sendUserPaymentConfirmation(
 ): Promise<void> {
   if (!env.EMAIL_USER || !env.EMAIL_PASSWORD) return;
   await transporter.sendMail({
-    from: `"AcariPole Studio" <${env.EMAIL_FROM}>`,
+    from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: toEmail,
-    subject: `✅ ¡Tu plan ${params.planName} está activo! — AcariPole`,
+    subject: `✅ ¡Tu plan ${params.planName} está activo! — MedisXime`,
     html: userConfirmHtml(params),
   });
 }

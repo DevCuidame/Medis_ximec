@@ -65,7 +65,6 @@ interface Props { userId?: string }
 export const UserMembresias: React.FC<Props> = () => {
   const [plans, setPlans]                 = useState<Plan[]>([])
   const [active, setActive]               = useState<ActiveMembership | null>(null)
-  const [inscription, setInscription]     = useState<ActiveMembership | null>(null)
   const [catalogMap, setCatalogMap]       = useState<Map<string, { type: string; value: number | null }>>(new Map())
   const [loading, setLoading]             = useState(true)
   const [confirmPlan, setConfirmPlan]     = useState<Plan | null>(null)
@@ -74,7 +73,6 @@ export const UserMembresias: React.FC<Props> = () => {
   const [payMethod, setPayMethod]         = useState<'cash' | 'wompi' | null>(null)
   const [purchasing, setPurchasing]       = useState(false)
   const [toast, setToast]                 = useState<{ msg: string; ok: boolean } | null>(null)
-  const [inscriptionExpanded, setInscriptionExpanded] = useState(true)
 
   const showToast = (msg: string, ok: boolean) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 4000) }
 
@@ -82,12 +80,10 @@ export const UserMembresias: React.FC<Props> = () => {
     Promise.all([
       fetch('/api/memberships/active', { headers: authH() }).then(r => r.json()),
       fetch('/api/user-memberships/me', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-      fetch('/api/user-memberships/me/inscription', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
       fetch('/api/benefits', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-    ]).then(([plansData, activeData, inscData, benefitsData]) => {
+    ]).then(([plansData, activeData, benefitsData]) => {
       if (plansData.success) setPlans((plansData.data.memberships || []).filter((p: Plan) => p.isActive))
       if (activeData.success && activeData.data?.membership) setActive(activeData.data.membership)
-      if (inscData.success && inscData.data?.inscription) setInscription(inscData.data.inscription)
       if (benefitsData.success && benefitsData.data?.benefits) {
         const map = new Map<string, { type: string; value: number | null }>()
         for (const b of benefitsData.data.benefits) {
@@ -98,7 +94,6 @@ export const UserMembresias: React.FC<Props> = () => {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
-  const inscriptionPlans = plans.filter(p => p.type === 'inscription')
   const regularPlans     = plans.filter(p => p.type !== 'inscription')
 
   const openConfirm = (plan: Plan) => {
@@ -183,98 +178,6 @@ export const UserMembresias: React.FC<Props> = () => {
           </div>
         ) : (
           <>
-            {/* ── INSCRIPCIÓN STATUS ── */}
-            {inscription ? (
-              /* User has active inscription */
-              <div style={{ marginBottom: 28, borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${C.pink}40`, boxShadow: '0 6px 24px rgba(190,24,93,0.08)' }}>
-                <div style={{ background: `linear-gradient(135deg, ${C.pink}, ${C.pinkLight})`, padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <ShieldCheck size={18} color="rgba(255,255,255,0.9)" />
-                    <div>
-                      <p style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.14em', margin: 0 }}>Inscripción activa</p>
-                      <p style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 700, color: C.white, margin: '2px 0 0', lineHeight: 1.1 }}>{inscription.membership.name}</p>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, padding: '4px 12px', borderRadius: 99, background: 'rgba(255,255,255,0.2)', color: C.white }}>✓ Activa</span>
-                    <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)', margin: '6px 0 0' }}>Desde: <strong>{fmtDate(inscription.startedAt)}</strong></p>
-                  </div>
-                </div>
-                {/* Discount from inscription */}
-                {(() => {
-                  const disc = inscription.membership.benefits
-                    .map(b => catalogMap.get(b))
-                    .find(e => e?.type === 'discount_percent')
-                  if (!disc) return null
-                  return (
-                    <div style={{ background: `${C.pink}08`, padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: C.pink }}>🎉 {disc.value}% de descuento</span>
-                      <span style={{ fontSize: 12, color: C.textMuted }}>en servicios adicionales por ser miembro</span>
-                    </div>
-                  )
-                })()}
-              </div>
-            ) : inscriptionPlans.length > 0 ? (
-              /* No inscription — collapsible banner */
-              (() => {
-                const insc = inscriptionPlans[0]
-                const { discountPct } = getPlanMeta(insc)
-                return (
-                  <div style={{ marginBottom: 28, borderRadius: 18, overflow: 'hidden', border: `2px dashed ${C.pink}50`, background: `${C.pink}05` }}>
-                    {/* Collapsed header — always visible */}
-                    <button onClick={() => setInscriptionExpanded(e => !e)}
-                      style={{ width: '100%', padding: '18px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 14, background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: FONT_INTER }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 14, minWidth: 0 }}>
-                        <div style={{ width: 44, height: 44, borderRadius: 12, background: `${C.pink}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                          <Lock size={20} color={C.pink} />
-                        </div>
-                        <div style={{ minWidth: 0 }}>
-                          <h3 style={{ fontFamily: FONT_BODONI, fontSize: 18, color: C.text, margin: '0 0 2px' }}>Inscríbete en MEDIS</h3>
-                          <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>
-                            Pago único de <strong>{fmtPrice(insc.price)}</strong> · desbloquea{discountPct != null ? ` ${discountPct}% de descuento y` : ''} acceso a todos los planes
-                          </p>
-                        </div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: C.pink, whiteSpace: 'nowrap' }}>{inscriptionExpanded ? 'Ver menos' : 'Ver detalles'}</span>
-                        {inscriptionExpanded ? <ChevronUp size={16} color={C.pink} /> : <ChevronDown size={16} color={C.pink} />}
-                      </div>
-                    </button>
-
-                    {/* Expanded details */}
-                    <AnimatePresence>
-                      {inscriptionExpanded && (
-                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                          <div style={{ padding: '0 24px 22px', borderTop: `1px dashed ${C.pink}30`, marginTop: 2, paddingTop: 18 }}>
-                            {insc.description && (
-                              <p style={{ fontSize: 12.5, color: C.textMuted, lineHeight: 1.7, margin: '0 0 16px' }}>{insc.description}</p>
-                            )}
-                            {insc.benefits.length > 0 && (
-                              <div style={{ marginBottom: 18 }}>
-                                <p style={{ fontSize: 11, fontWeight: 700, color: C.pink, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 10px' }}>Beneficios incluidos</p>
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                  {insc.benefits.map(b => (
-                                    <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                      <CheckCircle2 size={14} color={C.pink} />
-                                      <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>{b}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            <button onClick={() => openConfirm(insc)}
-                              style={{ padding: '11px 24px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.pink}, ${C.pinkLight})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                              Inscribirme ahora — {fmtPrice(insc.price)}
-                            </button>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )
-              })()
-            ) : null}
-
             {/* ── PLAN ACTIVO ── */}
             {active && (
               <div style={{ marginBottom: 36, borderRadius: 20, overflow: 'hidden', border: `1.5px solid ${C.gold}40`, boxShadow: '0 8px 32px rgba(92,58,40,0.1)' }}>

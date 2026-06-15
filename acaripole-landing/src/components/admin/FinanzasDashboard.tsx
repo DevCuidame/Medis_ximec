@@ -90,6 +90,7 @@ export const FinanzasDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'planes' | 'servicios'>('planes');
 
   const [kpis, setKpis] = useState({ ingresos: 0, egresos: 0, balance: 0, pendientes: 0 });
+  const [egresosMes] = useState(0); // egresos manuales — se puede conectar a API en el futuro
   const [activeMemberships, setActiveMemberships] = useState<ActiveMembership[]>([]);
   const [pendingPayments, setPendingPayments] = useState<PendingMembership[]>([]);
   const [pendingServices, setPendingServices] = useState<PendingServicePayment[]>([]);
@@ -218,14 +219,15 @@ export const FinanzasDashboard: React.FC = () => {
       });
       const data = await res.json();
       if (!data.success) throw new Error(data.error ?? 'Error al confirmar');
-      setPendingServices(prev => prev.filter(s => s.id !== id));
       showPaymentToast(`Pago confirmado · Inscripción aprobada`, true);
+      await Promise.all([fetchPendingServices(), fetchActive(), fetchPending()]);
     } catch (e: unknown) {
       showPaymentToast((e as Error).message, false);
     } finally {
       setConfirmingServiceId(null);
     }
   };
+
 
   const handleConfirmPayment = async (id: string, userName: string) => {
     setConfirmingId(id);
@@ -245,16 +247,36 @@ export const FinanzasDashboard: React.FC = () => {
     }
   };
 
+  // ── Recalculate KPIs whenever active plans or pending services change ──────
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setKpis({ ingresos: 2580000, egresos: 1625000, balance: 955000, pendientes: 145000 });
-    }, 400);
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
+
+    // Ingresos: planes activados este mes
+    const ingresosMemberships = activeMemberships
+      .filter(am => {
+        const d = new Date(am.startedAt);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      })
+      .reduce((sum, am) => sum + (am.membership.price ?? 0), 0);
+
+    // Cobros pendientes: planes que aún no están aprobados
+    const pendientesTotal = pendingPayments
+      .reduce((sum, pm) => sum + (pm.membership.price ?? 0), 0);
+
+    const ingresos = ingresosMemberships;
+    const balance = ingresos - egresosMes;
+
+    setKpis({ ingresos, egresos: egresosMes, balance, pendientes: pendientesTotal });
+  }, [activeMemberships, pendingPayments, pendingServices, egresosMes]);
+
+  useEffect(() => {
     fetchActive();
     fetchPending();
     fetchPendingServices();
-
-  return () => clearTimeout(timer);
   }, []);
+
 
   useEffect(() => {
     document.body.classList.remove('sidebar-collapsed');
@@ -497,7 +519,10 @@ export const FinanzasDashboard: React.FC = () => {
               <div>
                 <p style={{ fontSize: 11, fontWeight: 700, color: C.gold, letterSpacing: '0.18em', textTransform: 'uppercase', margin: '0 0 6px', fontFamily: '"Inter", sans-serif' }}>Gestión Financiera</p>
                 <h1 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '2.5rem', color: C.text, marginBottom: '0.4rem', lineHeight: 1.1 }}>Finanzas</h1>
-                <p style={{ color: C.textMuted, fontSize: '1rem', margin: 0 }}>Resumen financiero de MedisXime Consultorio — Mayo 2026.</p>
+                <p style={{ color: C.textMuted, fontSize: '1rem', margin: 0 }}>
+                  Resumen financiero de MedisXime Consultorio —{' '}
+                  {new Date().toLocaleDateString('es-CO', { month: 'long', year: 'numeric' })}.
+                </p>
               </div>
 
               {/* Finance Stickman Animation */}
@@ -509,12 +534,49 @@ export const FinanzasDashboard: React.FC = () => {
             {/* ── KPI CARDS ── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
               {[
-                { label: 'Ingresos del mes', value: kpis.ingresos, icon: TrendingUp, color: '#16A34A', bg: 'rgba(34,197,94,0.06)', trend: '+18% vs. abril', up: true },
-                { label: 'Egresos del mes', value: kpis.egresos, icon: TrendingDown, color: '#DC2626', bg: 'rgba(239,68,68,0.06)', trend: '+8% vs. abril', up: false },
-                { label: 'Balance neto', value: kpis.balance, icon: DollarSign, color: C.gold, bg: 'rgba(92,58,40,0.06)', trend: '+34% vs. abril', up: true },
-                { label: 'Cobros pendientes', value: kpis.pendientes, icon: Clock, color: '#B45309', bg: 'rgba(234,179,8,0.06)', trend: '2 transacciones', up: null },
+                {
+                  label: 'Ingresos del mes',
+                  value: kpis.ingresos,
+                  icon: TrendingUp,
+                  color: '#16A34A',
+                  bg: 'rgba(34,197,94,0.06)',
+                  trend: activeMemberships.filter(am => {
+                    const d = new Date(am.startedAt);
+                    const now = new Date();
+                    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+                  }).length + ' plan(es) activos este mes',
+                  up: kpis.ingresos > 0 ? true : null,
+                },
+                {
+                  label: 'Egresos del mes',
+                  value: kpis.egresos,
+                  icon: TrendingDown,
+                  color: '#DC2626',
+                  bg: 'rgba(239,68,68,0.06)',
+                  trend: null as null,
+                  up: null as null,
+                },
+                {
+                  label: 'Balance neto',
+                  value: kpis.balance,
+                  icon: DollarSign,
+                  color: C.gold,
+                  bg: 'rgba(92,58,40,0.06)',
+                  trend: null as null,
+                  up: kpis.balance >= 0 ? true : false,
+                },
+                {
+                  label: 'Cobros pendientes',
+                  value: kpis.pendientes,
+                  icon: Clock,
+                  color: '#B45309',
+                  bg: 'rgba(234,179,8,0.06)',
+                  trend: pendingPayments.length + ' plan(es) por aprobar',
+                  up: null as null,
+                },
               ].map((kpi, i) => {
                 const Icon = kpi.icon;
+
 
   return (
                   <motion.div
