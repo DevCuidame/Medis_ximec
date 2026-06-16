@@ -50,7 +50,7 @@ $files = @(
     @{ local = "acaripole-landing\src\components\admin\AdminClasses.tsx"; remote = "$APP/acaripole-landing/src/components/admin/AdminClasses.tsx" },
     # Frontend: CSS global responsive
     @{ local = "acaripole-landing\src\components\admin\MainDashboard.css"; remote = "$APP/acaripole-landing/src/components/admin/MainDashboard.css" },
-    # Frontend: vistas de usuario (rebranding Academia Acaripole)
+    # Frontend: vistas de usuario (rebranding MedisXime)
     @{ local = "acaripole-landing\src\components\ArtistLogin.tsx";              remote = "$APP/acaripole-landing/src/components/ArtistLogin.tsx" },
     @{ local = "acaripole-landing\src\components\user\UserCalendario.tsx";      remote = "$APP/acaripole-landing/src/components/user/UserCalendario.tsx" },
     @{ local = "acaripole-landing\src\components\user\UserMembresias.tsx";      remote = "$APP/acaripole-landing/src/components/user/UserMembresias.tsx" },
