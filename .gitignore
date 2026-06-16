@@ -98,6 +98,7 @@ Thumbs.db
 
 # Deploy/fix scripts with hardcoded production credentials
 /deploy-acari.ps1
+/deploy-medisxime.ps1
 /diagnostico-vm.ps1
 /fix-definitivo.ps1
 /fix-trigger.ps1

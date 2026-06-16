@@ -17,7 +17,7 @@ import type {
   RoomPublic,
   CreateServiceOfferPayload,
   OfferType,
-} from '@acaripole/shared-types';
+} from '@medisxime/shared-types';
 
 // ─── Interfaces de apoyo ────────────────────────────────────
 interface LocationOption { id: string; name: string; }

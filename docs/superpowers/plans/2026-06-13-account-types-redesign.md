@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Expand medisXime's account-creation system from 3 roles (Pacientes, Personal Médico, Administrador) to 4 by adding "Empresas" (`EMPRESA`), redesign the "Nueva Cuenta" wizard (`CreateProfessionalModal.tsx`) with role-specific fields tied to the clinic's services, and migrate `UsuariosDashboard.tsx` / `UsuarioCard.tsx` from the legacy purple/blue Acaripole palette to the medisXime café/crema/terracota palette.
+**Goal:** Expand medisXime's account-creation system from 3 roles (Pacientes, Personal Médico, Administrador) to 4 by adding "Empresas" (`EMPRESA`), redesign the "Nueva Cuenta" wizard (`CreateProfessionalModal.tsx`) with role-specific fields tied to the clinic's services, and migrate `UsuariosDashboard.tsx` / `UsuarioCard.tsx` from the legacy purple/blue medisxime palette to the medisXime café/crema/terracota palette.
 
 **Architecture:** Add a new Postgres enum value (`EMPRESA`) and 11 nullable profile columns via migration `016_account_types_expansion.sql`. Widen the backend `UserRole`/DTO/repository types so `POST /api/professionals` accepts any of the 4 roles and persists the new columns — the existing role-dispatch logic in `professional.service.ts` (`if (dto.role && dto.role !== 'PROFESSIONAL') return UserRepository.create(...) else return ProfessionalRepository.create(...)`) is reused unchanged, but requires `CreateProfessionalDTO` and `RegisterDTO` to declare the same 11 new optional fields so the shared `dto` object type-checks against both repositories. On the frontend, swap the `C` design-token object VALUES in `UsuariosDashboard.tsx` and `CreateProfessionalModal.tsx` to the medisXime palette (cascades automatically via `C.*` references), replace remaining literal purple/blue hex codes, rewrite `UsuarioCard.tsx`'s `ROLE_CONFIG` for 4 roles, and restructure the wizard's 4 steps to be role-conditional (Pacientes / Personal Médico / Empresas / Administrador).
 
-**Tech Stack:** pnpm monorepo — `apps/backend` (Express + pg + tsx + TypeScript), `acaripole-landing` (Vite + React + TypeScript, Tailwind v4 + inline-style components). PostgreSQL migrations run via `pnpm --filter @acaripole/backend run migrate`. Type-check commands: backend `pnpm --filter @acaripole/backend exec tsc --noEmit`, frontend `pnpm --filter acaripole-landing exec tsc -b`.
+**Tech Stack:** pnpm monorepo — `apps/backend` (Express + pg + tsx + TypeScript), `medisxime-landing` (Vite + React + TypeScript, Tailwind v4 + inline-style components). PostgreSQL migrations run via `pnpm --filter @medisxime/backend run migrate`. Type-check commands: backend `pnpm --filter @medisxime/backend exec tsc --noEmit`, frontend `pnpm --filter medisxime-landing exec tsc -b`.
 
 ---
 
@@ -53,7 +53,7 @@ Todas las columnas son `NULL`able. `ALTER TYPE ... ADD VALUE` y los `ALTER TABLE
 
 - [ ] **Step 2: Ejecutar la migración**
 
-Run: `pnpm --filter @acaripole/backend run migrate`
+Run: `pnpm --filter @medisxime/backend run migrate`
 
 Expected output includes:
 ```
@@ -599,7 +599,7 @@ git commit -m "feat(backend): persist and return id_type/id_number/professional_
 
 - [ ] **Step 1: Ejecutar el type-check del backend**
 
-Run: `pnpm --filter @acaripole/backend exec tsc --noEmit`
+Run: `pnpm --filter @medisxime/backend exec tsc --noEmit`
 
 Expected: no output, exit code 0 (no type errors). This confirms:
 - `UserRepository.create()` and `ProfessionalRepository.create()` compile against the widened `RegisterDTO` / `CreateProfessionalDTO`.
@@ -612,11 +612,11 @@ If errors appear, fix the mismatched field name/type before continuing — do no
 ## Task 7: Frontend types — `admin/types.ts`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/types.ts`
+- Modify: `medisxime-landing/src/components/admin/types.ts`
 
 - [ ] **Step 1: Reemplazar todo el contenido del archivo**
 
-Use the Write tool to replace the entire content of `acaripole-landing/src/components/admin/types.ts` with:
+Use the Write tool to replace the entire content of `medisxime-landing/src/components/admin/types.ts` with:
 
 ```ts
 export interface User {
@@ -634,7 +634,7 @@ export interface User {
 - [ ] **Step 2: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/types.ts
+git add medisxime-landing/src/components/admin/types.ts
 git commit -m "feat(frontend): widen User.rol union to the 4 medisXime account types"
 ```
 
@@ -643,13 +643,13 @@ git commit -m "feat(frontend): widen User.rol union to the 4 medisXime account t
 ## Task 8: Frontend — `UsuarioCard.tsx` full rewrite (4 roles + medisXime palette)
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/UsuarioCard.tsx` (228 lines, full rewrite)
+- Modify: `medisxime-landing/src/components/admin/UsuarioCard.tsx` (228 lines, full rewrite)
 
 This file is small enough, and changes pervasively enough (ROLE_CONFIG 3→4 entries, every literal purple/blue color, two fonts), that a full-file rewrite is simpler and less error-prone than many targeted edits.
 
 - [ ] **Step 1: Reemplazar todo el contenido del archivo**
 
-Use the Write tool to replace the entire content of `acaripole-landing/src/components/admin/UsuarioCard.tsx` with:
+Use the Write tool to replace the entire content of `medisxime-landing/src/components/admin/UsuarioCard.tsx` with:
 
 ```tsx
 import React, { useState } from 'react';
@@ -891,7 +891,7 @@ export const UsuarioCard: React.FC<UsuarioCardProps> = ({ user, onView, onEdit, 
 - [ ] **Step 2: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/UsuarioCard.tsx
+git add medisxime-landing/src/components/admin/UsuarioCard.tsx
 git commit -m "feat(frontend): rewrite UsuarioCard with 4-role config and medisXime palette"
 ```
 
@@ -899,19 +899,19 @@ git commit -m "feat(frontend): rewrite UsuarioCard with 4-role config and medisX
 
 ## Task 9: UsuariosDashboard.tsx — design tokens and sidebar branding
 
-`UsuariosDashboard.tsx` still uses the old purple/blue "Acaripole" `C` design tokens,
+`UsuariosDashboard.tsx` still uses the old purple/blue "medisxime" `C` design tokens,
 the `"Bodoni Moda"`/`"Hanken Grotesk"` font stack, and a sidebar logo block that reads
 "A" / "MEDIS" / "Estudio Admin". This task swaps the token values and fonts to the
 medisXime palette (matching `MainDashboard.tsx`) and replaces the sidebar logo block
 with the confirmed "XC" / "MedisXime" / "Consultorio Admin" pattern.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/UsuariosDashboard.tsx:17-32` (design tokens)
-- Modify: `acaripole-landing/src/components/admin/UsuariosDashboard.tsx:382-393` (sidebar logo)
+- Modify: `medisxime-landing/src/components/admin/UsuariosDashboard.tsx:17-32` (design tokens)
+- Modify: `medisxime-landing/src/components/admin/UsuariosDashboard.tsx:382-393` (sidebar logo)
 
 - [ ] **Step 1: Swap the `C` design tokens to the medisXime palette**
 
-In `acaripole-landing/src/components/admin/UsuariosDashboard.tsx`, replace:
+In `medisxime-landing/src/components/admin/UsuariosDashboard.tsx`, replace:
 
 ```ts
 const C = {
@@ -1002,7 +1002,7 @@ with:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/UsuariosDashboard.tsx
+git add medisxime-landing/src/components/admin/UsuariosDashboard.tsx
 git commit -m "feat(frontend): migrate UsuariosDashboard design tokens and sidebar branding to medisXime palette"
 ```
 
@@ -1014,7 +1014,7 @@ This task updates the role taxonomy (`RoleFilter`, `mappedUsers`, `matchRole`, t
 filter pills) to the 4 medisXime account types from
 `docs/superpowers/specs/2026-06-13-account-types-redesign-design.md` §4, fixes the
 footer branding text, and replaces the remaining literal purple/blue color codes left
-over from the old Acaripole palette (everything not already covered by Task 9's `C`
+over from the old medisxime palette (everything not already covered by Task 9's `C`
 token swap).
 
 Note: the gray `#94A3B8` at `UsuariosDashboard.tsx:555` (the secondary text inside the
@@ -1023,7 +1023,7 @@ semantic error alert, not part of the purple/blue brand palette, so it is not pa
 this migration.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/UsuariosDashboard.tsx`
+- Modify: `medisxime-landing/src/components/admin/UsuariosDashboard.tsx`
 
 - [ ] **Step 1: Update `RoleFilter` and add a role-label lookup map**
 
@@ -1284,7 +1284,7 @@ with:
 - [ ] **Step 14: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/UsuariosDashboard.tsx
+git add medisxime-landing/src/components/admin/UsuariosDashboard.tsx
 git commit -m "feat(frontend): migrate UsuariosDashboard role taxonomy, filters and remaining colors to medisXime"
 ```
 
@@ -1302,13 +1302,13 @@ state, the `visibleSteps` rule, and `validate()`. Tasks 12-15 build the JSX for 
 wizard step on top of these.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:8-17` (design tokens)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:33-36` (specialties constant)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:50-66` (ID types, new constants, AccountRole, FormData)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:109-114` (initial form state)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx` (`DISCIPLINES` → `SPECIALTIES` rename, all occurrences)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:157` (`visibleSteps`)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:161-180` (`validate`)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:8-17` (design tokens)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:33-36` (specialties constant)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:50-66` (ID types, new constants, AccountRole, FormData)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:109-114` (initial form state)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx` (`DISCIPLINES` → `SPECIALTIES` rename, all occurrences)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:157` (`visibleSteps`)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:161-180` (`validate`)
 
 - [ ] **Step 1: Swap design tokens and fonts to the medisXime palette**
 
@@ -1564,7 +1564,7 @@ with:
 - [ ] **Step 8: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): widen CreateProfessionalModal constants/types for 4 account types and medisXime palette"
 ```
 
@@ -1579,8 +1579,8 @@ de Identificación" fields are hidden for Empresas, and Empresas get new "NIT" a
 "Sector económico" fields.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:325-368` (Nombres/Apellidos + Tipo de cuenta)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:395-426` (Tipo/Número ID + new NIT/Sector fields)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:325-368` (Nombres/Apellidos + Tipo de cuenta)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:395-426` (Tipo/Número ID + new NIT/Sector fields)
 
 - [ ] **Step 1: Add the Razón Social branch and switch the role select to `ROLE_OPTIONS`**
 
@@ -1810,7 +1810,7 @@ with:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): redesign CreateProfessionalModal Paso 1 (Identidad) for 4 account types"
 ```
 
@@ -1823,7 +1823,7 @@ Adds the Empresa-only "Nombre del contacto" and "Cargo del contacto" fields afte
 unchanged and apply to all 4 roles.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:463-477` (end of Paso 2)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:463-477` (end of Paso 2)
 
 - [ ] **Step 1: Add the Empresa contact fields after "Foto de Perfil"**
 
@@ -1899,7 +1899,7 @@ with:
 - [ ] **Step 2: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): add Empresa contact fields to CreateProfessionalModal Paso 2 (Contacto)"
 ```
 
@@ -1914,8 +1914,8 @@ Empresas get a new "Servicios de interés" checkbox list. Administrador has no P
 (already excluded from `visibleSteps` by Task 11 Step 6).
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:543-548` (Personal Médico — Especialidades/Bio boundary)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:644-649` (end of Paso 3, before Paso 4)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:543-548` (Personal Médico — Especialidades/Bio boundary)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:644-649` (end of Paso 3, before Paso 4)
 
 - [ ] **Step 1: Add "Registro Médico / Tarjeta Profesional" to the Personal Médico branch**
 
@@ -2057,7 +2057,7 @@ with:
 - [ ] **Step 3: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): add role-specific Paso 3 sections (Registro Médico, Perfil de Salud, Servicios de interés)"
 ```
 
@@ -2072,9 +2072,9 @@ nombres+especialidades, and the submit button label becomes role-aware via
 `ROLE_LABELS`.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:208-220` (`submit()` payload)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:652-668` (Paso 4 resume card)
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx:772` (footer submit button label)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:208-220` (`submit()` payload)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:652-668` (Paso 4 resume card)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx:772` (footer submit button label)
 
 - [ ] **Step 1: Extend the `submit()` payload with the 11 new optional fields**
 
@@ -2199,7 +2199,7 @@ with:
 - [ ] **Step 4: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): wire up new account-type fields in CreateProfessionalModal submit, resume card and footer"
 ```
 
@@ -2209,7 +2209,7 @@ git commit -m "feat(frontend): wire up new account-type fields in CreateProfessi
 
 After Tasks 11-15, every `C.*`-referenced color has been migrated to the medisXime
 palette, but 9 literal `rgba(139,92,246,<alpha>)` strings remain — these are the old
-Acaripole purple (`#8B5CF6`) baked directly into chip backgrounds, icon-button
+medisxime purple (`#8B5CF6`) baked directly into chip backgrounds, icon-button
 backgrounds, the schedule "add slot" panel/time badge, and the two CTA button
 shadows (Continuar / Crear), plus the new Empresa "Servicios de interés" checkbox
 background added in Task 14. `139,92,246` is the RGB triplet for `#8B5CF6`;
@@ -2219,33 +2219,33 @@ of their opacity suffix, a single substring `replace_all` converts every one of 
 in a single pass — no individual edits needed.
 
 **Files:**
-- Modify: `acaripole-landing/src/components/admin/CreateProfessionalModal.tsx` (global)
+- Modify: `medisxime-landing/src/components/admin/CreateProfessionalModal.tsx` (global)
 
 - [ ] **Step 1: Verify the current count of `139,92,246` occurrences**
 
-Run: `grep -c "139,92,246" acaripole-landing/src/components/admin/CreateProfessionalModal.tsx`
+Run: `grep -c "139,92,246" medisxime-landing/src/components/admin/CreateProfessionalModal.tsx`
 Expected: `9`
 
 - [ ] **Step 2: Replace every `139,92,246` with `92,58,40`**
 
 Using the Edit tool with `replace_all: true` on
-`acaripole-landing/src/components/admin/CreateProfessionalModal.tsx`:
+`medisxime-landing/src/components/admin/CreateProfessionalModal.tsx`:
 
 - `old_string`: `139,92,246`
 - `new_string`: `92,58,40`
 
 - [ ] **Step 3: Verify the substitution**
 
-Run: `grep -c "139,92,246" acaripole-landing/src/components/admin/CreateProfessionalModal.tsx`
+Run: `grep -c "139,92,246" medisxime-landing/src/components/admin/CreateProfessionalModal.tsx`
 Expected: `0` (grep exits non-zero on no matches, which is fine)
 
-Run: `grep -c "92,58,40" acaripole-landing/src/components/admin/CreateProfessionalModal.tsx`
+Run: `grep -c "92,58,40" medisxime-landing/src/components/admin/CreateProfessionalModal.tsx`
 Expected: `9`
 
 - [ ] **Step 4: Commit**
 
 ```bash
-git add acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
+git add medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
 git commit -m "feat(frontend): replace remaining literal purple overlays with medisXime gold in CreateProfessionalModal"
 ```
 
@@ -2257,7 +2257,7 @@ git commit -m "feat(frontend): replace remaining literal purple overlays with me
 
 - [ ] **Step 1: Run the frontend type-check**
 
-Run: `pnpm --filter acaripole-landing exec tsc -b`
+Run: `pnpm --filter medisxime-landing exec tsc -b`
 
 Expected: no output, exit code 0. This confirms `FormData`, `ROLE_OPTIONS`,
 `ROLE_LABELS`, `SECTORS`, `SERVICES_OF_INTEREST`, `BLOOD_TYPES`, the widened
@@ -2269,11 +2269,11 @@ together.
 Run in two separate terminals:
 
 ```bash
-pnpm --filter @acaripole/backend dev
+pnpm --filter @medisxime/backend dev
 ```
 
 ```bash
-pnpm --filter acaripole-landing dev
+pnpm --filter medisxime-landing dev
 ```
 
 - [ ] **Step 3: Manually walk through "Nueva Cuenta" for each of the 4 roles**

@@ -1,6 +1,6 @@
 # UI Components Library
 
-Reusable React component library for Acaripole project.
+Reusable React component library for medisxime project.
 
 ## Purpose
 
@@ -21,7 +21,7 @@ src/
 ## Usage
 
 ```typescript
-import { Button, Card } from '@acaripole/ui-components';
+import { Button, Card } from '@medisxime/ui-components';
 ```
 
 ## Future Enhancements

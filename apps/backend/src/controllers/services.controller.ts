@@ -20,7 +20,7 @@ import type {
   UpdateServiceOfferPayload,
   ServiceOffersFilter,
   ResolveBookingRequestPayload,
-} from '@acaripole/shared-types';
+} from '@medisxime/shared-types';
 
 /** Map a discipline name to a session category (must match resolveBenefits logic) */
 function getDisciplineCategory(disciplineName: string | null | undefined): string {

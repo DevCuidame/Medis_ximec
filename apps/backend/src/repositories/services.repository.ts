@@ -15,7 +15,7 @@ import type {
   UpdateRoomPayload,
   ServiceOffersFilter,
   UpsertOperatingHourPayload,
-} from '@acaripole/shared-types';
+} from '@medisxime/shared-types';
 
 // ─── OPERATING HOURS ─────────────────────────────────────────
 

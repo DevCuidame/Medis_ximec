@@ -2,9 +2,9 @@
 
 > **Para agentes:** SUB-SKILL REQUERIDA: usa superpowers:subagent-driven-development (recomendado) o superpowers:executing-plans para ejecutar este plan tarea por tarea. Los pasos usan sintaxis de checkbox (`- [ ]`) para seguimiento.
 
-**Objetivo:** Migrar los 8 componentes de la landing pública (`acaripole-landing/src/components/`) + `App.tsx` + `index.css` + `index.html` desde la identidad actual "Dra. Diana Cristina Medina Camargo" (paleta morado/azul `#8B5CF6` / `#3B82F6` / `#38BDF8`) a la nueva identidad **"Dra. Ximena Correa"** (paleta café/crema/terracota), con todo el contenido, servicios y datos de contacto definidos en `docs/superpowers/specs/2026-06-11-landing-rebranding-ximena-design.md`.
+**Objetivo:** Migrar los 8 componentes de la landing pública (`medisxime-landing/src/components/`) + `App.tsx` + `index.css` + `index.html` desde la identidad actual "Dra. Diana Cristina Medina Camargo" (paleta morado/azul `#8B5CF6` / `#3B82F6` / `#38BDF8`) a la nueva identidad **"Dra. Ximena Correa"** (paleta café/crema/terracota), con todo el contenido, servicios y datos de contacto definidos en `docs/superpowers/specs/2026-06-11-landing-rebranding-ximena-design.md`.
 
-**Arquitectura:** Cambios puramente de frontend (React + TypeScript + Tailwind v4 + Framer Motion) en `acaripole-landing/`. Se actualiza primero el sistema de diseño (`index.css`, tokens `@theme`), luego cada componente en el orden en que aparece en la página (Navbar → Hero → About → Classes → Instructors → Testimonials → FinalCTA → Footer), y finalmente `App.tsx` (gradientes inline) e `index.html` (metadatos). La mayoría de los cambios son: (1) reemplazos sistemáticos de color vía `replace_all` según la tabla de equivalencias del spec, y (2) reemplazos de bloques de texto / arrays de datos por el contenido nuevo.
+**Arquitectura:** Cambios puramente de frontend (React + TypeScript + Tailwind v4 + Framer Motion) en `medisxime-landing/`. Se actualiza primero el sistema de diseño (`index.css`, tokens `@theme`), luego cada componente en el orden en que aparece en la página (Navbar → Hero → About → Classes → Instructors → Testimonials → FinalCTA → Footer), y finalmente `App.tsx` (gradientes inline) e `index.html` (metadatos). La mayoría de los cambios son: (1) reemplazos sistemáticos de color vía `replace_all` según la tabla de equivalencias del spec, y (2) reemplazos de bloques de texto / arrays de datos por el contenido nuevo.
 
 **Stack técnico:** React 19 + TypeScript + Vite + Tailwind CSS v4 (`@theme`) + Framer Motion. No hay backend ni tests automatizados involucrados — la verificación es visual (`pnpm dev`) + `grep` + `pnpm build`.
 
@@ -30,11 +30,11 @@
 ## Task 1: `index.css` — Sistema de diseño (tokens de color)
 
 **Files:**
-- Modify: `acaripole-landing/src/index.css`
+- Modify: `medisxime-landing/src/index.css`
 
 - [ ] **Step 1: Reescribir el archivo completo con la nueva paleta café/crema/terracota**
 
-Reemplaza **todo el contenido** de `acaripole-landing/src/index.css` con:
+Reemplaza **todo el contenido** de `medisxime-landing/src/index.css` con:
 
 ```css
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap');
@@ -188,7 +188,7 @@ Nota: se eliminan los tokens `--color-bg-footer` y `--color-text-medium` (no for
 
 - [ ] **Step 2: Verificar que no quedan colores antiguos en el archivo**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|56,189,248" acaripole-landing/src/index.css`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|56,189,248" medisxime-landing/src/index.css`
 Expected: sin resultados (comando no imprime nada).
 
 ---
@@ -196,11 +196,11 @@ Expected: sin resultados (comando no imprime nada).
 ## Task 2: `App.tsx` — Gradientes inline
 
 **Files:**
-- Modify: `acaripole-landing/src/App.tsx`
+- Modify: `medisxime-landing/src/App.tsx`
 
 - [ ] **Step 1: Actualizar el gradiente de la barra de progreso de scroll**
 
-En `acaripole-landing/src/App.tsx`, busca este bloque (línea ~37):
+En `medisxime-landing/src/App.tsx`, busca este bloque (línea ~37):
 
 ```tsx
 // ── Gold scroll-progress bar (landing only) ───────────────────────────────────
@@ -274,7 +274,7 @@ Y reemplázalo por:
 
 - [ ] **Step 3: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8" acaripole-landing/src/App.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8" medisxime-landing/src/App.tsx`
 Expected: sin resultados.
 
 ---
@@ -282,7 +282,7 @@ Expected: sin resultados.
 ## Task 3: `Navbar.tsx` — Marca, monograma y colores
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Navbar.tsx`
+- Modify: `medisxime-landing/src/components/Navbar.tsx`
 
 - [ ] **Step 1: Reemplazar el logo de imagen por el monograma "XC" + nombre**
 
@@ -430,7 +430,7 @@ Reemplázalo por:
 
 - [ ] **Step 8: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|Logo_Medis\|Diana" acaripole-landing/src/components/Navbar.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|Logo_Medis\|Diana" medisxime-landing/src/components/Navbar.tsx`
 Expected: sin resultados.
 
 ---
@@ -438,7 +438,7 @@ Expected: sin resultados.
 ## Task 4: `Hero.tsx` — Eyebrow, headline, subtexto y colores
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Hero.tsx`
+- Modify: `medisxime-landing/src/components/Hero.tsx`
 
 - [ ] **Step 1: Reemplazar `139,92,246` → `92,58,40` en todo el archivo (`replace_all`)**
 
@@ -544,7 +544,7 @@ Reemplázalo por:
 
 - [ ] **Step 7: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|56,189,248\|Diana\|Medicina Familiar\|FAMILIA" acaripole-landing/src/components/Hero.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|56,189,248\|Diana\|Medicina Familiar\|FAMILIA" medisxime-landing/src/components/Hero.tsx`
 Expected: sin resultados.
 
 ---
@@ -552,7 +552,7 @@ Expected: sin resultados.
 ## Task 5: `About.tsx` — Pilares, subtexto, stats y colores
 
 **Files:**
-- Modify: `acaripole-landing/src/components/About.tsx`
+- Modify: `medisxime-landing/src/components/About.tsx`
 
 - [ ] **Step 1: Reemplazar `#8B5CF6` → `#5C3A28` en todo el archivo (`replace_all`)**
 
@@ -692,7 +692,7 @@ Reemplázalo por:
 
 - [ ] **Step 8: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|Bienestar Integral\|Confianza y Cercanía\|valoración individual\|Años de Experiencia\|Servicios Médicos" acaripole-landing/src/components/About.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|Bienestar Integral\|Confianza y Cercanía\|valoración individual\|Años de Experiencia\|Servicios Médicos" medisxime-landing/src/components/About.tsx`
 Expected: sin resultados.
 
 ---
@@ -700,7 +700,7 @@ Expected: sin resultados.
 ## Task 6: `Classes.tsx` — Servicios (renombrar `CLASSES` → `SERVICES`)
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Classes.tsx`
+- Modify: `medisxime-landing/src/components/Classes.tsx`
 
 - [ ] **Step 1: Reemplazar el array `CLASSES` por `SERVICES` con los 6 nuevos servicios**
 
@@ -1016,7 +1016,7 @@ Esta cadena aparece 2 veces tras los pasos anteriores: `whileHover={{ scale: 1.0
 
 - [ ] **Step 10: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|A78BFA\|167,139,250\|56,189,248\|C4B5FD\|7DD3FC\|CLASSES\|F3F0FB\|Servicios <em\|Pediatría\|Control Prenatal" acaripole-landing/src/components/Classes.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|A78BFA\|167,139,250\|56,189,248\|C4B5FD\|7DD3FC\|CLASSES\|F3F0FB\|Servicios <em\|Pediatría\|Control Prenatal" medisxime-landing/src/components/Classes.tsx`
 Expected: sin resultados.
 
 ---
@@ -1024,7 +1024,7 @@ Expected: sin resultados.
 ## Task 7: `Instructors.tsx` — "Sobre la Doctora" (Dra. Ximena Correa)
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Instructors.tsx`
+- Modify: `medisxime-landing/src/components/Instructors.tsx`
 
 La estructura de 2 columnas (avatar izquierdo `min-height: 420px` + info derecha) ya existe y coincide con el spec — no requiere reescritura completa, solo los cambios de contenido y color de abajo.
 
@@ -1157,7 +1157,7 @@ const CREDENTIALS = [
 
 - [ ] **Step 10: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|6366F1\|Diana\|Medina\|>DM<\|Medicina Familiar y Comunitaria\|años de experiencia" acaripole-landing/src/components/Instructors.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|6366F1\|Diana\|Medina\|>DM<\|Medicina Familiar y Comunitaria\|años de experiencia" medisxime-landing/src/components/Instructors.tsx`
 Expected: sin resultados.
 
 ---
@@ -1165,7 +1165,7 @@ Expected: sin resultados.
 ## Task 8: `Testimonials.tsx` — Testimonios de pacientes y colores
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Testimonials.tsx`
+- Modify: `medisxime-landing/src/components/Testimonials.tsx`
 
 El eyebrow ("Testimonios de Pacientes") y el título ("Lo que dicen *Nuestros Pacientes*") ya coinciden con el spec — no requieren cambio de texto, solo de color (incluido en los `replace_all` de abajo). Solo cambia el array `TESTIMONIALS` y el fondo de la sección.
 
@@ -1287,7 +1287,7 @@ const TESTIMONIALS = [
 
 - [ ] **Step 7: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|F3F0FB\|Medina\|Control Prenatal\|Control de Niño Sano" acaripole-landing/src/components/Testimonials.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|F3F0FB\|Medina\|Control Prenatal\|Control de Niño Sano" medisxime-landing/src/components/Testimonials.tsx`
 Expected: sin resultados.
 
 ---
@@ -1295,7 +1295,7 @@ Expected: sin resultados.
 ## Task 9: `FinalCTA.tsx` — CTA final, fondo oscuro y colores
 
 **Files:**
-- Modify: `acaripole-landing/src/components/FinalCTA.tsx`
+- Modify: `medisxime-landing/src/components/FinalCTA.tsx`
 
 El eyebrow ("Agenda tu Consulta") ya coincide con el spec en cuanto a texto. Cambian: el fondo de la sección (a `--color-bg-dark`), el headline, el subtexto, un trust indicator, y todos los colores morado/azul.
 
@@ -1437,7 +1437,7 @@ Reemplázalo por:
 
 - [ ] **Step 9: Verificar**
 
-Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|1B1C1C\|Diana\|Medina\|es lo primero\|Tu salud" acaripole-landing/src/components/FinalCTA.tsx`
+Run: `grep -n "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|1B1C1C\|Diana\|Medina\|es lo primero\|Tu salud" medisxime-landing/src/components/FinalCTA.tsx`
 Expected: sin resultados.
 
 ---
@@ -1445,7 +1445,7 @@ Expected: sin resultados.
 ## Task 10: `Footer.tsx` — Reescritura para fondo oscuro (`--color-bg-dark`)
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Footer.tsx`
+- Modify: `medisxime-landing/src/components/Footer.tsx`
 
 El footer pasa de fondo claro (`#EEF2FF`) a fondo oscuro (`#3D2418`, `--color-bg-dark`), por lo que todos los textos secundarios cambian de grises oscuros a tonos crema translúcidos. También se añade el monograma "XC" junto al nombre de la marca, se elimina Facebook de redes sociales, y se actualizan las columnas de Servicios y Contacto.
 
@@ -2003,7 +2003,7 @@ Reemplázalo por:
 
 - [ ] **Step 12: Verificar**
 
-Run: `grep -n "EEF2FF\|475569\|94A3B8\|1B1C1C\|8B5CF6\|139,92,246\|Diana\|Medina\|Facebook\|Dirección\|Control de Niño Sano\|Control Prenatal\|XXX XXX XXXX" acaripole-landing/src/components/Footer.tsx`
+Run: `grep -n "EEF2FF\|475569\|94A3B8\|1B1C1C\|8B5CF6\|139,92,246\|Diana\|Medina\|Facebook\|Dirección\|Control de Niño Sano\|Control Prenatal\|XXX XXX XXXX" medisxime-landing/src/components/Footer.tsx`
 Expected: sin resultados.
 
 ---
@@ -2011,7 +2011,7 @@ Expected: sin resultados.
 ## Task 11: `index.html` — Metadatos SEO y `theme-color`
 
 **Files:**
-- Modify: `acaripole-landing/index.html`
+- Modify: `medisxime-landing/index.html`
 
 - [ ] **Step 1: Actualizar `<title>`, `description` y `keywords`**
 
@@ -2079,7 +2079,7 @@ Reemplázalo por:
 
 - [ ] **Step 5: Verificar**
 
-Run: `grep -n "8B5CF6\|Diana\|Medina\|Medicina Familiar" acaripole-landing/index.html`
+Run: `grep -n "8B5CF6\|Diana\|Medina\|Medicina Familiar" medisxime-landing/index.html`
 Expected: sin resultados.
 
 ---
@@ -2093,7 +2093,7 @@ Expected: sin resultados.
 Run:
 
 ```bash
-grep -rn "Acaripole\|acaripole\|pole dance\|pole\|instructora\|instructoras\|disciplinas\|Diana\|gold-" acaripole-landing/src/components/Navbar.tsx acaripole-landing/src/components/Hero.tsx acaripole-landing/src/components/About.tsx acaripole-landing/src/components/Classes.tsx acaripole-landing/src/components/Instructors.tsx acaripole-landing/src/components/Testimonials.tsx acaripole-landing/src/components/FinalCTA.tsx acaripole-landing/src/components/Footer.tsx acaripole-landing/src/App.tsx
+grep -rn "medisxime\|medisxime\|pole dance\|pole\|instructora\|instructoras\|disciplinas\|Diana\|gold-" medisxime-landing/src/components/Navbar.tsx medisxime-landing/src/components/Hero.tsx medisxime-landing/src/components/About.tsx medisxime-landing/src/components/Classes.tsx medisxime-landing/src/components/Instructors.tsx medisxime-landing/src/components/Testimonials.tsx medisxime-landing/src/components/FinalCTA.tsx medisxime-landing/src/components/Footer.tsx medisxime-landing/src/App.tsx
 ```
 
 Expected: sin resultados.
@@ -2103,14 +2103,14 @@ Expected: sin resultados.
 Run:
 
 ```bash
-grep -rn "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|A78BFA\|6366F1\|775A00\|B08D32\|D4A843\|119,90,0\|176,141,50" acaripole-landing/src/components/Navbar.tsx acaripole-landing/src/components/Hero.tsx acaripole-landing/src/components/About.tsx acaripole-landing/src/components/Classes.tsx acaripole-landing/src/components/Instructors.tsx acaripole-landing/src/components/Testimonials.tsx acaripole-landing/src/components/FinalCTA.tsx acaripole-landing/src/components/Footer.tsx acaripole-landing/src/App.tsx acaripole-landing/src/index.css acaripole-landing/index.html
+grep -rn "8B5CF6\|3B82F6\|38BDF8\|139,92,246\|59,130,246\|A78BFA\|6366F1\|775A00\|B08D32\|D4A843\|119,90,0\|176,141,50" medisxime-landing/src/components/Navbar.tsx medisxime-landing/src/components/Hero.tsx medisxime-landing/src/components/About.tsx medisxime-landing/src/components/Classes.tsx medisxime-landing/src/components/Instructors.tsx medisxime-landing/src/components/Testimonials.tsx medisxime-landing/src/components/FinalCTA.tsx medisxime-landing/src/components/Footer.tsx medisxime-landing/src/App.tsx medisxime-landing/src/index.css medisxime-landing/index.html
 ```
 
 Expected: sin resultados.
 
 - [ ] **Step 3: Levantar el servidor de desarrollo**
 
-Run: `cd acaripole-landing && pnpm dev`
+Run: `cd medisxime-landing && pnpm dev`
 
 Abre la URL indicada (normalmente `http://localhost:5173`) en el navegador.
 
@@ -2132,7 +2132,7 @@ Usa las herramientas de desarrollo del navegador para simular anchos de **<900px
 
 - [ ] **Step 6: Build de producción sin errores**
 
-Run: `cd acaripole-landing && pnpm build`
+Run: `cd medisxime-landing && pnpm build`
 Expected: build exitoso, sin errores de TypeScript.
 
 ---

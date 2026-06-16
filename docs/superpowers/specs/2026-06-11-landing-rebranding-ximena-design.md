@@ -1,7 +1,7 @@
 # Diseño: Rebranding Landing Pública — Consultorio Dra. Ximena Correa
 
 **Fecha:** 2026-06-11
-**Sub-proyecto:** 1 de N — Landing pública (`acaripole-landing/src/components/`)
+**Sub-proyecto:** 1 de N — Landing pública (`medisxime-landing/src/components/`)
 **Estado:** Aprobado — pendiente plan de implementación
 **Supersede a:** `2026-06-10-landing-rebranding-medica-design.md` (enfoque "Dra. Diana Cristina Medina Camargo", paleta morado/azul, nunca implementado)
 
@@ -9,7 +9,7 @@
 
 ## Contexto
 
-El proyecto `MedisXime` parte de una copia de la plataforma AcariPole (estudio de pole dance) y se migra al sistema de gestión del **consultorio de la Dra. Ximena Correa, Médico Especialista en Salud Ocupacional, Medicina Laboral, consultoría SGSST y Medicina Bioreguladora**.
+El proyecto `MedisXime` parte de una copia de la plataforma medisxime (estudio de pole dance) y se migra al sistema de gestión del **consultorio de la Dra. Ximena Correa, Médico Especialista en Salud Ocupacional, Medicina Laboral, consultoría SGSST y Medicina Bioreguladora**.
 
 La identidad de marca se basa en la tarjeta de presentación física de la doctora:
 - **Anverso:** fondo crema/beige, logo circular tipo "remolino" con una "X" estilizada, texto "Dra. Ximena Correa — Médico Especialista" en café oscuro.
@@ -201,7 +201,7 @@ Concepto: el footer adopta el **café oscuro del reverso de la tarjeta**, igual 
 
 ### index.html
 
-- Actualizar `<title>` (quitar referencia a "Acaripole")
+- Actualizar `<title>` (quitar referencia a "medisxime")
 
 ---
 
@@ -228,7 +228,7 @@ Concepto: el footer adopta el **café oscuro del reverso de la tarjeta**, igual 
 
 ## Verificación Final
 
-1. Grep de residuos: `Acaripole|acaripole|pole dance|pole|instructora|instructoras|disciplinas|Diana|gold-` en los 8 componentes + `App.tsx` → sin resultados.
+1. Grep de residuos: `medisxime|medisxime|pole dance|pole|instructora|instructoras|disciplinas|Diana|gold-` en los 8 componentes + `App.tsx` → sin resultados.
 2. Grep de colores antiguos: todos los valores de la columna izquierda de la tabla de equivalencias → sin resultados.
 3. Verificación visual en `pnpm dev` (desktop y mobile <900px/<768px) de las 8 secciones.
 4. `pnpm build` sin errores de TypeScript.

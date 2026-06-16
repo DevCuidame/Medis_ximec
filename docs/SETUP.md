@@ -14,7 +14,7 @@
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd Acaripole
+cd medisxime
 
 # Install dependencies (all apps and packages)
 pnpm install
@@ -24,16 +24,16 @@ pnpm install
 
 ```bash
 # Option A: Using Docker (recommended)
-docker run -d --name acaripole-postgres \
-  -e POSTGRES_USER=acaripole \
+docker run -d --name medisxime-postgres \
+  -e POSTGRES_USER=medisxime \
   -e POSTGRES_PASSWORD=your_password \
-  -e POSTGRES_DB=acaripole_dev \
+  -e POSTGRES_DB=medisxime_dev \
   -p 5432:5432 \
   postgres:15
 
 # Option B: Using local PostgreSQL
 psql -U postgres
-CREATE DATABASE acaripole_dev;
+CREATE DATABASE medisxime_dev;
 ```
 
 ### 3. Environment Configuration
@@ -43,7 +43,7 @@ CREATE DATABASE acaripole_dev;
 cp apps/backend/.env.example apps/backend/.env.local
 
 # Edit apps/backend/.env.local with your database credentials:
-# DATABASE_URL=postgresql://acaripole:your_password@localhost:5432/acaripole_dev
+# DATABASE_URL=postgresql://medisxime:your_password@localhost:5432/medisxime_dev
 # JWT_SECRET=your-secret-key-change-in-production
 
 # Frontend
@@ -51,7 +51,7 @@ cp apps/frontend/.env.example apps/frontend/.env.local
 
 # Edit apps/frontend/.env.local (usually defaults are fine):
 # VITE_API_URL=http://localhost:3000/api
-# VITE_APP_NAME=Acaripole
+# VITE_APP_NAME=medisxime
 # VITE_ENVIRONMENT=development
 ```
 
@@ -59,7 +59,7 @@ cp apps/frontend/.env.example apps/frontend/.env.local
 
 ```bash
 # Run migrations
-pnpm -F @acaripole/backend migrate
+pnpm -F @medisxime/backend migrate
 ```
 
 ### 5. Start Development Servers
@@ -70,16 +70,16 @@ pnpm dev
 
 # Or separately:
 # Terminal 1 - Frontend (http://localhost:5173)
-pnpm -F @acaripole/frontend dev
+pnpm -F @medisxime/frontend dev
 
 # Terminal 2 - Backend (http://localhost:3000)
-pnpm -F @acaripole/backend dev
+pnpm -F @medisxime/backend dev
 ```
 
 ## Verify Installation
 
 - Open http://localhost:5173 in your browser
-- You should see the Acaripole welcome page
+- You should see the medisxime welcome page
 - Check http://localhost:3000/api/health for backend health status
 
 ## Common Commands
@@ -90,8 +90,8 @@ pnpm -F @acaripole/backend dev
 pnpm dev
 
 # Start specific app
-pnpm -F @acaripole/frontend dev
-pnpm -F @acaripole/backend dev
+pnpm -F @medisxime/frontend dev
+pnpm -F @medisxime/backend dev
 
 # Format code
 pnpm format
@@ -116,7 +116,7 @@ pnpm build:backend
 pnpm test
 
 # Run specific app tests
-pnpm -F @acaripole/backend test
+pnpm -F @medisxime/backend test
 ```
 
 ## Troubleshooting
@@ -145,7 +145,7 @@ kill -9 <PID>
 
 3. Ensure database exists:
    ```bash
-   psql -U postgres -l | grep acaripole_dev
+   psql -U postgres -l | grep medisxime_dev
    ```
 
 ### pnpm Install Issues

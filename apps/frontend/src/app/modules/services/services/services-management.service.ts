@@ -21,7 +21,7 @@ import type {
   ServiceOffersFilter,
   PaginatedResponse,
   ResolveBookingRequestPayload,
-} from '@acaripole/shared-types';
+} from '@medisxime/shared-types';
 
 interface ApiResponse<T> {
   success: boolean;

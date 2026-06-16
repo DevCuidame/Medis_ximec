@@ -6,7 +6,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Migrar la landing pública de AcariPole (pole dance) al consultorio de la Dra. Diana Cristina Medina Camargo — Especialista en Medicina Familiar y Comunitaria — aplicando la nueva paleta morado→azul sobre blanco y reemplazando todo el contenido con temática médica.
+**Goal:** Migrar la landing pública de medisxime (pole dance) al consultorio de la Dra. Diana Cristina Medina Camargo — Especialista en Medicina Familiar y Comunitaria — aplicando la nueva paleta morado→azul sobre blanco y reemplazando todo el contenido con temática médica.
 
 **Architecture:** Se actualizan en orden: (1) `index.css` establece el nuevo sistema de tokens y clases utilitarias como fundamento visual; (2) `App.tsx` corrige los dos gradientes dorados que afectan toda la app; (3) los 8 componentes de landing se migran uno a uno — contenido primero, luego colores inline.
 
@@ -14,7 +14,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-10-landing-rebranding-medica-design.md`
 
-**Dev server:** `cd acaripole-landing && pnpm dev` → abre `http://localhost:5173`
+**Dev server:** `cd medisxime-landing && pnpm dev` → abre `http://localhost:5173`
 
 ---
 
@@ -22,23 +22,23 @@
 
 | Archivo | Tipo de cambio |
 |---|---|
-| `acaripole-landing/src/index.css` | Reescritura completa — nuevo `@theme` + clases utilitarias |
-| `acaripole-landing/src/App.tsx` | 2 cambios inline — barra progreso + banner sesión expirada |
-| `acaripole-landing/src/components/Navbar.tsx` | Copy + links + colores + classNames |
-| `acaripole-landing/src/components/Hero.tsx` | Copy + video source + colores inline |
-| `acaripole-landing/src/components/About.tsx` | Array PILLARS + stats + copy + colores inline |
-| `acaripole-landing/src/components/Classes.tsx` | Array CLASSES→SERVICES + id sección + gradientes tarjetas |
-| `acaripole-landing/src/components/Instructors.tsx` | Reescritura completa — layout 2 columnas, perfil doctora |
-| `acaripole-landing/src/components/Testimonials.tsx` | Array TESTIMONIALS + id sección + colores |
-| `acaripole-landing/src/components/FinalCTA.tsx` | Copy + colores inline |
-| `acaripole-landing/src/components/Footer.tsx` | Contenido + colores inline |
+| `medisxime-landing/src/index.css` | Reescritura completa — nuevo `@theme` + clases utilitarias |
+| `medisxime-landing/src/App.tsx` | 2 cambios inline — barra progreso + banner sesión expirada |
+| `medisxime-landing/src/components/Navbar.tsx` | Copy + links + colores + classNames |
+| `medisxime-landing/src/components/Hero.tsx` | Copy + video source + colores inline |
+| `medisxime-landing/src/components/About.tsx` | Array PILLARS + stats + copy + colores inline |
+| `medisxime-landing/src/components/Classes.tsx` | Array CLASSES→SERVICES + id sección + gradientes tarjetas |
+| `medisxime-landing/src/components/Instructors.tsx` | Reescritura completa — layout 2 columnas, perfil doctora |
+| `medisxime-landing/src/components/Testimonials.tsx` | Array TESTIMONIALS + id sección + colores |
+| `medisxime-landing/src/components/FinalCTA.tsx` | Copy + colores inline |
+| `medisxime-landing/src/components/Footer.tsx` | Contenido + colores inline |
 
 ---
 
 ## Task 1: Sistema de diseño — `index.css`
 
 **Files:**
-- Modify: `acaripole-landing/src/index.css` (reescritura completa)
+- Modify: `medisxime-landing/src/index.css` (reescritura completa)
 
 - [ ] **Step 1: Reemplazar `index.css` con el nuevo sistema de tokens**
 
@@ -195,7 +195,7 @@ body {
 - [ ] **Step 2: Verificar en dev server**
 
 ```bash
-cd acaripole-landing && pnpm dev
+cd medisxime-landing && pnpm dev
 ```
 
 Abrir `http://localhost:5173`. La barra de scroll (si visible) debe verse morada/azul. El fondo del body es blanco. No hay errores de consola por clases CSS faltantes todavía (las clases `gold-gradient`/`gold-text-gradient` seguirán en el HTML de los componentes hasta que se actualicen en las tareas siguientes — es normal que los botones queden sin estilo de gradiente por ahora).
@@ -205,7 +205,7 @@ Abrir `http://localhost:5173`. La barra de scroll (si visible) debe verse morada
 ## Task 2: `App.tsx` — barra de progreso y banner de sesión
 
 **Files:**
-- Modify: `acaripole-landing/src/App.tsx`
+- Modify: `medisxime-landing/src/App.tsx`
 
 - [ ] **Step 1: Actualizar `ScrollProgressBar`**
 
@@ -238,7 +238,7 @@ Con el dev server activo, recarga `http://localhost:5173`. La barra de progreso 
 ## Task 3: `Navbar.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Navbar.tsx`
+- Modify: `medisxime-landing/src/components/Navbar.tsx`
 
 - [ ] **Step 1: Actualizar array `links`**
 
@@ -267,7 +267,7 @@ const links = [
 
 Reemplaza:
 ```tsx
-            Acaripole
+            medisxime
 ```
 Con:
 ```tsx
@@ -403,7 +403,7 @@ Recargar `http://localhost:5173`. El navbar debe mostrar "Dra. Diana Medina" en 
 ## Task 4: `Hero.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Hero.tsx`
+- Modify: `medisxime-landing/src/components/Hero.tsx`
 
 - [ ] **Step 1: Cambiar fuente del video**
 
@@ -517,7 +517,7 @@ Reemplaza:
 
 Reemplaza:
 ```tsx
-            En Acaripole transformamos fuerza, sensualidad y confianza en una experiencia artística
+            En medisxime transformamos fuerza, sensualidad y confianza en una experiencia artística
             diseñada para conectar contigo misma.
 ```
 →
@@ -603,7 +603,7 @@ Scroll al hero en `http://localhost:5173`. Los orbs deben ser morado/azul, el te
 ## Task 5: `About.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/About.tsx`
+- Modify: `medisxime-landing/src/components/About.tsx`
 
 - [ ] **Step 1: Reemplazar array `PILLARS`**
 
@@ -651,7 +651,7 @@ Título (dos líneas):
 
 Subtexto:
 ```tsx
-            Acaripole es un espacio donde el movimiento se convierte en ritual. Cada sesión es un
+            medisxime es un espacio donde el movimiento se convierte en ritual. Cada sesión es un
             encuentro contigo misma — un espacio de exploración, confianza y poder que va más allá
             de la técnica. Aquí, el arte del pole dance se fusiona con la expresión femenina más pura.
 ```
@@ -788,7 +788,7 @@ Scroll a la sección "About" en la landing. Las tarjetas deben mostrar íconos m
 ## Task 6: `Classes.tsx` → Servicios Médicos
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Classes.tsx`
+- Modify: `medisxime-landing/src/components/Classes.tsx`
 
 - [ ] **Step 1: Reemplazar array `CLASSES`**
 
@@ -950,7 +950,7 @@ Scroll a la sección en la landing. Las 6 tarjetas deben mostrar servicios médi
 ## Task 7: `Instructors.tsx` — Perfil de la Doctora (reescritura completa)
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Instructors.tsx` (reescritura completa del archivo)
+- Modify: `medisxime-landing/src/components/Instructors.tsx` (reescritura completa del archivo)
 
 - [ ] **Step 1: Reemplazar el archivo completo**
 
@@ -1141,7 +1141,7 @@ Scroll a la sección "Sobre la Doctora". Debe mostrarse el perfil de 2 columnas:
 ## Task 8: `Testimonials.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Testimonials.tsx`
+- Modify: `medisxime-landing/src/components/Testimonials.tsx`
 
 - [ ] **Step 1: Reemplazar array `TESTIMONIALS`**
 
@@ -1335,7 +1335,7 @@ Scroll a "Testimonios". Deben verse los 5 testimonios de pacientes, estrellas mo
 ## Task 9: `FinalCTA.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/FinalCTA.tsx`
+- Modify: `medisxime-landing/src/components/FinalCTA.tsx`
 
 - [ ] **Step 1: Actualizar eyebrow, título y subtexto**
 
@@ -1512,13 +1512,13 @@ Scroll al FinalCTA. Fondo oscuro con resplandores morado/azul, título "Tu salud
 ## Task 10: `Footer.tsx`
 
 **Files:**
-- Modify: `acaripole-landing/src/components/Footer.tsx`
+- Modify: `medisxime-landing/src/components/Footer.tsx`
 
 - [ ] **Step 1: Actualizar nombre de marca y tagline**
 
 Reemplaza texto del logo:
 ```tsx
-              Acaripole
+              medisxime
 ```
 →
 ```tsx
@@ -1571,7 +1571,7 @@ Reemplaza el objeto TikTok en el array `SOCIAL`:
   },
 ```
 
-Actualiza la URL de Instagram de `href: 'https://www.instagram.com/acaripole/?hl=es-la'` a `href: '#'` (placeholder — el usuario debe poner su URL real).
+Actualiza la URL de Instagram de `href: 'https://www.instagram.com/medisxime/?hl=es-la'` a `href: '#'` (placeholder — el usuario debe poner su URL real).
 
 - [ ] **Step 3: Actualizar columna "Estudio" → "Consultorio"**
 
@@ -1612,9 +1612,9 @@ Los hrefs de esos links: `href="#clases"` → `href="#servicios"`
 
 Reemplaza el array de datos de contacto:
 ```tsx
-                { label: 'Instagram', value: '@acaripole' },
+                { label: 'Instagram', value: '@medisxime' },
                 { label: 'WhatsApp', value: '+57 322 380 80 20 ' },
-                { label: 'Email', value: 'acaripoleagenda@gmail.com' },
+                { label: 'Email', value: 'medisximeagenda@gmail.com' },
                 { label: 'Horarios', value: 'Lun – Vier · 8am – 11am y 3pm-8pm sab 8am-8pm' },
 ```
 →
@@ -1639,7 +1639,7 @@ Texto: `Acceso artistas` → `Agendar Cita`
 
 Copyright:
 ```tsx
-            © {year} Acaripole · Todos los derechos reservados
+            © {year} medisxime · Todos los derechos reservados
 ```
 →
 ```tsx
@@ -1693,10 +1693,10 @@ Scroll al footer. Debe mostrar: nombre completo de la doctora en degradado morad
 
 - [ ] **Step 1: Grep de referencias residuales**
 
-Ejecuta desde `acaripole-landing/`:
+Ejecuta desde `medisxime-landing/`:
 
 ```bash
-grep -rn "Acaripole\|acaripole\|pole dance\|pole\|instructora\|instructoras\|disciplinas" src/components/Navbar.tsx src/components/Hero.tsx src/components/About.tsx src/components/Classes.tsx src/components/Instructors.tsx src/components/Testimonials.tsx src/components/FinalCTA.tsx src/components/Footer.tsx
+grep -rn "medisxime\|medisxime\|pole dance\|pole\|instructora\|instructoras\|disciplinas" src/components/Navbar.tsx src/components/Hero.tsx src/components/About.tsx src/components/Classes.tsx src/components/Instructors.tsx src/components/Testimonials.tsx src/components/FinalCTA.tsx src/components/Footer.tsx
 ```
 
 No debe haber resultados. Si los hay, corregir en el archivo correspondiente.
@@ -1737,7 +1737,7 @@ Abrir DevTools → dispositivo mobile (< 900px). Probar hamburger, dropdown, tod
 - [ ] **Step 6: Verificar `build` sin errores de TypeScript**
 
 ```bash
-cd acaripole-landing && pnpm build
+cd medisxime-landing && pnpm build
 ```
 
 Salida esperada: `✓ built in X.XXs` sin errores.

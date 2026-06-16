@@ -1,8 +1,8 @@
 {
-  "name": "acaripole-monorepo",
+  "name": "medisxime-monorepo",
   "version": "0.0.1",
   "private": true,
-  "description": "Modern, modular monorepo for Acaripole project with React frontend and Node.js backend",
+  "description": "Modern, modular monorepo for medisxime project with React frontend and Node.js backend",
   "packageManager": "pnpm@9.0.0",
   "type": "module",
   "scripts": {

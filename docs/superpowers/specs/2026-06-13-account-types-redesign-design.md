@@ -3,7 +3,7 @@
 ## Contexto
 
 El wizard "Nueva Cuenta" (`CreateProfessionalModal.tsx`) y el panel `UsuariosDashboard.tsx`
-todavía usan la taxonomía heredada de Acaripole (`Profesional` / `Usuario normal` /
+todavía usan la taxonomía heredada de medisxime (`Profesional` / `Usuario normal` /
 `Administrador`) y la paleta de colores morado/azul antigua. Para medisXime, los tipos
 de cuenta que el administrador puede crear deben reflejar los actores reales del negocio:
 

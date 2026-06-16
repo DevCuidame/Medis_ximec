@@ -36,75 +36,75 @@ citas, pacientes, médicos, planes/membresías, finanzas, etc.).
 ## Pantallas detectadas a migrar
 
 ### App core
-- acaripole-landing/src/App.tsx
-- acaripole-landing/src/main.tsx
+- medisxime-landing/src/App.tsx
+- medisxime-landing/src/main.tsx
 
 ### Landing pública (`/`)
-- acaripole-landing/src/components/Hero.tsx
-- acaripole-landing/src/components/About.tsx
-- acaripole-landing/src/components/Classes.tsx
-- acaripole-landing/src/components/Instructors.tsx
-- acaripole-landing/src/components/Testimonials.tsx
-- acaripole-landing/src/components/FinalCTA.tsx
-- acaripole-landing/src/components/Navbar.tsx
-- acaripole-landing/src/components/Footer.tsx
+- medisxime-landing/src/components/Hero.tsx
+- medisxime-landing/src/components/About.tsx
+- medisxime-landing/src/components/Classes.tsx
+- medisxime-landing/src/components/Instructors.tsx
+- medisxime-landing/src/components/Testimonials.tsx
+- medisxime-landing/src/components/FinalCTA.tsx
+- medisxime-landing/src/components/Navbar.tsx
+- medisxime-landing/src/components/Footer.tsx
 
 ### Autenticación (`/login`)
-- acaripole-landing/src/components/ArtistLogin.tsx
+- medisxime-landing/src/components/ArtistLogin.tsx
 
 ### Componentes compartidos
-- acaripole-landing/src/components/ProtectedRoute.tsx
+- medisxime-landing/src/components/ProtectedRoute.tsx
 
 ### Panel Admin (`/admin/*`)
-- acaripole-landing/src/components/admin/MainDashboard.tsx
-- acaripole-landing/src/components/admin/UsuariosDashboard.tsx
-- acaripole-landing/src/components/admin/UsuarioCard.tsx
-- acaripole-landing/src/components/admin/AdminClasses.tsx
-- acaripole-landing/src/components/admin/AdminProfessionals.tsx
-- acaripole-landing/src/components/admin/ServiciosDashboard.tsx
-- acaripole-landing/src/components/admin/CreateService.tsx
-- acaripole-landing/src/components/admin/CreateClassModal.tsx
-- acaripole-landing/src/components/admin/SedesDashboard.tsx
-- acaripole-landing/src/components/admin/SedeCard.tsx
-- acaripole-landing/src/components/admin/CreateLocation.tsx
-- acaripole-landing/src/components/admin/EspaciosDashboard.tsx
-- acaripole-landing/src/components/admin/CreateRoom.tsx
-- acaripole-landing/src/components/admin/FinanzasDashboard.tsx
-- acaripole-landing/src/components/admin/MembresiasDashboard.tsx
-- acaripole-landing/src/components/admin/BeneficiosDashboard.tsx
-- acaripole-landing/src/components/admin/InscripcionesDashboard.tsx
-- acaripole-landing/src/components/admin/CreateProfessionalModal.tsx
-- acaripole-landing/src/components/admin/ProfessionalProfileModal.tsx
-- acaripole-landing/src/components/admin/ConfirmationModal.tsx
-- acaripole-landing/src/components/admin/FormularioEspacio.tsx
-- acaripole-landing/src/components/admin/FormularioSede.tsx
-- acaripole-landing/src/components/admin/FormularioServicio.tsx
+- medisxime-landing/src/components/admin/MainDashboard.tsx
+- medisxime-landing/src/components/admin/UsuariosDashboard.tsx
+- medisxime-landing/src/components/admin/UsuarioCard.tsx
+- medisxime-landing/src/components/admin/AdminClasses.tsx
+- medisxime-landing/src/components/admin/AdminProfessionals.tsx
+- medisxime-landing/src/components/admin/ServiciosDashboard.tsx
+- medisxime-landing/src/components/admin/CreateService.tsx
+- medisxime-landing/src/components/admin/CreateClassModal.tsx
+- medisxime-landing/src/components/admin/SedesDashboard.tsx
+- medisxime-landing/src/components/admin/SedeCard.tsx
+- medisxime-landing/src/components/admin/CreateLocation.tsx
+- medisxime-landing/src/components/admin/EspaciosDashboard.tsx
+- medisxime-landing/src/components/admin/CreateRoom.tsx
+- medisxime-landing/src/components/admin/FinanzasDashboard.tsx
+- medisxime-landing/src/components/admin/MembresiasDashboard.tsx
+- medisxime-landing/src/components/admin/BeneficiosDashboard.tsx
+- medisxime-landing/src/components/admin/InscripcionesDashboard.tsx
+- medisxime-landing/src/components/admin/CreateProfessionalModal.tsx
+- medisxime-landing/src/components/admin/ProfessionalProfileModal.tsx
+- medisxime-landing/src/components/admin/ConfirmationModal.tsx
+- medisxime-landing/src/components/admin/FormularioEspacio.tsx
+- medisxime-landing/src/components/admin/FormularioSede.tsx
+- medisxime-landing/src/components/admin/FormularioServicio.tsx
 
 ### Tipos y esquemas admin
-- acaripole-landing/src/components/admin/types.ts
-- acaripole-landing/src/components/admin/EspacioTypes.ts
-- acaripole-landing/src/components/admin/SedeTypes.ts
-- acaripole-landing/src/components/admin/servicioSchema.ts
+- medisxime-landing/src/components/admin/types.ts
+- medisxime-landing/src/components/admin/EspacioTypes.ts
+- medisxime-landing/src/components/admin/SedeTypes.ts
+- medisxime-landing/src/components/admin/servicioSchema.ts
 
 ### Portal Paciente (`/user/*`)
-- acaripole-landing/src/components/user/UserLayout.tsx
-- acaripole-landing/src/components/user/UserCalendario.tsx
-- acaripole-landing/src/components/user/UserServicios.tsx
-- acaripole-landing/src/components/user/UserMisServicios.tsx
-- acaripole-landing/src/components/user/UserMembresias.tsx
-- acaripole-landing/src/components/user/UserProfesionales.tsx
-- acaripole-landing/src/components/user/UserDashboard.tsx
-- acaripole-landing/src/components/user/UserMemberships.tsx
-- acaripole-landing/src/components/user/UserClasses.tsx
+- medisxime-landing/src/components/user/UserLayout.tsx
+- medisxime-landing/src/components/user/UserCalendario.tsx
+- medisxime-landing/src/components/user/UserServicios.tsx
+- medisxime-landing/src/components/user/UserMisServicios.tsx
+- medisxime-landing/src/components/user/UserMembresias.tsx
+- medisxime-landing/src/components/user/UserProfesionales.tsx
+- medisxime-landing/src/components/user/UserDashboard.tsx
+- medisxime-landing/src/components/user/UserMemberships.tsx
+- medisxime-landing/src/components/user/UserClasses.tsx
 
 ### Schemas lib
-- acaripole-landing/src/lib/schemas/espacioSchema.ts
-- acaripole-landing/src/lib/schemas/sedeSchema.ts
+- medisxime-landing/src/lib/schemas/espacioSchema.ts
+- medisxime-landing/src/lib/schemas/sedeSchema.ts
 
 ### Portal Profesional/Médico (`/professional/*`)
-- acaripole-landing/src/components/professional/ProfessionalDashboard.tsx
-- acaripole-landing/src/components/professional/ProfessionalClasses.tsx
-- acaripole-landing/src/components/professional/ProfessionalProfile.tsx
+- medisxime-landing/src/components/professional/ProfessionalDashboard.tsx
+- medisxime-landing/src/components/professional/ProfessionalClasses.tsx
+- medisxime-landing/src/components/professional/ProfessionalProfile.tsx
 
 ## Base de datos (apps/backend/migrations/)
 

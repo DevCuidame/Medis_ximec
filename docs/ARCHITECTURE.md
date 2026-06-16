@@ -1,8 +1,8 @@
-# Acaripole Architecture Guide
+# medisxime Architecture Guide
 
 ## Overview
 
-Acaripole is a modern, modular monorepo built with a client/server architecture, emphasizing clean separation of concerns, scalability, and maintainability.
+medisxime is a modern, modular monorepo built with a client/server architecture, emphasizing clean separation of concerns, scalability, and maintainability.
 
 ## Technology Stack
 
@@ -16,7 +16,7 @@ Acaripole is a modern, modular monorepo built with a client/server architecture,
 ## Directory Structure
 
 ```
-Acaripole/
+medisxime/
 ├── apps/
 │   ├── frontend/    # React + Vite SPA
 │   └── backend/     # Express API server
@@ -74,12 +74,12 @@ PostgreSQL Database
 ### Frontend
 - Build: `pnpm build` → static files in `dist/`
 - Deploy: Upload to CDN or static host
-- URL: https://acaripole.com
+- URL: https://medisxime.com
 
 ### Backend
 - Build: `pnpm build` → compiled JS in `dist/`
 - Deploy: Docker container → Cloud (K8s, Render, Railway)
-- URL: https://api.acaripole.com
+- URL: https://api.medisxime.com
 
 ### Database
 - Migrations: Run before backend startup
@@ -110,7 +110,7 @@ PostgreSQL Database
 
 4. **Run migrations**
    ```bash
-   pnpm -F @acaripole/backend migrate
+   pnpm -F @medisxime/backend migrate
    ```
 
 5. **Start dev servers**

@@ -1,6 +1,6 @@
-# Acaripole Backend
+# medisxime Backend
 
-Express.js backend server for Acaripole project with PostgreSQL database.
+Express.js backend server for medisxime project with PostgreSQL database.
 
 ## Features
 
@@ -85,7 +85,7 @@ pnpm migrate
 Copy `.env.example` to `.env.local` and configure:
 
 ```
-DATABASE_URL=postgresql://user:password@localhost:5432/acaripole_dev
+DATABASE_URL=postgresql://user:password@localhost:5432/medisxime_dev
 NODE_ENV=development
 PORT=3000
 JWT_SECRET=your-secret-key

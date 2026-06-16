@@ -2,13 +2,13 @@
 
 ## Overview
 
-The Acaripole API is a RESTful service that communicates with JSON payloads. All requests should include `Content-Type: application/json`.
+The medisxime API is a RESTful service that communicates with JSON payloads. All requests should include `Content-Type: application/json`.
 
 ## Base URL
 
 ```
 Development:  http://localhost:3000/api
-Production:   https://api.acaripole.com/api
+Production:   https://api.medisxime.com/api
 ```
 
 ## Response Format
@@ -197,7 +197,7 @@ Common error messages:
 
 The API allows requests from:
 - Development: `http://localhost:5173`
-- Production: `https://acaripole.com`
+- Production: `https://medisxime.com`
 
 ## Testing API
 
