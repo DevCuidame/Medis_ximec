@@ -15,6 +15,55 @@ importers:
         specifier: ^2.0.0
         version: 2.9.14
 
+  apps/backend:
+    dependencies:
+      '@medisxime/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
+      dotenv:
+        specifier: ^16.3.1
+        version: 16.6.1
+      express:
+        specifier: ^4.18.2
+        version: 4.22.2
+      jsonwebtoken:
+        specifier: ^9.0.3
+        version: 9.0.3
+      nodemailer:
+        specifier: ^8.0.7
+        version: 8.0.7
+      pg:
+        specifier: ^8.11.3
+        version: 8.21.0
+    devDependencies:
+      '@types/express':
+        specifier: ^4.17.21
+        version: 4.17.25
+      '@types/jsonwebtoken':
+        specifier: ^9.0.7
+        version: 9.0.10
+      '@types/node':
+        specifier: ^20.10.6
+        version: 20.19.41
+      '@types/nodemailer':
+        specifier: ^8.0.0
+        version: 8.0.0
+      '@types/pg':
+        specifier: ^8.20.0
+        version: 8.20.0
+      eslint:
+        specifier: ^8.56.0
+        version: 8.57.1
+      prettier:
+        specifier: ^3.1.1
+        version: 3.8.3
+      tsx:
+        specifier: ^4.7.0
+        version: 4.22.2
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+
   medisxime-landing:
     dependencies:
       '@hookform/resolvers':
@@ -35,6 +84,9 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
+      react-helmet-async:
+        specifier: ^3.0.0
+        version: 3.0.0(react@19.2.6)
       react-hook-form:
         specifier: ^7.76.0
         version: 7.76.0(react@19.2.6)
@@ -87,55 +139,6 @@ importers:
       vite:
         specifier: ^8.0.12
         version: 8.0.13(@types/node@24.12.4)(esbuild@0.28.0)(jiti@2.7.0)(tsx@4.22.2)
-
-  apps/backend:
-    dependencies:
-      '@medisxime/shared-types':
-        specifier: workspace:*
-        version: link:../../packages/shared-types
-      dotenv:
-        specifier: ^16.3.1
-        version: 16.6.1
-      express:
-        specifier: ^4.18.2
-        version: 4.22.2
-      jsonwebtoken:
-        specifier: ^9.0.3
-        version: 9.0.3
-      nodemailer:
-        specifier: ^8.0.7
-        version: 8.0.7
-      pg:
-        specifier: ^8.11.3
-        version: 8.21.0
-    devDependencies:
-      '@types/express':
-        specifier: ^4.17.21
-        version: 4.17.25
-      '@types/jsonwebtoken':
-        specifier: ^9.0.7
-        version: 9.0.10
-      '@types/node':
-        specifier: ^20.10.6
-        version: 20.19.41
-      '@types/nodemailer':
-        specifier: ^8.0.0
-        version: 8.0.0
-      '@types/pg':
-        specifier: ^8.20.0
-        version: 8.20.0
-      eslint:
-        specifier: ^8.56.0
-        version: 8.57.1
-      prettier:
-        specifier: ^3.1.1
-        version: 3.8.3
-      tsx:
-        specifier: ^4.7.0
-        version: 4.22.2
-      typescript:
-        specifier: ^5.4.0
-        version: 5.9.3
 
   packages/config: {}
 
@@ -1441,6 +1444,9 @@ packages:
   inherits@2.0.4:
     resolution: {integrity: sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==}
 
+  invariant@2.2.4:
+    resolution: {integrity: sha512-phJfQVBuaJM5raOpJjSfkiD6BpbCE4Ns//LaXl6wGYtUBY83nWS6Rf9tXm2e8VaK60JEjYldbPif/A2B1C2gNA==}
+
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
     engines: {node: '>= 0.10'}
@@ -1939,6 +1945,14 @@ packages:
     peerDependencies:
       react: ^19.2.6
 
+  react-fast-compare@3.2.2:
+    resolution: {integrity: sha512-nsO+KSNgo1SbJqJEYRE9ERzo7YtYbou/OqjSQKxV7jcKox7+usiUVZOAC+XnDOABXggQTno0Y1CpVnuWEc1boQ==}
+
+  react-helmet-async@3.0.0:
+    resolution: {integrity: sha512-nA3IEZfXiclgrz4KLxAhqJqIfFDuvzQwlKwpdmzZIuC1KNSghDEIXmyU0TKtbM+NafnkICcwx8CECFrZ/sL/1w==}
+    peerDependencies:
+      react: ^16.6.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   react-hook-form@7.76.0:
     resolution: {integrity: sha512-eKtLGgFeSgkHqQD8J59AMZ9a4uD1D83iSIzt4YlTGD7liDen5rrjcUO1rVIGd9yC1gofryjtHbv+4ny4hkLWlw==}
     engines: {node: '>=18.0.0'}
@@ -2037,6 +2051,9 @@ packages:
 
   setprototypeof@1.2.0:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
+
+  shallowequal@1.1.0:
+    resolution: {integrity: sha512-y0m1JoUZSlPAjXVtPPW70aZWfIL/dSP7AFkRnniLCrK/8MDKog3TySTBmckD+RObVxH0v4Tox67+F14PdED2oQ==}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -3548,6 +3565,10 @@ snapshots:
 
   inherits@2.0.4: {}
 
+  invariant@2.2.4:
+    dependencies:
+      loose-envify: 1.4.0
+
   ipaddr.js@1.9.1: {}
 
   is-binary-path@2.1.0:
@@ -3948,6 +3969,15 @@ snapshots:
       react: 19.2.6
       scheduler: 0.27.0
 
+  react-fast-compare@3.2.2: {}
+
+  react-helmet-async@3.0.0(react@19.2.6):
+    dependencies:
+      invariant: 2.2.4
+      react: 19.2.6
+      react-fast-compare: 3.2.2
+      shallowequal: 1.1.0
+
   react-hook-form@7.76.0(react@19.2.6):
     dependencies:
       react: 19.2.6
@@ -4064,6 +4094,8 @@ snapshots:
   set-cookie-parser@2.7.2: {}
 
   setprototypeof@1.2.0: {}
+
+  shallowequal@1.1.0: {}
 
   shebang-command@2.0.0:
     dependencies:
