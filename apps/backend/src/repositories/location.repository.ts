@@ -20,6 +20,7 @@ export interface LocationPublic {
   city: string;
   phone?: string;
   email?: string;
+  providerCode?: string | null;
   isActive: boolean;
 }
 
@@ -34,7 +35,7 @@ function emptyOperatingHours(): OperatingHoursMap {
 export const LocationRepository = {
   async findAll(): Promise<(LocationPublic & { operatingHours: OperatingHoursMap })[]> {
     const { rows } = await pool.query(
-      `SELECT id, name, address, city, phone, email, is_active AS "isActive"
+      `SELECT id, name, address, city, phone, email, provider_code AS "providerCode", is_active AS "isActive"
        FROM locations
        ORDER BY name`
     );
@@ -71,10 +72,10 @@ export const LocationRepository = {
 
   async create(data: Omit<LocationPublic, 'id' | 'isActive'>): Promise<LocationPublic> {
     const { rows } = await pool.query(
-      `INSERT INTO locations (name, address, city, phone, email)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, name, address, city, phone, email, is_active AS "isActive"`,
-      [data.name, data.address, data.city, data.phone ?? null, data.email ?? null]
+      `INSERT INTO locations (name, address, city, phone, email, provider_code)
+       VALUES ($1, $2, $3, $4, $5, $6)
+       RETURNING id, name, address, city, phone, email, provider_code AS "providerCode", is_active AS "isActive"`,
+      [data.name, data.address, data.city, data.phone ?? null, data.email ?? null, data.providerCode ?? null]
     );
     return rows[0];
   },
@@ -89,6 +90,7 @@ export const LocationRepository = {
     if (data.city !== undefined)     { sets.push(`city = $${i++}`);    values.push(data.city); }
     if (data.phone !== undefined)    { sets.push(`phone = $${i++}`);   values.push(data.phone); }
     if (data.email !== undefined)    { sets.push(`email = $${i++}`);   values.push(data.email); }
+    if (data.providerCode !== undefined) { sets.push(`provider_code = $${i++}`); values.push(data.providerCode); }
     if (data.isActive !== undefined) { sets.push(`is_active = $${i++}`); values.push(data.isActive); }
     if (sets.length === 0) return null;
 
@@ -98,7 +100,7 @@ export const LocationRepository = {
     const { rows } = await pool.query(
       `UPDATE locations SET ${sets.join(', ')}
        WHERE id = $${i}
-       RETURNING id, name, address, city, phone, email, is_active AS "isActive"`,
+       RETURNING id, name, address, city, phone, email, provider_code AS "providerCode", is_active AS "isActive"`,
       values
     );
     return rows[0] ?? null;

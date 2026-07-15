@@ -3,6 +3,9 @@ import { LocationRepository } from '@repositories/location.repository.js';
 import { OperatingHoursRepository } from '@repositories/services.repository.js';
 import type { DayOfWeek, UpsertOperatingHourPayload } from '@medisxime/shared-types';
 
+const PROVIDER_CODE_RE = /^\d{8,12}$/;
+const PROVIDER_CODE_ERROR = 'Código de prestador requerido (8 a 12 dígitos).';
+
 interface IncomingDaySchedule {
   isOpen: boolean;
   blocks?: { openTime: string; closeTime: string }[];
@@ -33,6 +36,10 @@ export async function getLocations(_req: Request, res: Response): Promise<void> 
 export async function createLocation(req: Request, res: Response): Promise<void> {
   try {
     const { operatingHours, ...locationData } = req.body;
+    if (!PROVIDER_CODE_RE.test(String(locationData.providerCode ?? ''))) {
+      res.status(400).json({ success: false, error: PROVIDER_CODE_ERROR });
+      return;
+    }
     const location = await LocationRepository.create(locationData);
 
     if (operatingHours) {
@@ -49,6 +56,10 @@ export async function updateLocation(req: Request, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const { operatingHours, ...locationData } = req.body;
+    if (locationData.providerCode !== undefined && !PROVIDER_CODE_RE.test(String(locationData.providerCode))) {
+      res.status(400).json({ success: false, error: PROVIDER_CODE_ERROR });
+      return;
+    }
     const location = await LocationRepository.update(id, locationData);
     if (!location) { res.status(404).json({ success: false, error: 'Sede no encontrada' }); return; }
 
