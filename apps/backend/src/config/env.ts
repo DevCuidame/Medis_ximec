@@ -7,6 +7,7 @@ interface Env {
   NODE_ENV: 'development' | 'production' | 'test';
   PORT: number;
   JWT_SECRET: string;
+  SISPRO_SECRET: string;
   CORS_ORIGIN: string;
   EMAIL_HOST: string;
   EMAIL_PORT: number;
@@ -30,6 +31,7 @@ export const env: Env = {
   NODE_ENV: (process.env.NODE_ENV as Env['NODE_ENV']) || 'development',
   PORT: Number(process.env.PORT) || 3007,
   JWT_SECRET: process.env.JWT_SECRET || '',
+  SISPRO_SECRET: process.env.SISPRO_SECRET || '',
   CORS_ORIGIN: process.env.CORS_ORIGIN || 'http://localhost:5173',
   EMAIL_HOST: process.env.EMAIL_HOST || 'smtp.gmail.com',
   EMAIL_PORT: Number(process.env.EMAIL_PORT) || 465,
