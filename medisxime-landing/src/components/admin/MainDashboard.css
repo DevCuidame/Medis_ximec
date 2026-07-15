@@ -19,7 +19,8 @@
   z-index: 50;
 }
 
-.dashboard-container.sidebar-collapsed .sidebar {
+.dashboard-container.sidebar-collapsed .sidebar,
+.dashboard-container.sidebar-collapsed .admin-sidebar {
   display: none;
 }
 
