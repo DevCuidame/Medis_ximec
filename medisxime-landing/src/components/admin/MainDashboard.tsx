@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Users, Calendar, CalendarDays, DollarSign, LogOut, CreditCard,
-  Bell, Briefcase, ChevronDown, ChevronRight,
-  LayoutDashboard, ClipboardList, Activity, CheckCircle2, XCircle, Menu
+import { motion } from 'framer-motion';
+import {
+  Users, Calendar,
+  Bell, Activity, CheckCircle2, XCircle, Menu
 } from 'lucide-react';
+import { AdminSidebar } from './AdminSidebar';
 import './MainDashboard.css';
 
 const C = {
@@ -19,15 +19,6 @@ const C = {
   textMuted: '#B0A08C',
   borderLight: '#E6D9C7',
 };
-
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: true },
-  { icon: Users, label: 'Usuarios', active: false },
-  { icon: CalendarDays, label: 'Calendario', active: false },
-  { icon: Briefcase, label: 'Servicios', active: false },
-  { icon: DollarSign,   label: 'Finanzas',      active: false },
-  { icon: CreditCard,   label: 'Planes',    active: false },
-];
 
 interface TodayService {
   id: string; title: string; scheduledAt: string; durationMinutes: number
@@ -47,8 +38,6 @@ function isSameDay(a: Date, b: Date) {
 
 export const MainDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [hoveredNav, setHoveredNav] = useState<number | null>(null);
-  const [isServicesExpanded, setIsServicesExpanded] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [occupancy, setOccupancy]         = useState(0);
@@ -136,116 +125,7 @@ export const MainDashboard: React.FC = () => {
   return (
     <div className="dashboard-container">
       
-      {/* -- MOBILE OVERLAY -- */}
-      <div 
-        className={`mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`} 
-        onClick={() => setIsMobileMenuOpen(false)}
-      />
-
-      {/* -- SIDEBAR --------------------------------------------------- */}
-      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 18, fontWeight: 700, color: C.white }}>XC</span>
-            </div>
-            <div>
-              <div style={{ fontFamily: '"Cormorant Garamond", Georgia, serif', fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
-            </div>
-          </div>
-        </div>
-
-        <nav style={{ flex: 1, padding: '20px 14px' }}>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '0 10px', display: 'block', marginBottom: 10 }}>Menú Principal</span>
-            {NAV_ITEMS.map((item, i) => {
-              const Icon = item.icon;
-              const isHovered = hoveredNav === i;
-              const isActive = item.active;
-              
-              const handleNavClick = () => {
-                if (item.label === 'Dashboard') navigate('/admin/dashboard');
-                if (item.label === 'Calendario') navigate('/admin/classes');
-                if (item.label === 'Usuarios') navigate('/admin/users');
-                if (item.label === 'Inscripciones') navigate('/admin/inscripciones')
-                if (item.label === 'Finanzas') navigate('/admin/finances');
-                if (item.label === 'Planes') navigate('/admin/memberships');
-                if (item.label === 'Servicios') {
-                  setIsServicesExpanded(!isServicesExpanded);
-                } else {
-                  setIsMobileMenuOpen(false);
-                }
-              };
-              
-              return (
-                <div key={item.label} style={{ marginBottom: 4 }}>
-                  <button
-                    onClick={handleNavClick}
-                    onMouseEnter={() => setHoveredNav(i)}
-                    onMouseLeave={() => setHoveredNav(null)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '12px 14px', borderRadius: 10,
-                      background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent',
-                      border: 'none',
-                      transition: 'all 0.2s ease',
-                      cursor: 'pointer',
-                      position: 'relative',
-                      overflow: 'hidden'
-                    }}
-                  >
-                    {isActive && (
-                      <motion.div layoutId="activeNav" style={{ position: 'absolute', inset: 0, background: `linear-gradient(90deg, ${C.gold}, ${C.goldLight})`, zIndex: 0, borderRadius: 10 }} />
-                    )}
-                    <div style={{ position: 'relative', zIndex: 1, display: 'flex', alignItems: 'center', width: '100%' }}>
-                      <Icon size={18} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} strokeWidth={isActive ? 2.5 : 2} style={{ flexShrink: 0, transition: 'color 0.2s' }} />
-                      <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', marginLeft: 12, color: isActive ? C.white : isHovered ? C.gold : C.textBrown, transition: 'color 0.2s' }}>
-                        {item.label}
-                      </span>
-                      {item.label === 'Servicios' && (
-                        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                          {isServicesExpanded ? <ChevronDown size={14} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} /> : <ChevronRight size={14} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} />}
-                        </div>
-                      )}
-                    </div>
-                  </button>
-                  
-                  <AnimatePresence>
-                    {item.label === 'Servicios' && isServicesExpanded && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        style={{ overflow: 'hidden' }}
-                      >
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginLeft: 38, marginTop: 8, marginBottom: 8, borderLeft: `2px solid ${C.goldLight}`, paddingLeft: 12 }}>
-                          <span onClick={() => navigate('/admin/services/locations')} style={{ fontSize: 12, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '6px 4px', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = C.gold} onMouseLeave={(e) => e.currentTarget.style.color = C.textBrown}>Sedes</span>
-                          <span onClick={() => navigate('/admin/services/rooms')} style={{ fontSize: 12, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '6px 4px', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = C.gold} onMouseLeave={(e) => e.currentTarget.style.color = C.textBrown}>Espacios</span>
-                          <span onClick={() => navigate('/admin/services/create')} style={{ fontSize: 12, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '6px 4px', transition: 'color 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.color = C.gold} onMouseLeave={(e) => e.currentTarget.style.color = C.textBrown}>Servicios</span>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              );
-            })}
-          </div>
-        </nav>
-
-
-        <div style={{ padding: '16px 20px 24px', borderTop: `1px solid ${C.borderLight}` }}>
-          <button
-            onClick={() => { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); navigate('/login'); }}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', borderRadius: 10, background: 'none', border: 'none', cursor: 'pointer', color: C.textMedium, transition: 'background 0.2s' }}
-            onMouseEnter={(e) => e.currentTarget.style.background = '#F5EDE1'}
-            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-          >
-            <LogOut size={18} strokeWidth={2} />
-            <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.05em' }}>Cerrar Sesión</span>
-          </button>
-        </div>
-      </aside>
+      <AdminSidebar active="dashboard" isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
 
       {/* -- MAIN CONTENT ----------------------------------------------- */}
       <div className="main-content">
