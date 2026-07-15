@@ -16,8 +16,11 @@ function toPublic(r: ProfessionalRecord): ProfessionalPublic {
     email:            r.email,
     firstName:        r.first_name,
     lastName:         r.last_name,
+    secondName:          r.second_name,
+    secondLastName:      r.second_last_name,
     idType:           r.id_type,
     idNumber:         r.id_number,
+    professionalLicense: r.professional_license,
     phone:            r.phone,
     bio:              r.bio,
     specialties:      r.specialties ?? [],
@@ -69,13 +72,21 @@ export const ProfessionalRepository = {
     return rows[0] ? toPublic(rows[0]) : null
   },
 
-  /** Create a professional (insert as PROFESSIONAL role) */
-  async create(dto: CreateProfessionalDTO & { passwordHash: string }): Promise<ProfessionalPublic> {
+  /** Create an ADMIN or PROFESSIONAL account */
+  async create(
+    dto: CreateProfessionalDTO & {
+      passwordHash: string
+      role: 'PROFESSIONAL' | 'ADMIN'
+      sisproPasswordEnc: string | null
+    },
+  ): Promise<ProfessionalPublic> {
     const { rows } = await pool.query<ProfessionalRecord>(`
       INSERT INTO users
-        (email, password_hash, first_name, last_name, phone, role,
-         id_type, id_number, bio, specialties, instagram_url, avatar_url, status, is_verified, professional_type)
-      VALUES ($1,$2,$3,$4,$5,'PROFESSIONAL',$6,$7,$8,$9,$10,$11,'offline',TRUE,$12)
+        (email, password_hash, first_name, second_name, last_name, second_last_name,
+         phone, address, role, id_type, id_number, professional_license,
+         sispro_user, sispro_password_enc,
+         bio, specialties, instagram_url, avatar_url, status, is_verified, professional_type)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,'offline',TRUE,$19)
       RETURNING *,
         NULL::NUMERIC AS avg_score,
         NULL::BIGINT  AS total_reviews
@@ -83,10 +94,17 @@ export const ProfessionalRepository = {
       dto.email.toLowerCase().trim(),
       dto.passwordHash,
       dto.firstName.trim(),
+      dto.secondName?.trim() || null,
       dto.lastName.trim(),
+      dto.secondLastName?.trim() || null,
       dto.phone?.trim() ?? null,
+      dto.address?.trim() || null,
+      dto.role,
       dto.idType?.trim() ?? null,
       dto.idNumber?.trim() ?? null,
+      dto.professionalLicense?.trim() || null,
+      dto.sisproUser?.trim() || null,
+      dto.sisproPasswordEnc,
       dto.bio?.trim() ?? null,
       dto.specialties ?? null,
       dto.instagramUrl?.trim() ?? null,
@@ -97,7 +115,7 @@ export const ProfessionalRepository = {
   },
 
   /** Update professional profile */
-  async update(id: string, dto: UpdateProfessionalDTO): Promise<ProfessionalPublic | null> {
+  async update(id: string, dto: UpdateProfessionalDTO & { sisproPasswordEnc?: string | null }): Promise<ProfessionalPublic | null> {
     const fields: string[] = []
     const values: unknown[] = []
     let idx = 1
@@ -113,6 +131,12 @@ export const ProfessionalRepository = {
     if (dto.avatarUrl   !== undefined) { fields.push(`avatar_url    = $${idx++}`); values.push(dto.avatarUrl?.trim() ?? null) }
     if (dto.isActive    !== undefined) { fields.push(`is_active     = $${idx++}`); values.push(dto.isActive) }
     if (dto.isVerified  !== undefined) { fields.push(`is_verified   = $${idx++}`); values.push(dto.isVerified) }
+    if (dto.secondName          !== undefined) { fields.push(`second_name          = $${idx++}`); values.push(dto.secondName?.trim() || null) }
+    if (dto.secondLastName      !== undefined) { fields.push(`second_last_name     = $${idx++}`); values.push(dto.secondLastName?.trim() || null) }
+    if (dto.address             !== undefined) { fields.push(`address              = $${idx++}`); values.push(dto.address?.trim() || null) }
+    if (dto.professionalLicense !== undefined) { fields.push(`professional_license = $${idx++}`); values.push(dto.professionalLicense?.trim() || null) }
+    if (dto.sisproUser          !== undefined) { fields.push(`sispro_user          = $${idx++}`); values.push(dto.sisproUser?.trim() || null) }
+    if (dto.sisproPasswordEnc   !== undefined) { fields.push(`sispro_password_enc  = $${idx++}`); values.push(dto.sisproPasswordEnc) }
 
     if (fields.length === 0) return this.findById(id)
 
@@ -174,6 +198,23 @@ export const ProfessionalRepository = {
       weeklyBookings:      parseInt(bookingsResult.rows[0].weekly_bookings, 10),
       totalDisciplines:    parseInt(disciplinesResult.rows[0].total, 10),
       avgSatisfaction:     ratingResult.rows[0].avg ? parseFloat(ratingResult.rows[0].avg) * 20 : 98,
+    }
+  },
+
+  /** Datos sensibles solo-ADMIN (dirección + credenciales SISPRO) */
+  async findAdminDetails(id: string): Promise<{ address: string | null; sisproUser: string | null; sisproPasswordEnc: string | null } | null> {
+    const { rows } = await pool.query(
+      `SELECT address, sispro_user, sispro_password_enc
+       FROM users
+       WHERE id = $1 AND role IN ('PROFESSIONAL', 'ADMIN')
+       LIMIT 1`,
+      [id],
+    )
+    if (!rows[0]) return null
+    return {
+      address:           rows[0].address,
+      sisproUser:        rows[0].sispro_user,
+      sisproPasswordEnc: rows[0].sispro_password_enc,
     }
   },
 }

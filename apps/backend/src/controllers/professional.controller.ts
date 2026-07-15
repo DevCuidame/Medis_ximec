@@ -55,6 +55,16 @@ export async function createProfessional(req: Request, res: Response): Promise<v
   }
 }
 
+// ─── GET /api/professionals/:id/admin-details ────────────────────────────────
+export async function getAdminDetails(req: Request, res: Response): Promise<void> {
+  try {
+    const details = await ProfessionalService.getAdminDetails(req.params.id)
+    res.status(200).json({ success: true, data: { details } })
+  } catch (err: any) {
+    res.status(err.statusCode ?? 500).json({ success: false, error: err.message })
+  }
+}
+
 // ─── PUT /api/professionals/:id ───────────────────────────────────────────────
 export async function updateProfessional(req: Request, res: Response): Promise<void> {
   try {

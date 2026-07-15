@@ -5,11 +5,17 @@ export interface ProfessionalRecord {
   id:                string
   email:             string
   first_name:        string
+  second_name:         string | null
+  second_last_name:    string | null
   last_name:         string
   phone:             string | null
   role:              string
   id_type:           string | null
   id_number:         string | null
+  address:              string | null
+  professional_license: string | null
+  sispro_user:          string | null
+  sispro_password_enc:  string | null
   bio:               string | null
   specialties:       string[] | null
   instagram_url:     string | null
@@ -31,8 +37,11 @@ export interface ProfessionalPublic {
   email:            string
   firstName:        string
   lastName:         string
+  secondName:          string | null
+  secondLastName:      string | null
   idType:           string | null
   idNumber:         string | null
+  professionalLicense: string | null
   phone:            string | null
   bio:              string | null
   specialties:      string[]
@@ -51,30 +60,49 @@ export interface ProfessionalPublic {
 export interface CreateProfessionalDTO {
   email:            string
   password:         string
+  role?:               'PROFESSIONAL' | 'ADMIN'
   firstName:        string
+  secondName?:         string
   lastName:         string
+  secondLastName?:     string
   idType?:          string
   idNumber?:        string
   phone?:           string
+  address?:            string
   bio?:             string
   specialties?:     string[]
   instagramUrl?:    string
   avatarUrl?:       string
   professionalType?: 'dependiente' | 'independiente'
+  professionalLicense?: string
+  sisproUser?:         string
+  sisproPassword?:     string
 }
 
 export interface UpdateProfessionalDTO {
   firstName?:   string
   lastName?:    string
+  secondName?:         string
+  secondLastName?:     string
   idType?:      string
   idNumber?:    string
   phone?:       string
+  address?:            string
   bio?:         string
   specialties?: string[]
   instagramUrl?: string
   avatarUrl?:   string
   isActive?:    boolean
   isVerified?:  boolean
+  professionalLicense?: string
+  sisproUser?:         string
+  sisproPassword?:     string
+}
+
+export interface ProfessionalAdminDetails {
+  address:        string | null
+  sisproUser:     string | null
+  sisproPassword: string | null
 }
 
 // ─── Stats ────────────────────────────────────────────────────────────────────

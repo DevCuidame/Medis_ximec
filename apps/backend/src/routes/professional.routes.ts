@@ -3,6 +3,7 @@ import {
   listProfessionals,
   getStats,
   getProfessional,
+  getAdminDetails,
   checkAvailability,
   getSchedule,
   replaceSchedule,
@@ -21,6 +22,7 @@ router.get('/stats',               authenticate, authorize('ADMIN'), getStats)
 router.get('/:id/availability',    checkAvailability)
 router.get('/:id/schedule',        authenticate, getSchedule)
 router.put('/:id/schedule',        authenticate, authorize('ADMIN'), replaceSchedule)
+router.get('/:id/admin-details',   authenticate, authorize('ADMIN'), getAdminDetails)
 router.get('/:id',                 authenticate, getProfessional)
 
 // Admin-only mutations

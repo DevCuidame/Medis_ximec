@@ -1,14 +1,14 @@
 import { ProfessionalRepository } from '@repositories/professional.repository.js'
 import { UserRepository } from '@repositories/user.repository.js'
-import { hashPassword } from '@utils/index.js'
+import { hashPassword, encryptSecret, decryptSecret } from '@utils/index.js'
 import type {
   ProfessionalPublic,
   CreateProfessionalDTO,
   UpdateProfessionalDTO,
   ProfessionalStatus,
   ProfessionalStats,
+  ProfessionalAdminDetails,
 } from '../types/professional.types.js'
-import type { UserPublic, UserRole } from '../types/auth.types.js'
 
 export const ProfessionalService = {
 
@@ -22,19 +22,42 @@ export const ProfessionalService = {
     return pro
   },
 
-  async create(dto: CreateProfessionalDTO & { role?: UserRole }): Promise<ProfessionalPublic | UserPublic> {
+  async create(dto: CreateProfessionalDTO): Promise<ProfessionalPublic> {
+    const role = dto.role ?? 'PROFESSIONAL'
+    if (role !== 'PROFESSIONAL' && role !== 'ADMIN') {
+      throw Object.assign(
+        new Error('Rol no permitido. Solo se pueden crear cuentas ADMIN o PROFESSIONAL.'),
+        { statusCode: 400 },
+      )
+    }
+
     const exists = await UserRepository.emailExists(dto.email)
     if (exists) throw Object.assign(new Error('El email ya está registrado.'), { statusCode: 409 })
 
     const passwordHash = hashPassword(dto.password)
-    if (dto.role && dto.role !== 'PROFESSIONAL') {
-      return UserRepository.create({ ...dto, role: dto.role, passwordHash })
+    const sisproPasswordEnc = dto.sisproPassword ? encryptSecret(dto.sisproPassword) : null
+    return ProfessionalRepository.create({ ...dto, role, passwordHash, sisproPasswordEnc })
+  },
+
+  async getAdminDetails(id: string): Promise<ProfessionalAdminDetails> {
+    const row = await ProfessionalRepository.findAdminDetails(id)
+    if (!row) throw Object.assign(new Error('Profesional no encontrado.'), { statusCode: 404 })
+    return {
+      address:        row.address,
+      sisproUser:     row.sisproUser,
+      sisproPassword: row.sisproPasswordEnc ? decryptSecret(row.sisproPasswordEnc) : null,
     }
-    return ProfessionalRepository.create({ ...dto, passwordHash })
   },
 
   async update(id: string, dto: UpdateProfessionalDTO): Promise<ProfessionalPublic> {
-    const updated = await ProfessionalRepository.update(id, dto)
+    const { sisproPassword, ...rest } = dto
+    const payload = {
+      ...rest,
+      ...(sisproPassword !== undefined
+        ? { sisproPasswordEnc: sisproPassword ? encryptSecret(sisproPassword) : null }
+        : {}),
+    }
+    const updated = await ProfessionalRepository.update(id, payload)
     if (!updated) throw Object.assign(new Error('Profesional no encontrado.'), { statusCode: 404 })
     return updated
   },
