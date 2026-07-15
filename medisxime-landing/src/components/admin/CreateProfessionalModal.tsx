@@ -58,13 +58,14 @@ const ID_TYPES = [
 
 const DEFAULT_AVATAR_URL = 'https://images.unsplash.com/photo-1505751172876-fa1923c5c528?auto=format&fit=crop&q=80&w=600'
 
-type AccountRole = 'USER' | 'PROFESSIONAL' | 'COMPANY' | 'ADMIN'
+type AccountRole = 'PROFESSIONAL' | 'ADMIN'
 
 interface FormData {
-  firstName: string; lastName: string; idType: string; idNumber: string
-  companyName: string; legalRepresentative: string;
-  email: string; phone: string
+  firstName: string; secondName: string; lastName: string; secondLastName: string
+  idType: string; idNumber: string
+  email: string; phone: string; address: string
   specialties: string[]; bio: string; instagramUrl: string
+  professionalLicense: string; sisproUser: string; sisproPassword: string
   password: string; confirmPassword: string
 }
 
@@ -97,6 +98,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
   const [newSlotEnd, setNewSlotEnd]       = useState('')
   const [showPass, setShowPass]           = useState(false)
   const [showConf, setShowConf]           = useState(false)
+  const [showSispro, setShowSispro]       = useState(false)
   const [loading, setLoading]             = useState(false)
   const [showAddSpecialty, setShowAddSpecialty] = useState(false)
   const [newSpecialtyText, setNewSpecialtyText] = useState('')
@@ -111,10 +113,11 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
   const [customIdType, setCustomIdType]       = useState('')
 
   const [form, setForm] = useState<FormData>({
-    firstName: '', lastName: '', idType: ID_TYPES[0], idNumber: '',
-    companyName: '', legalRepresentative: '',
-    email: '', phone: '',
+    firstName: '', secondName: '', lastName: '', secondLastName: '',
+    idType: ID_TYPES[0], idNumber: '',
+    email: '', phone: '', address: '',
     specialties: [], bio: '', instagramUrl: '',
+    professionalLicense: '', sisproUser: '', sisproPassword: '',
     password: '', confirmPassword: '',
   })
 
@@ -166,17 +169,11 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
   const validate = (s: number) => {
     const e: Record<string, string> = {}
     if (s === 1) {
-      if (role === 'COMPANY') {
-        if (!form.companyName.trim()) e.companyName = 'Requerido'
-        if (!form.legalRepresentative.trim()) e.legalRepresentative = 'Requerido'
-        if (!form.idNumber.trim()) e.idNumber = 'Requerido'
-      } else {
-        if (!form.firstName.trim())  e.firstName = 'Requerido'
-        if (!form.lastName.trim())   e.lastName  = 'Requerido'
-        if (form.idType === 'Otro' && !customIdType.trim()) e.idType = 'Requerido'
-        if (!form.idNumber.trim())   e.idNumber  = 'Requerido'
-      }
-      
+      if (!form.firstName.trim())  e.firstName = 'Requerido'
+      if (!form.lastName.trim())   e.lastName  = 'Requerido'
+      if (form.idType === 'Otro' && !customIdType.trim()) e.idType = 'Requerido'
+      if (!form.idNumber.trim())   e.idNumber  = 'Requerido'
+
       if (role === 'PROFESSIONAL' && professionalType === 'independiente' && schedule.length === 0) {
         e.schedule = 'Requerido'
       }
@@ -225,16 +222,22 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
           email:            form.email.toLowerCase().trim(),
           password:         form.password,
           role,
-          firstName:        role === 'COMPANY' ? form.companyName.trim() : form.firstName.trim(),
-          lastName:         role === 'COMPANY' ? form.legalRepresentative.trim() : form.lastName.trim(),
+          firstName:        form.firstName.trim(),
+          secondName:       form.secondName.trim()     || undefined,
+          lastName:         form.lastName.trim(),
+          secondLastName:   form.secondLastName.trim() || undefined,
           idType:           form.idType === 'Otro' ? customIdType.trim() : form.idType,
           idNumber:         form.idNumber.trim(),
-          phone:            form.phone.trim()        || undefined,
+          phone:            form.phone.trim()          || undefined,
+          address:          form.address.trim()        || undefined,
           avatarUrl:        DEFAULT_AVATAR_URL,
-          bio:              form.bio.trim()          || undefined,
+          bio:              form.bio.trim()            || undefined,
           specialties:      form.specialties.length ? form.specialties : undefined,
-          instagramUrl:     form.instagramUrl.trim() || undefined,
+          instagramUrl:     form.instagramUrl.trim()   || undefined,
           professionalType: role === 'PROFESSIONAL' ? professionalType : undefined,
+          professionalLicense: role === 'PROFESSIONAL' ? form.professionalLicense.trim() || undefined : undefined,
+          sisproUser:          role === 'PROFESSIONAL' ? form.sisproUser.trim()          || undefined : undefined,
+          sisproPassword:      role === 'PROFESSIONAL' ? form.sisproPassword             || undefined : undefined,
         }),
       })
       const data = await res.json()
@@ -352,67 +355,58 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     onBlur={e => (e.target.style.borderColor = C.border)}
                     style={{ ...INPUT(), cursor: 'pointer', appearance: 'none', backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36 }}
                   >
-                    <option value="USER">Paciente</option>
                     <option value="PROFESSIONAL">Médico Profesional</option>
-                    <option value="COMPANY">Empresa</option>
                     <option value="ADMIN">Administrador</option>
                   </select>
                 </div>
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-                  {role === 'COMPANY' ? (
-                    <>
-                      <div>
-                        <label style={LABEL}>Razón Social <span style={{ color: '#ef4444' }}>*</span></label>
-                        <input
-                          type="text" value={form.companyName} placeholder="Ej. Industrias San José S.A."
-                          onChange={e => { set('companyName', e.target.value); clearErr('companyName') }}
-                          onFocus={e => (e.target.style.borderColor = C.gold)}
-                          onBlur={e => (e.target.style.borderColor = errors.companyName ? '#ef4444' : C.border)}
-                          style={INPUT(errors.companyName)}
-                        />
-                        {errors.companyName && <p style={ERR}>{errors.companyName}</p>}
-                      </div>
-                      <div>
-                        <label style={LABEL}>Representante Legal <span style={{ color: '#ef4444' }}>*</span></label>
-                        <input
-                          type="text" value={form.legalRepresentative} placeholder="Ej. Carlos Martínez"
-                          onChange={e => { set('legalRepresentative', e.target.value); clearErr('legalRepresentative') }}
-                          onFocus={e => (e.target.style.borderColor = C.gold)}
-                          onBlur={e => (e.target.style.borderColor = errors.legalRepresentative ? '#ef4444' : C.border)}
-                          style={INPUT(errors.legalRepresentative)}
-                        />
-                        {errors.legalRepresentative && <p style={ERR}>{errors.legalRepresentative}</p>}
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      {/* Nombres */}
-                      <div>
-                        <label style={LABEL}>Nombres <span style={{ color: '#ef4444' }}>*</span></label>
-                        <input
-                          type="text" value={form.firstName} placeholder="Ej. María"
-                          onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
-                          onFocus={e => (e.target.style.borderColor = C.gold)}
-                          onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
-                          style={INPUT(errors.firstName)}
-                        />
-                        {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
-                      </div>
-                      {/* Apellidos */}
-                      <div>
-                        <label style={LABEL}>Apellidos <span style={{ color: '#ef4444' }}>*</span></label>
-                        <input
-                          type="text" value={form.lastName} placeholder="Ej. González"
-                          onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
-                          onFocus={e => (e.target.style.borderColor = C.gold)}
-                          onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
-                          style={INPUT(errors.lastName)}
-                        />
-                        {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
-                      </div>
-                    </>
-                  )}
+                  {/* Primer Nombre */}
+                  <div>
+                    <label style={LABEL}>Primer Nombre <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input
+                      type="text" value={form.firstName} placeholder="Ej. María"
+                      onChange={e => { set('firstName', e.target.value); clearErr('firstName') }}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = errors.firstName ? '#ef4444' : C.border)}
+                      style={INPUT(errors.firstName)}
+                    />
+                    {errors.firstName && <p style={ERR}>{errors.firstName}</p>}
+                  </div>
+                  {/* Segundo Nombre */}
+                  <div>
+                    <label style={LABEL}>Segundo Nombre</label>
+                    <input
+                      type="text" value={form.secondName} placeholder="Ej. Fernanda (opcional)"
+                      onChange={e => set('secondName', e.target.value)}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = C.border)}
+                      style={INPUT()}
+                    />
+                  </div>
+                  {/* Primer Apellido */}
+                  <div>
+                    <label style={LABEL}>Primer Apellido <span style={{ color: '#ef4444' }}>*</span></label>
+                    <input
+                      type="text" value={form.lastName} placeholder="Ej. González"
+                      onChange={e => { set('lastName', e.target.value); clearErr('lastName') }}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = errors.lastName ? '#ef4444' : C.border)}
+                      style={INPUT(errors.lastName)}
+                    />
+                    {errors.lastName && <p style={ERR}>{errors.lastName}</p>}
+                  </div>
+                  {/* Segundo Apellido */}
+                  <div>
+                    <label style={LABEL}>Segundo Apellido</label>
+                    <input
+                      type="text" value={form.secondLastName} placeholder="Ej. Pérez (opcional)"
+                      onChange={e => set('secondLastName', e.target.value)}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = C.border)}
+                      style={INPUT()}
+                    />
+                  </div>
                 </div>
 
                 {/* Professional type — only for PROFESSIONAL role */}
@@ -515,22 +509,20 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     <label style={LABEL}>Tipo de Identificación</label>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                       <select
-                        value={role === 'COMPANY' ? 'NIT' : form.idType}
+                        value={form.idType}
                         onChange={e => { set('idType', e.target.value); clearErr('idType') }}
-                        disabled={role === 'COMPANY'}
                         onFocus={e => (e.target.style.borderColor = C.gold)}
                         onBlur={e => (e.target.style.borderColor = C.border)}
                         style={{
-                          ...INPUT(), cursor: role === 'COMPANY' ? 'not-allowed' : 'pointer', appearance: 'none',
-                          backgroundImage: role === 'COMPANY' ? 'none' : `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: role === 'COMPANY' ? 14 : 36,
-                          opacity: role === 'COMPANY' ? 0.7 : 1
+                          ...INPUT(), cursor: 'pointer', appearance: 'none',
+                          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237F7665' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
+                          backgroundRepeat: 'no-repeat', backgroundPosition: 'right 14px center', paddingRight: 36,
                         }}
                       >
-                        {role === 'COMPANY' ? <option value="NIT">NIT</option> : ID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                        {ID_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                      
-                      {form.idType === 'Otro' && role !== 'COMPANY' && (
+
+                      {form.idType === 'Otro' && (
                         <div>
                           <input
                             type="text" value={customIdType} placeholder="Ej. Registro Civil"
@@ -549,8 +541,8 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                   <div>
                     <label style={LABEL}>Número de Identificación <span style={{ color: '#ef4444' }}>*</span></label>
                     <input
-                      type="text" value={form.idNumber} placeholder={role === 'COMPANY' ? "Ej. 900.123.456-7" : "Ej. 1012345678"}
-                      onChange={e => { set('idNumber', e.target.value); clearErr('idNumber') }}
+                      type="text" inputMode="numeric" value={form.idNumber} placeholder="Ej. 1012345678"
+                      onChange={e => { set('idNumber', e.target.value.replace(/\D/g, '')) ; clearErr('idNumber') }}
                       onFocus={e => (e.target.style.borderColor = C.gold)}
                       onBlur={e => (e.target.style.borderColor = errors.idNumber ? '#ef4444' : C.border)}
                       style={INPUT(errors.idNumber)}
@@ -570,7 +562,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                   <div style={{ position: 'relative' }}>
                     <Mail size={14} color={C.textMuted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                     <input
-                      type="email" value={form.email} placeholder={role === 'COMPANY' ? "contacto@empresa.com" : "juan.perez@correo.com"}
+                      type="email" value={form.email} placeholder="juan.perez@correo.com"
                       onChange={e => { set('email', e.target.value); clearErr('email') }}
                       onFocus={e => (e.target.style.borderColor = C.gold)}
                       onBlur={e => (e.target.style.borderColor = errors.email ? '#ef4444' : C.border)}
@@ -594,6 +586,18 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     />
                   </div>
                   {errors.phone && <p style={ERR}>{errors.phone}</p>}
+                </div>
+
+                {/* Dirección */}
+                <div>
+                  <label style={LABEL}>Dirección Personal</label>
+                  <input
+                    type="text" value={form.address} placeholder="Ej. Cra 15 # 82-30, Bogotá"
+                    onChange={e => set('address', e.target.value)}
+                    onFocus={e => (e.target.style.borderColor = C.gold)}
+                    onBlur={e => (e.target.style.borderColor = C.border)}
+                    style={INPUT()}
+                  />
                 </div>
 
                 {/* Foto */}
@@ -659,7 +663,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                             value={newSpecialtyText}
                             onChange={e => setNewSpecialtyText(e.target.value)}
                             onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAddSpecialty())}
-                            placeholder="Ej: Aerial Hoop..."
+                            placeholder="Ej. Medicina del Trabajo..."
                             autoFocus
                             onFocus={e => (e.target.style.borderColor = C.gold)}
                             onBlur={e => (e.target.style.borderColor = C.border)}
@@ -704,6 +708,50 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                       onBlur={e => (e.target.style.borderColor = C.border)}
                       style={{ ...INPUT(), paddingLeft: 36 }}
                     />
+                  </div>
+                </div>
+
+                {/* Registro Médico */}
+                <div>
+                  <label style={LABEL}>Registro Médico</label>
+                  <input
+                    type="text" value={form.professionalLicense} placeholder="Ej. RM-123456"
+                    onChange={e => set('professionalLicense', e.target.value)}
+                    onFocus={e => (e.target.style.borderColor = C.gold)}
+                    onBlur={e => (e.target.style.borderColor = C.border)}
+                    style={INPUT()}
+                  />
+                </div>
+
+                {/* SISPRO */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                  <div>
+                    <label style={LABEL}>Usuario SISPRO</label>
+                    <input
+                      type="text" value={form.sisproUser} placeholder="Usuario del portal"
+                      onChange={e => set('sisproUser', e.target.value)}
+                      onFocus={e => (e.target.style.borderColor = C.gold)}
+                      onBlur={e => (e.target.style.borderColor = C.border)}
+                      style={INPUT()}
+                      autoComplete="off"
+                    />
+                  </div>
+                  <div>
+                    <label style={LABEL}>Contraseña SISPRO</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showSispro ? 'text' : 'password'} value={form.sisproPassword} placeholder="Clave del portal"
+                        onChange={e => set('sisproPassword', e.target.value)}
+                        onFocus={e => (e.target.style.borderColor = C.gold)}
+                        onBlur={e => (e.target.style.borderColor = C.border)}
+                        style={{ ...INPUT(), paddingRight: 42 }}
+                        autoComplete="new-password"
+                      />
+                      <button type="button" onClick={() => setShowSispro(v => !v)}
+                        style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 0 }}>
+                        {showSispro ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -790,7 +838,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                     <img src={DEFAULT_AVATAR_URL} style={{ width: 50, height: 50, borderRadius: 9, objectFit: 'cover', flexShrink: 0, border: `2px solid ${C.goldLight}` }} alt="avatar por defecto" />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <p style={{ fontFamily: FONT_BODONI, fontSize: 16, fontWeight: 600, color: C.text, margin: '0 0 2px' }}>
-                      {role === 'COMPANY' ? form.companyName || 'Nueva Empresa' : `${form.firstName} ${form.lastName}`.trim() || 'Nuevo Usuario'}
+                      {`${form.firstName} ${form.lastName}`.trim() || 'Nuevo Usuario'}
                     </p>
                     {role === 'PROFESSIONAL' && (
                       <p style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 700, color: C.gold, letterSpacing: '0.08em', textTransform: 'uppercase', margin: '0 0 5px' }}>
@@ -907,7 +955,7 @@ export function CreateProfessionalModal({ onClose, onSuccess }: Props) {
                 >
                   {loading
                     ? <><span style={{ width: 14, height: 14, border: `2px solid rgba(255,255,255,0.4)`, borderTopColor: C.white, borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} /> Creando...</>
-                    : <><Check size={14} strokeWidth={2.5} /> Crear {role === 'USER' ? 'Paciente' : role === 'COMPANY' ? 'Empresa' : role === 'ADMIN' ? 'Administrador' : 'Profesional'}</>
+                    : <><Check size={14} strokeWidth={2.5} /> Crear {role === 'ADMIN' ? 'Administrador' : 'Profesional'}</>
                   }
                 </button>
               )}
