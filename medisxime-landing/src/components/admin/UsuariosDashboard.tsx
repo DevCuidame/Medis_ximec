@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import {
-  Users, CalendarDays, DollarSign, Plus, CreditCard, CircleHelp, LogOut,
-  Search, Bell, RefreshCw, Briefcase, ChevronDown, ChevronRight,
-  UserCheck, UserMinus, CheckCircle2, AlertCircle, LayoutDashboard, ClipboardList, Menu, X,
+  Users, Plus,
+  Search, Bell, RefreshCw,
+  UserCheck, UserMinus, CheckCircle2, AlertCircle, Menu, X,
   SlidersHorizontal,
 } from 'lucide-react'
+import { AdminSidebar } from './AdminSidebar'
 import { CreateProfessionalModal } from './CreateProfessionalModal'
 import { ConfirmationModal } from './ConfirmationModal'
 import { ProfessionalProfileModal } from './ProfessionalProfileModal'
@@ -31,15 +32,6 @@ const C = {
 
 const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
 const FONT_INTER = '"Inter", Inter, system-ui, sans-serif'
-
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: false },
-  { icon: Users, label: 'Usuarios', active: true },
-  { icon: CalendarDays, label: 'Calendario', active: false },
-  { icon: Briefcase, label: 'Servicios', active: false },
-  { icon: DollarSign,   label: 'Finanzas',      active: false },
-  { icon: CreditCard,   label: 'Planes',    active: false },
-]
 
 function authHeaders(): HeadersInit {
   const token = localStorage.getItem('accessToken')
@@ -148,8 +140,6 @@ export const UsuariosDashboard: React.FC = () => {
   const [users, setUsers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [hoveredNav, setHoveredNav] = useState<number | null>(null)
-  const [isServicesExpanded, setIsServicesExpanded] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
 
@@ -297,6 +287,12 @@ export const UsuariosDashboard: React.FC = () => {
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:rgba(92,58,40,0.2);border-radius:99px}
         ::-webkit-scrollbar-thumb:hover{background:rgba(92,58,40,0.35)}
+        @media (max-width: 768px) {
+          .main-with-sidebar { margin-left: 0 !important; }
+        }
+        @media (min-width: 769px) {
+          .menu-toggle-btn { display: none !important; }
+        }
       `}</style>
 
       {/* Modals */}
@@ -344,119 +340,14 @@ export const UsuariosDashboard: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Mobile overlay */}
-      {isMobileMenuOpen && (
-        <div
-          onClick={() => setIsMobileMenuOpen(false)}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(27,28,28,0.45)', backdropFilter: 'blur(4px)', zIndex: 40 }}
-        />
-      )}
-
       <div style={{ display: 'flex', height: '100vh', background: C.bg, color: C.text, overflow: 'hidden', fontFamily: FONT_INTER }}>
 
         {/* ── SIDEBAR ─────────────────────────────────────────────────── */}
-        <aside style={{
-          width: 240, flexShrink: 0,
-          background: C.bgPanel,
-          borderRight: `1px solid ${C.border}`,
-          display: 'flex', flexDirection: 'column',
-          overflowY: 'auto',
-        }}
-          className="sidebar-resp"
-        >
-          <style>{`
-            @media (max-width: 768px) {
-              .sidebar-resp {
-                position: fixed !important;
-                top: 0; bottom: 0; left: 0;
-                z-index: 50;
-                transform: ${isMobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)'} !important;
-                transition: transform 0.3s ease;
-              }
-              .main-with-sidebar { margin-left: 0 !important; }
-            }
-            @media (min-width: 769px) {
-              .menu-toggle-btn { display: none !important; }
-            }
-          `}</style>
-
-          {/* Logo */}
-          <div style={{ padding: '28px 20px 22px', borderBottom: `1px solid ${C.borderLight}` }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{ width: 40, height: 48, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: `0 4px 12px rgba(92,58,40,0.3)` }}>
-                <span style={{ fontFamily: FONT_BODONI, fontSize: 22, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
-              </div>
-              <div>
-                <div style={{ fontFamily: FONT_BODONI, fontSize: 18, fontWeight: 700, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
-                <div style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, letterSpacing: '0.14em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Nav */}
-          <nav style={{ flex: 1, padding: '20px 12px' }}>
-            <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, letterSpacing: '0.2em', textTransform: 'uppercase', padding: '0 10px', display: 'block', marginBottom: 10 }}>Menú Principal</span>
-            {NAV_ITEMS.map((item, i) => {
-              const Icon = item.icon
-              const isHov = hoveredNav === i
-              const isActive = item.active
-              const handleNavClick = () => {
-                if (item.label === 'Dashboard') navigate('/admin/dashboard')
-                if (item.label === 'Calendario') navigate('/admin/classes')
-                if (item.label === 'Usuarios') navigate('/admin/users')
-                if (item.label === 'Inscripciones') navigate('/admin/inscripciones')
-                if (item.label === 'Finanzas') navigate('/admin/finances')
-                if (item.label === 'Planes') navigate('/admin/memberships')
-                if (item.label === 'Servicios') setIsServicesExpanded(v => !v)
-                if (item.label !== 'Servicios') setIsMobileMenuOpen(false)
-              }
-              return (
-                <div key={item.label} style={{ marginBottom: 4 }}>
-                  <button
-                    onClick={handleNavClick}
-                    onMouseEnter={() => setHoveredNav(i)}
-                    onMouseLeave={() => setHoveredNav(null)}
-                    style={{
-                      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '11px 14px', borderRadius: 10,
-                      background: isActive
-                        ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})`
-                        : isHov ? 'rgba(92,58,40,0.07)' : 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease',
-                    }}
-                  >
-                    <Icon size={17} color={isActive ? C.white : isHov ? C.gold : '#9E9492'} strokeWidth={isActive ? 2.5 : 2} style={{ flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.05em', color: isActive ? C.white : isHov ? C.gold : C.textBrown, transition: 'color 0.2s' }}>
-                      {item.label}
-                    </span>
-                    {item.label === 'Servicios' && (
-                      <span style={{ marginLeft: 'auto' }}>
-                        {isServicesExpanded ? <ChevronDown size={14} color={isActive ? C.white : '#9E9492'} /> : <ChevronRight size={14} color={isActive ? C.white : '#9E9492'} />}
-                      </span>
-                    )}
-                  </button>
-                  <AnimatePresence>
-                    {item.label === 'Servicios' && isServicesExpanded && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
-                        <div style={{ paddingLeft: 38, borderLeft: `2px solid ${C.goldLight}`, marginLeft: 24, paddingTop: 8, paddingBottom: 8, marginTop: 4, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                          {[['Sedes', '/admin/services/locations'], ['Espacios', '/admin/services/rooms'], ['Servicios', '/admin/services/create']].map(([lbl, path]) => (
-                            <span key={lbl} onClick={() => navigate(path)} style={{ fontSize: 12, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '5px 4px', transition: 'color 0.2s' }}
-                              onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
-                              onMouseLeave={e => (e.currentTarget.style.color = C.textBrown)}
-                            >{lbl}</span>
-                          ))}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )
-            })}
-          </nav>
-
-          <div style={{ padding: '12px 16px' }}>
+        <AdminSidebar
+          active="usuarios"
+          isMobileOpen={isMobileMenuOpen}
+          onMobileClose={() => setIsMobileMenuOpen(false)}
+          actionSlot={
             <button
               onClick={() => setShowModal(true)}
               style={{ width: '100%', padding: '12px 0', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, border: 'none', borderRadius: 10, fontFamily: FONT_INTER, fontSize: 12, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, boxShadow: `0 4px 16px rgba(92,58,40,0.3)` }}
@@ -464,27 +355,8 @@ export const UsuariosDashboard: React.FC = () => {
               <Plus size={15} strokeWidth={3} />
               Nuevo Usuario
             </button>
-          </div>
-
-          <div style={{ padding: '12px 16px 24px', borderTop: `1px solid ${C.borderLight}` }}>
-            <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, textDecoration: 'none', color: C.textMedium, transition: 'background 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#F3F0FB')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              <CircleHelp size={17} strokeWidth={2} />
-              <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.05em' }}>Ayuda</span>
-            </a>
-            <button
-              onClick={() => { localStorage.removeItem('accessToken'); localStorage.removeItem('refreshToken'); navigate('/login') }}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 14px', borderRadius: 10, background: 'none', border: 'none', cursor: 'pointer', color: C.textMedium, transition: 'background 0.2s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#F3F0FB')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-            >
-              <LogOut size={17} strokeWidth={2} />
-              <span style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.05em' }}>Cerrar Sesión</span>
-            </button>
-          </div>
-        </aside>
+          }
+        />
 
         {/* ── MAIN AREA ────────────────────────────────────────────────── */}
         <div className="main-with-sidebar" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
