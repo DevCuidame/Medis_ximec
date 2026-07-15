@@ -1,87 +1,18 @@
 ﻿import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Users, CalendarDays, DollarSign, CreditCard, Briefcase, ChevronDown, ChevronRight, LayoutDashboard, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
 import './MainDashboard.css';
+import { AdminSidebar } from './AdminSidebar';
 
 const C = { gold: '#5C3A28', goldLight: '#9C4A2E', bg: '#FFFBF5', bgPanel: '#F5EDE1', bgSecondary: '#F5EDE1', white: '#FFFFFF', text: '#3D2B1F', textBrown: '#7A6452', textMedium: '#7A6452', textMuted: '#B0A08C', border: '#E6D9C7', borderLight: '#E6D9C7' };
 const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
 const FONT_INTER = '"Inter", Inter, system-ui, sans-serif';
 
-const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: 'Dashboard', active: false },
-  { icon: Users, label: 'Usuarios', active: false },
-  { icon: CalendarDays, label: 'Calendario', active: false },
-  { icon: Briefcase, label: 'Servicios', active: true },
-  { icon: DollarSign,   label: 'Finanzas',      active: false },
-  { icon: CreditCard,   label: 'Planes',    active: false },
-]
-
 export const CreateRoom: React.FC = () => {
-  const navigate = useNavigate()
-  const [hoveredNav, setHoveredNav] = useState<number | null>(null)
-  const [isServicesExpanded, setIsServicesExpanded] = useState(true)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   return (
     <div className="dashboard-container" style={{ background: C.bg, color: C.text, fontFamily: FONT_INTER }}>
-      <div className={`mobile-overlay ${isMobileMenuOpen ? 'open' : ''}`} onClick={() => setIsMobileMenuOpen(false)} />
-      <aside className={`sidebar ${isMobileMenuOpen ? 'open' : ''}`} style={{ background: C.bgPanel, borderRight: `1px solid ${C.border}` }}>
-        <div style={{ padding: '28px 20px 20px', borderBottom: `1px solid ${C.borderLight}` }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{ width: 38, height: 46, background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <span style={{ fontFamily: FONT_BODONI, fontSize: 20, fontStyle: 'italic', fontWeight: 700, color: C.white }}>XC</span>
-            </div>
-            <div>
-              <div style={{ fontFamily: FONT_BODONI, fontSize: 17, fontWeight: 600, color: C.gold, lineHeight: 1.2 }}>MedisXime</div>
-              <div style={{ fontFamily: FONT_INTER, fontSize: 10, fontWeight: 600, color: C.textMuted, letterSpacing: '0.12em', textTransform: 'uppercase', marginTop: 2 }}>Consultorio Admin</div>
-            </div>
-          </div>
-        </div>
-        <nav style={{ flex: 1, padding: '16px 10px' }}>
-          <div style={{ marginBottom: 6 }}>
-            <span style={{ fontFamily: FONT_INTER, fontSize: 9, fontWeight: 700, color: C.textMuted, letterSpacing: '0.18em', textTransform: 'uppercase', padding: '0 10px', display: 'block', marginBottom: 6 }}>Menú Principal</span>
-            {NAV_ITEMS.map((item, i) => {
-              const Icon = item.icon
-              const isHovered = hoveredNav === i
-              const isActive = item.active
-              const handleNavClick = () => {
-                if (item.label === 'Dashboard') navigate('/admin/dashboard')
-                if (item.label === 'Calendario') navigate('/admin/classes')
-                if (item.label === 'Usuarios') navigate('/admin/users')
-                if (item.label === 'Inscripciones') navigate('/admin/inscripciones')
-                if (item.label === 'Finanzas') navigate('/admin/finances')
-                if (item.label === 'Planes') navigate('/admin/memberships')
-                if (item.label === 'Servicios') setIsServicesExpanded(!isServicesExpanded)
-              }
-              return (
-                <div key={item.label}>
-                  <button
-                    onClick={handleNavClick}
-                    onMouseEnter={() => setHoveredNav(i)}
-                    onMouseLeave={() => setHoveredNav(null)}
-                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', borderRadius: 8, marginBottom: 2, background: isActive ? `linear-gradient(90deg, ${C.gold}, ${C.goldLight})` : isHovered ? 'rgba(92,58,40,0.07)' : 'transparent', borderLeft: isActive ? `3px solid ${C.gold}` : '3px solid transparent', borderTop: 'none', borderRight: 'none', borderBottom: 'none', transition: 'background 0.18s ease', cursor: 'pointer' }}
-                  >
-                    <Icon size={16} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} strokeWidth={isActive ? 2.5 : 2} style={{ flexShrink: 0 }} />
-                    <span style={{ fontFamily: FONT_INTER, fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: isActive ? C.white : isHovered ? C.gold : C.textBrown, transition: 'color 0.18s ease' }}>{item.label}</span>
-                    {item.label === 'Servicios' && (
-                      <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center' }}>
-                        {isServicesExpanded ? <ChevronDown size={14} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} /> : <ChevronRight size={14} color={isActive ? C.white : isHovered ? C.gold : C.textMedium} />}
-                      </div>
-                    )}
-                  </button>
-                  {item.label === 'Servicios' && isServicesExpanded && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginLeft: 34, marginTop: 4, marginBottom: 8, borderLeft: `2px solid ${C.goldLight}`, paddingLeft: 8 }}>
-                      <span onClick={() => navigate('/admin/services/locations')} style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '6px 4px' }}>Creación de Sedes</span>
-                      <span onClick={() => navigate('/admin/services/rooms')} style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 600, color: C.gold, cursor: 'pointer', padding: '6px 4px' }}>Creación de Espacios</span>
-                      <span onClick={() => navigate('/admin/services/create')} style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 600, color: C.textBrown, cursor: 'pointer', padding: '6px 4px' }}>Creación de Servicios</span>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </nav>
-      </aside>
+      <AdminSidebar active="infraestructura" isMobileOpen={isMobileMenuOpen} onMobileClose={() => setIsMobileMenuOpen(false)} />
 
       <div className="main-content">
         <header style={{ height: 68, background: C.white, borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', flexShrink: 0 }}>
