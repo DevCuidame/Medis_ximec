@@ -333,7 +333,7 @@ export const ServiciosDashboard: React.FC = () => {
                 <div>
                   <h1 style={{ fontFamily: FONT_BODONI, fontSize: 36, fontWeight: 700, color: C.text, margin: 0, lineHeight: 1 }}>Gestión de Servicios</h1>
                   <p style={{ fontFamily: FONT_INTER, color: C.textMedium, marginTop: 8, fontWeight: 500 }}>
-                    Administra el catálogo, horarios y disponibilidad de la academia.
+                    Administra el catálogo, horarios y disponibilidad del consultorio.
                   </p>
                 </div>
               </motion.div>
