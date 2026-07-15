@@ -231,6 +231,9 @@ export const SedesDashboard: React.FC = () => {
                     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, color: C.textMuted, fontSize: 13, marginBottom: 6 }}>
                       <MapPin size={14} style={{ flexShrink: 0, marginTop: 2 }} /> <span style={{ lineHeight: 1.4 }}>{sede.address}, {sede.city}</span>
                     </div>
+                    <p style={{ fontSize: 12, color: sede.providerCode ? C.textBrown : C.textMuted, margin: '0 0 6px 0', fontStyle: sede.providerCode ? 'normal' : 'italic' }}>
+                      {sede.providerCode ? `Prestador: ${sede.providerCode}` : '— sin código de prestador —'}
+                    </p>
                     {sede.phone && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: C.textMuted, fontSize: 13 }}>
                         <Phone size={14} style={{ flexShrink: 0 }} /> <span>{sede.phone}</span>

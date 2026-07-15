@@ -127,7 +127,7 @@ const DayScheduleRow: React.FC<DayScheduleRowProps> = ({ dayKey, label, register
 };
 
 interface FormularioSedeProps {
-  initialData?: SedeFormValues;
+  initialData?: Omit<SedeFormValues, 'providerCode'> & { providerCode?: string | null };
   onCancel: () => void;
   onSuccess: (data: SedeFormValues) => void;
 }
@@ -136,10 +136,11 @@ export const FormularioSede: React.FC<FormularioSedeProps> = ({ initialData, onC
 
   const { register, handleSubmit, watch, setValue, getValues, control, formState: { errors, isSubmitting } } = useForm<SedeFormValues>({
     resolver: zodResolver(sedeSchema),
-    defaultValues: initialData || {
+    defaultValues: initialData ? { ...initialData, providerCode: initialData.providerCode ?? '' } : {
       name: '',
       address: '',
       city: '',
+      providerCode: '',
       phone: '',
       email: '',
       isActive: true,
@@ -231,6 +232,19 @@ export const FormularioSede: React.FC<FormularioSedeProps> = ({ initialData, onC
                 placeholder="Ej. Bogotá"
               />
               {errors.city && <p style={{ color: '#ef4444', fontSize: 11, margin: '4px 0 0 0' }}>{errors.city.message}</p>}
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 8 }}>Código de Prestador *</label>
+              <input
+                {...register('providerCode')}
+                inputMode="numeric"
+                maxLength={12}
+                onChange={e => setValue('providerCode', e.target.value.replace(/\D/g, ''), { shouldValidate: false })}
+                style={{ width: '100%', boxSizing: 'border-box', background: C.bgPanel, border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', fontSize: 14, color: C.text, outline: 'none' }}
+                placeholder="Ej. 0500123456"
+              />
+              {errors.providerCode && <p style={{ color: '#ef4444', fontSize: 11, margin: '4px 0 0 0' }}>{errors.providerCode.message}</p>}
             </div>
 
             <div style={{ gridColumn: '1 / -1' }}>

@@ -20,6 +20,7 @@ export const sedeSchema = z.object({
   name: z.string().min(3, "El nombre debe tener al menos 3 caracteres"),
   address: z.string().min(5, "La dirección debe ser más descriptiva"),
   city: z.string().min(2, "Ciudad es requerida"),
+  providerCode: z.string().regex(/^\d{8,12}$/, "Código de prestador requerido (8 a 12 dígitos)"),
   phone: z.string().optional(),
   email: z.string().email("Debe ser un email válido").optional().or(z.literal('')),
   isActive: z.boolean(),

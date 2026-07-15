@@ -1,6 +1,6 @@
 import type { SedeFormValues } from '../../lib/schemas/sedeSchema';
 
-export type Sede = SedeFormValues & { id: string };
+export type Sede = Omit<SedeFormValues, 'providerCode'> & { id: string; providerCode?: string | null };
 
 export type ModalState = 
   | { type: 'none' }
