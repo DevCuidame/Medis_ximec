@@ -190,7 +190,7 @@ const OFFER_SELECT = `
   JOIN locations l ON l.id = so.location_id
   LEFT JOIN rooms r ON r.id = so.room_id
   LEFT JOIN users u ON u.id = so.professional_id
-  LEFT JOIN disciplines d ON d.id = so.discipline_id
+  LEFT JOIN specialties d ON d.id = so.specialty_id
 `;
 
 export const ServiceOfferRepository = {
@@ -235,7 +235,7 @@ export const ServiceOfferRepository = {
     const { rows } = await pool.query(
       `INSERT INTO service_offers
          (location_id, room_id, offer_type, title, description,
-          professional_id, discipline_id, capacity, duration_minutes,
+          professional_id, specialty_id, capacity, duration_minutes,
           scheduled_at, price, currency, created_by)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
        RETURNING id`,
@@ -252,7 +252,7 @@ export const ServiceOfferRepository = {
   async update(id: string, data: UpdateServiceOfferPayload): Promise<ServiceOfferPublic | null> {
     const map: Record<string, string> = {
       title: 'title', description: 'description', roomId: 'room_id',
-      professionalId: 'professional_id', disciplineId: 'discipline_id',
+      professionalId: 'professional_id', disciplineId: 'specialty_id',
       capacity: 'capacity', durationMinutes: 'duration_minutes',
       scheduledAt: 'scheduled_at', price: 'price', currency: 'currency',
       status: 'status',
