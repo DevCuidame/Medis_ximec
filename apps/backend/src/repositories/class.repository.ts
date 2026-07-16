@@ -40,7 +40,6 @@ function toMembership(row: ClassRow): MembershipPublic | null {
     currency: row.membership_currency ?? 'COP',
     durationDays: row.membership_duration ?? null,
     maxClasses: null,
-    benefits: [],
     isActive: true,
   };
 }

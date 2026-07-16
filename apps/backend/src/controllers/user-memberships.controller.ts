@@ -3,17 +3,6 @@ import { UserMembershipRepository } from '@repositories/user-membership.reposito
 import { sendAdminPaymentNotification, sendUserPaymentConfirmation } from '@utils/email.util.js';
 import { pool } from '@config/database.js';
 
-export async function getMyActiveInscription(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = req.user?.id;
-    if (!userId) { res.status(401).json({ success: false, error: 'No autenticado' }); return; }
-    const inscription = await UserMembershipRepository.findActiveInscriptionByUserId(userId);
-    res.json({ success: true, data: { inscription } });
-  } catch (err: any) {
-    res.status(err.statusCode ?? 500).json({ success: false, error: err.message });
-  }
-}
-
 export async function getMyActiveMembership(req: Request, res: Response): Promise<void> {
   try {
     const userId = req.user?.id;
@@ -140,7 +129,6 @@ export async function confirmPayment(req: Request, res: Response): Promise<void>
         planPrice: membership.membership.price,
         durationDays: membership.membership.durationDays,
         classesRemaining: membership.classesRemaining,
-        benefits: membership.membership.benefits,
         activatedAt: new Date().toLocaleDateString('es-CO', {
           day: 'numeric', month: 'long', year: 'numeric',
         }),

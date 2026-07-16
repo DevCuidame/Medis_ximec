@@ -13,7 +13,9 @@ import {
   ServiceOfferRepository,
   BookingRequestRepository,
 } from '@repositories/services.repository.js';
-import { UserMembershipRepository } from '@repositories/user-membership.repository.js';
+import { resolveDiscount } from '@services/discount.service.js';
+import { DiscountRepository } from '@repositories/discount.repository.js';
+import type { AppliedDiscount } from '../types/discount.types.js';
 import { sendServicePaymentConfirmation } from '@utils/email.util.js';
 import type {
   CreateServiceOfferPayload,
@@ -21,15 +23,6 @@ import type {
   ServiceOffersFilter,
   ResolveBookingRequestPayload,
 } from '@medisxime/shared-types';
-
-/** Map a discipline name to a session category (must match resolveBenefits logic) */
-function getDisciplineCategory(disciplineName: string | null | undefined): string {
-  if (!disciplineName) return 'general';
-  const n = disciplineName.toLowerCase();
-  if (n.includes('pole')) return 'pole';
-  if (n.includes('fuerza') || n.includes('flexibilidad') || n.includes('flex')) return 'complementary';
-  return 'general';
-}
 
 // ─── OPERATING HOURS ─────────────────────────────────────────
 
@@ -246,8 +239,8 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
   try {
     const userId = req.user?.id;
     if (!userId) { res.status(401).json({ success: false, error: 'No autenticado' }); return; }
-    const { offerIds, paymentMethod } = req.body as {
-      offerIds: string[]; paymentMethod?: 'cash' | 'wompi';
+    const { offerIds, paymentMethod, discountCode } = req.body as {
+      offerIds: string[]; paymentMethod?: 'cash' | 'wompi'; discountCode?: string;
     };
     if (!Array.isArray(offerIds) || offerIds.length === 0) {
       res.status(400).json({ success: false, error: 'offerIds debe ser un array no vacío' }); return;
@@ -263,60 +256,37 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
       res.status(400).json({ success: false, error: 'La oferta no está disponible' }); return;
     }
 
-    // ── Server-side per-category session quota check ──────────────────────
-    const activeMembership = await UserMembershipRepository.findActiveByUserId(userId);
+    // ── Precio con descuentos (módulo Descuentos) ─────────────────────────
     const sessionCount = offerIds.length;
+    const pricePerSession = lead.price ?? 0;
 
-    // If the plan has no discount, check if the inscription provides one
-    let inscriptionDiscountPct: number | null = null;
-    if (activeMembership?.discountPercent == null) {
-      const inscription = await UserMembershipRepository.findActiveInscriptionByUserId(userId);
-      inscriptionDiscountPct = inscription?.discountPercent ?? null;
+    // Las ofertas codifican su categoría en el título con formato "Categoría — Tipo"
+    // (ver ServiciosDashboard.tsx); discipline_id suele venir null, así que no basta
+    // con lead.discipline?.name para casar descuentos por especialidad.
+    const titleCategory = typeof lead.title === 'string' && lead.title.trim()
+      ? lead.title.split(' — ')[0].trim()
+      : null;
+    const offerSpecialty = titleCategory ?? lead.discipline?.name ?? null;
+
+    let applied: AppliedDiscount | null = null;
+    try {
+      applied = await resolveDiscount({
+        userId,
+        specialty: offerSpecialty,
+        sessionCount,
+        pricePerSession,
+        code: discountCode,
+      });
+    } catch (err: unknown) {
+      const status = (err as { statusCode?: number }).statusCode ?? 500;
+      res.status(status).json({ success: false, error: (err as Error).message });
+      return;
     }
-    // Effective discount: plan discount takes precedence over inscription discount
-    const effectiveDiscountPct = activeMembership?.discountPercent ?? inscriptionDiscountPct;
 
-    let computedExpectedAmount: number | undefined;
-    let computedDiscountPct: number | undefined;
-
-    if (activeMembership?.coversFreeClasses && activeMembership.classesRemaining === null) {
-      // Unlimited plan — always free
-      computedExpectedAmount = undefined;
-    } else if (activeMembership && Object.keys(activeMembership.categoryCredits).length > 0) {
-      // Per-category plan — check credits for this specific service type
-      const offerCategory = getDisciplineCategory(lead.discipline?.name);
-      const credits = activeMembership.categoryCredits[offerCategory]
-        ?? activeMembership.categoryCredits['general'];
-
-      const freeSessionsAvailable = credits?.remaining ?? 0;
-      const freeToUse = Math.min(freeSessionsAvailable, sessionCount);
-      const paidSessions = sessionCount - freeToUse;
-
-      if (paidSessions > 0 && (lead.price ?? 0) > 0) {
-        const discPct = effectiveDiscountPct ?? 0;
-        const pricePerSession = Math.round((lead.price ?? 0) * (1 - discPct / 100));
-        computedExpectedAmount = paidSessions * pricePerSession;
-        computedDiscountPct = discPct > 0 ? discPct : undefined;
-      } else {
-        computedExpectedAmount = undefined; // all free
-      }
-    } else if (activeMembership?.hasClassCredits) {
-      // Legacy single-pool plan (classes_remaining)
-      const remaining = activeMembership.classesRemaining ?? 0;
-      const paidSessions = Math.max(0, sessionCount - remaining);
-      if (paidSessions > 0 && (lead.price ?? 0) > 0) {
-        const discPct = effectiveDiscountPct ?? 0;
-        computedExpectedAmount = paidSessions * Math.round((lead.price ?? 0) * (1 - discPct / 100));
-        computedDiscountPct = discPct > 0 ? discPct : undefined;
-      }
-    } else if (effectiveDiscountPct != null && (lead.price ?? 0) > 0) {
-      // No free classes — apply plan or inscription discount
-      computedExpectedAmount = sessionCount * Math.round((lead.price ?? 0) * (1 - effectiveDiscountPct / 100));
-      computedDiscountPct = effectiveDiscountPct;
-    } else if ((lead.price ?? 0) > 0) {
-      // No membership or credits — full price
-      computedExpectedAmount = sessionCount * (lead.price ?? 0);
-    }
+    const computedExpectedAmount = pricePerSession > 0
+      ? (applied ? applied.expectedAmount : sessionCount * pricePerSession)
+      : undefined;
+    const computedDiscountPct = applied?.discountPct;
 
     const request = await BookingRequestRepository.createGroupEnrollment(
       offerIds, userId,
@@ -326,6 +296,11 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
         discountPct: computedDiscountPct,
       }
     );
+
+    if (applied) {
+      await DiscountRepository.redeem(applied.discountId, userId, request.id);
+    }
+
     res.status(201).json({ success: true, data: { request, sessionCount } });
   } catch (err: unknown) {
     res.status(500).json({ success: false, error: (err as Error).message });

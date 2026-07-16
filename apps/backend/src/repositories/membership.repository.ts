@@ -12,7 +12,6 @@ function toPublic(r: MembershipRecord): MembershipPublic {
     currency: r.currency,
     durationDays: r.duration_days,
     maxClasses: r.max_classes ?? null,
-    benefits: Array.isArray(r.benefits) ? r.benefits : [],
     isActive: r.is_active,
   };
 }
@@ -42,8 +41,8 @@ export const MembershipRepository = {
 
   async create(dto: CreateMembershipDto): Promise<MembershipPublic> {
     const { rows } = await pool.query<MembershipRecord>(
-      `INSERT INTO memberships (code, name, description, type, price, currency, duration_days, benefits, is_active)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO memberships (code, name, description, type, price, currency, duration_days, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
        RETURNING *`,
       [
         dto.code,
@@ -53,7 +52,6 @@ export const MembershipRepository = {
         dto.price,
         dto.currency ?? 'COP',
         dto.durationDays ?? null,
-        JSON.stringify(dto.benefits ?? []),
         dto.isActive ?? true,
       ]
     );
@@ -72,7 +70,6 @@ export const MembershipRepository = {
     if (dto.price !== undefined)       { fields.push(`price = $${idx++}`);         values.push(dto.price); }
     if (dto.currency !== undefined)    { fields.push(`currency = $${idx++}`);      values.push(dto.currency); }
     if (dto.durationDays !== undefined){ fields.push(`duration_days = $${idx++}`); values.push(dto.durationDays); }
-    if (dto.benefits !== undefined)    { fields.push(`benefits = $${idx++}`);      values.push(JSON.stringify(dto.benefits)); }
     if (dto.isActive !== undefined)    { fields.push(`is_active = $${idx++}`);     values.push(dto.isActive); }
 
     if (fields.length === 0) return this.findById(id);

@@ -2,7 +2,6 @@ import { Router } from 'express';
 import { authenticate, authorize } from '@middleware/auth.middleware.js';
 import {
   getMyActiveMembership,
-  getMyActiveInscription,
   getMyMembershipHistory,
   purchaseMembership,
   getActiveMemberships,
@@ -16,7 +15,6 @@ const router: Router = Router();
 
 // User routes
 router.get('/me',             authenticate, getMyActiveMembership);
-router.get('/me/inscription', authenticate, getMyActiveInscription);
 router.get('/history',        authenticate, getMyMembershipHistory);
 router.post('/',       authenticate, purchaseMembership);
 

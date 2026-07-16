@@ -170,7 +170,6 @@ interface UserConfirmParams {
   planPrice: number;
   durationDays: number | null;
   classesRemaining: number | null;
-  benefits: string[];
   activatedAt: string;
   expiresAt: string | null;
   appUrl?: string;
@@ -191,18 +190,6 @@ function userConfirmHtml(p: UserConfirmParams): string {
   const expLine = p.expiresAt
     ? `Válido hasta: <strong>${new Date(p.expiresAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>`
     : 'Sin fecha de vencimiento';
-
-  const benefitRows = p.benefits.length > 0
-    ? p.benefits.map(b => `
-        <tr>
-          <td style="padding:6px 0;">
-            <table cellpadding="0" cellspacing="0" role="presentation"><tr>
-              <td style="width:20px;color:#16A34A;font-size:14px;font-weight:700;vertical-align:top;">✓</td>
-              <td style="font-size:13px;color:#5E5E5E;line-height:1.5;">${b}</td>
-            </tr></table>
-          </td>
-        </tr>`).join('')
-    : '';
 
   return base(`
     <!-- Celebration header -->
@@ -255,15 +242,6 @@ function userConfirmHtml(p: UserConfirmParams): string {
         </td>
       </tr>
     </table>
-
-    ${benefitRows ? `
-    <!-- Benefits -->
-    <div style="background:${BG};border-radius:14px;padding:20px 22px;margin-bottom:28px;border:1px solid #E8E3DA;">
-      <p style="margin:0 0 12px;font-size:11px;color:${MUTED};text-transform:uppercase;letter-spacing:1.5px;font-weight:700;">Incluye</p>
-      <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
-        ${benefitRows}
-      </table>
-    </div>` : ''}
 
     <!-- CTA -->
     <div style="text-align:center;margin-bottom:28px;">

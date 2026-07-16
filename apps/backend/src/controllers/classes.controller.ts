@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { ClassRepository } from '@repositories/class.repository.js';
 import { BookingRepository } from '@repositories/booking.repository.js';
-import { UserMembershipRepository } from '@repositories/user-membership.repository.js';
 import { pool } from '@config/database.js';
 
 export async function getClassOptions(_req: Request, res: Response): Promise<void> {
@@ -63,33 +62,11 @@ export async function createBooking(req: Request, res: Response): Promise<void> 
     const { classId } = req.body;
     if (!classId) { res.status(400).json({ success: false, error: 'classId requerido' }); return; }
 
-    // Check user's active membership
-    const userMembership = await UserMembershipRepository.findActiveByUserId(userId);
-    let isFree = false;
-    let bookingSource: 'membership_unlimited' | 'membership_credit' | 'no_membership' = 'no_membership';
-
-    if (userMembership) {
-      if (userMembership.coversFreeClasses) {
-        isFree = true;
-        bookingSource = 'membership_unlimited';
-      } else if (userMembership.hasClassCredits) {
-        isFree = true;
-        bookingSource = 'membership_credit';
-        await UserMembershipRepository.deductClass(userMembership.id);
-      }
-    }
-
+    // Las membresías ya no otorgan clases gratis (módulo Descuentos reemplaza esa lógica).
     const booking = await BookingRepository.create(classId, userId);
     res.status(201).json({
       success: true,
-      data: {
-        booking,
-        isFree,
-        bookingSource,
-        classesRemaining: bookingSource === 'membership_credit'
-          ? (userMembership!.classesRemaining ?? 1) - 1
-          : null,
-      },
+      data: { booking },
     });
   } catch (err: any) {
     res.status(err.statusCode ?? 500).json({ success: false, error: err.message });

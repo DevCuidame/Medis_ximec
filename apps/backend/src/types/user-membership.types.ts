@@ -19,17 +19,10 @@ export interface UserMembershipRecord {
   membership_name?: string;
   membership_type?: MembershipType;
   membership_price?: number;
-  membership_benefits?: string[];
   membership_duration_days?: number | null;
   // Joined user fields (admin queries)
   user_name?: string;
   user_email?: string;
-}
-
-export interface CategoryCredit {
-  total: number;
-  used: number;
-  remaining: number;
 }
 
 export interface UserMembershipPublic {
@@ -50,17 +43,10 @@ export interface UserMembershipPublic {
     name: string;
     type: MembershipType;
     price: number;
-    benefits: string[];
     durationDays: number | null;
   };
   // Derived
   isExpired: boolean;
-  coversFreeClasses: boolean;
-  hasClassCredits: boolean;
-  discountPercent: number | null;
-  sessionsUsed: number;
-  // Per-category session tracking (pole, complementary, general)
-  categoryCredits: Record<string, CategoryCredit>;
 }
 
 export interface PurchaseMembershipDto {

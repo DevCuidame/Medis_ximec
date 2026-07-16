@@ -10,7 +10,6 @@ export interface MembershipRecord {
   currency: string;
   duration_days: number | null;
   max_classes: number | null;
-  benefits: string[];
   is_active: boolean;
   created_at: Date;
   updated_at: Date;
@@ -26,7 +25,6 @@ export interface MembershipPublic {
   currency: string;
   durationDays: number | null;
   maxClasses: number | null;
-  benefits: string[];
   isActive: boolean;
 }
 
@@ -38,7 +36,6 @@ export interface CreateMembershipDto {
   price: number;
   currency?: string;
   durationDays?: number | null;
-  benefits?: string[];
   isActive?: boolean;
 }
 
