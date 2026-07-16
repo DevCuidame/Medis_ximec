@@ -297,7 +297,7 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
       }
     );
 
-    if (applied) {
+    if (applied && request.wasCreated) {
       await DiscountRepository.redeem(applied.discountId, userId, request.id);
     }
 

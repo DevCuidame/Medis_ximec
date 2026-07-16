@@ -331,7 +331,8 @@ export const BookingRequestRepository = {
               u.last_name AS "lastName", u.email,
               l.name AS "locationName",
               p.first_name AS "profFirstName", p.last_name AS "profLastName",
-              COALESCE(jsonb_array_length(br.sibling_offer_ids), 0) + 1 AS "sessionCount"
+              COALESCE(jsonb_array_length(br.sibling_offer_ids), 0) + 1 AS "sessionCount",
+              br.expected_amount AS "expectedAmount", br.discount_pct AS "discountPct", br.payment_method AS "paymentMethod"
        FROM booking_requests br
        JOIN service_offers so ON so.id = br.offer_id
        JOIN users u ON u.id = br.user_id
@@ -446,17 +447,18 @@ export const BookingRequestRepository = {
     offerIds: string[],
     userId: string,
     payment: { paymentMethod: 'cash' | 'wompi'; expectedAmount?: number; discountPct?: number } = { paymentMethod: 'cash' }
-  ): Promise<BookingRequestPublic> {
+  ): Promise<BookingRequestPublic & { wasCreated: boolean }> {
     const leadId    = offerIds[0];
     const siblings  = offerIds.slice(1);
     const isPaid    = payment.expectedAmount != null && payment.expectedAmount > 0;
     const initStatus = isPaid ? 'pending' : 'approved';
 
-    await pool.query(
+    const insertResult = await pool.query(
       `INSERT INTO booking_requests
          (offer_id, user_id, sibling_offer_ids, is_group_lead, payment_method, expected_amount, discount_pct, status)
        VALUES ($1, $2, $3, TRUE, $4, $5, $6, $7)
-       ON CONFLICT (offer_id, user_id) DO NOTHING`,
+       ON CONFLICT (offer_id, user_id) DO NOTHING
+       RETURNING id`,
       [
         leadId, userId,
         siblings.length > 0 ? JSON.stringify(siblings) : null,
@@ -466,6 +468,7 @@ export const BookingRequestRepository = {
         initStatus,
       ]
     );
+    const wasCreated = (insertResult.rowCount ?? 0) > 0;
 
     if (!isPaid && siblings.length > 0) {
       for (const sibId of siblings) {
@@ -479,7 +482,7 @@ export const BookingRequestRepository = {
     }
 
     const list = await this.findByUser(userId);
-    return list.find((b) => b.offerId === leadId)!;
+    return { ...list.find((b) => b.offerId === leadId)!, wasCreated };
   },
 
   async resolve(

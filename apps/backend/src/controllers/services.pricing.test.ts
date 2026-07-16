@@ -27,7 +27,7 @@ beforeEach(() => {
   })
   ;(BookingRequestRepository as any).createGroupEnrollment = async (_ids: string[], _uid: string, opts: any) => {
     captured = opts
-    return { id: 'req-1', ...opts }
+    return { id: 'req-1', ...opts, wasCreated: true }
   }
   ;(DiscountRepository as any).findAutomaticCandidates = async () => []
   ;(DiscountRepository as any).findByCode = async () => null
@@ -84,6 +84,22 @@ test('especialidad se lee del título ("Categoría — Tipo"): descuento con spe
   assert.strictEqual(res.statusCode, 201)
   assert.strictEqual(captured.expectedAmount, 90000)
   assert.strictEqual(captured.discountPct, 10)
+})
+
+test('reserva ya existente (wasCreated: false): NO registra redención aunque el descuento aplique', async () => {
+  ;(BookingRequestRepository as any).createGroupEnrollment = async (_ids: string[], _uid: string, opts: any) => {
+    captured = opts
+    return { id: 'req-1', ...opts, wasCreated: false }
+  }
+  ;(DiscountRepository as any).findAutomaticCandidates = async () => [{
+    id: 'd1', name: 'Promo', kind: 'percentage', value: 20, code: null, specialty: null,
+    starts_at: null, ends_at: null, max_uses_total: null, max_uses_per_patient: null,
+    uses_count: 0, is_active: true, created_at: new Date(), updated_at: new Date(),
+  }]
+  const res = fakeRes()
+  await createBulkBookingRequests(req({ offerIds: ['offer-1', 'offer-1'] }), res)
+  assert.strictEqual(res.statusCode, 201)
+  assert.strictEqual(redemption, null)
 })
 
 test('especialidad del título no coincide: el descuento no aplica', async () => {
