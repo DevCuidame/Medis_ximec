@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, Users, CalendarDays, Building2, Briefcase,
-  DollarSign, CreditCard, LogOut, ChevronDown, ChevronRight,
+  BadgePercent, DollarSign, CreditCard, LogOut, ChevronDown, ChevronRight,
 } from 'lucide-react'
 
 // ─── Design tokens (paleta Dra. Ximena Correa) ────────────────────────────────
@@ -17,7 +17,7 @@ const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 export type AdminNavKey =
   | 'dashboard' | 'usuarios' | 'calendario'
-  | 'infraestructura' | 'servicios' | 'finanzas' | 'planes'
+  | 'infraestructura' | 'servicios' | 'descuentos' | 'finanzas' | 'planes'
 
 interface NavEntry {
   key: AdminNavKey
@@ -32,6 +32,7 @@ const NAV: NavEntry[] = [
   { key: 'calendario',      icon: CalendarDays,    label: 'Calendario',      route: '/admin/classes' },
   { key: 'infraestructura', icon: Building2,       label: 'Infraestructura' },
   { key: 'servicios',       icon: Briefcase,       label: 'Servicios',       route: '/admin/services/create' },
+  { key: 'descuentos',      icon: BadgePercent,    label: 'Descuentos',      route: '/admin/discounts' },
   { key: 'finanzas',        icon: DollarSign,      label: 'Finanzas',        route: '/admin/finances' },
   { key: 'planes',          icon: CreditCard,      label: 'Planes',          route: '/admin/memberships' },
 ]
