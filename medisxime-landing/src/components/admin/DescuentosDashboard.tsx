@@ -280,17 +280,20 @@ export const DescuentosDashboard: React.FC = () => {
 
   const handleFormSuccess = async (data: DescuentoFormValues) => {
     setSaveError(null);
-    // Mapear al contrato camelCase del API
+    // Mapear al contrato camelCase del API.
+    // En edición (PATCH parcial) los campos vaciados van como null para que el
+    // backend los limpie; en creación basta con omitirlos (undefined).
+    const empty = modalState.type === 'edit' ? null : undefined;
     const payload = {
       name: data.name.trim(),
       kind: data.kind,
-      value: data.kind === 'percentage' && data.value ? Number(data.value) : undefined,
-      code: data.code && data.code.trim() ? data.code.trim() : undefined,
-      specialty: data.specialty ? data.specialty : undefined,
-      startsAt: data.startsAt ? data.startsAt : undefined,
-      endsAt: data.endsAt ? data.endsAt : undefined,
-      maxUsesTotal: data.maxUsesTotal ? Number(data.maxUsesTotal) : undefined,
-      maxUsesPerPatient: data.maxUsesPerPatient ? Number(data.maxUsesPerPatient) : undefined,
+      value: data.kind === 'percentage' && data.value ? Number(data.value) : empty,
+      code: data.code && data.code.trim() ? data.code.trim() : empty,
+      specialty: data.specialty ? data.specialty : empty,
+      startsAt: data.startsAt ? data.startsAt : empty,
+      endsAt: data.endsAt ? data.endsAt : empty,
+      maxUsesTotal: data.maxUsesTotal ? Number(data.maxUsesTotal) : empty,
+      maxUsesPerPatient: data.maxUsesPerPatient ? Number(data.maxUsesPerPatient) : empty,
     };
     try {
       let res: Response | undefined;
