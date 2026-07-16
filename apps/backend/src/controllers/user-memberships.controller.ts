@@ -128,7 +128,6 @@ export async function confirmPayment(req: Request, res: Response): Promise<void>
         planType: membership.membership.type,
         planPrice: membership.membership.price,
         durationDays: membership.membership.durationDays,
-        classesRemaining: membership.classesRemaining,
         activatedAt: new Date().toLocaleDateString('es-CO', {
           day: 'numeric', month: 'long', year: 'numeric',
         }),

@@ -406,7 +406,8 @@ export const UserServicios: React.FC<Props> = () => {
 
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button onClick={() => setConfirmBooking(null)}
-                    style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: 'transparent', color: C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
+                    disabled={enrolling === confirmBooking.key}
+                    style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: 'transparent', color: C.textBrown, fontSize: 13, fontWeight: 700, cursor: enrolling === confirmBooking.key ? 'not-allowed' : 'pointer', opacity: enrolling === confirmBooking.key ? 0.6 : 1, fontFamily: FONT_INTER }}>
                     Cancelar
                   </button>
                   <button

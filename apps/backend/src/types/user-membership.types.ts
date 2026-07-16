@@ -9,7 +9,6 @@ export interface UserMembershipRecord {
   membership_id: string;
   started_at: Date;
   expires_at: Date | null;
-  classes_remaining: number | null;
   is_active: boolean;
   payment_status: PaymentStatus;
   payment_method: PaymentMethod;
@@ -31,7 +30,6 @@ export interface UserMembershipPublic {
   membershipId: string;
   startedAt: string;
   expiresAt: string | null;
-  classesRemaining: number | null;
   isActive: boolean;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;

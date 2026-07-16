@@ -40,7 +40,6 @@ function toPublic(row: UserMembershipRecord & Record<string, unknown>): UserMemb
     membershipId: row.membership_id,
     startedAt: new Date(row.started_at).toISOString(),
     expiresAt: expiresAt ? expiresAt.toISOString() : null,
-    classesRemaining: row.classes_remaining != null ? Number(row.classes_remaining) : null,
     isActive: row.is_active,
     paymentStatus: row.payment_status as 'pending' | 'paid' | 'cancelled',
     paymentMethod: (row.payment_method ?? 'cash') as 'cash' | 'wompi' | 'free',
@@ -107,30 +106,20 @@ export const UserMembershipRepository = {
     }
     const m = mRes.rows[0];
 
-    // Inscripciones: sin vencimiento por calendario, sin cuota de clases
+    // Vigencia por calendario; los planes ya no otorgan cuotas de clases
     let expiresAt: string | null = null;
-    let classesRemaining: number | null = null;
-
-    if (m.type === 'inscription') {
-      expiresAt = null;
-      classesRemaining = null;
-    } else {
-      if (m.duration_days) {
-        const d = new Date();
-        d.setDate(d.getDate() + Number(m.duration_days));
-        expiresAt = d.toISOString();
-      }
-      if (m.type === 'per_class' || m.type === 'pack' || m.type === 'private') {
-        classesRemaining = m.max_classes ?? (m.type === 'per_class' ? 1 : m.type === 'private' ? 1 : 10);
-      }
+    if (m.type !== 'inscription' && m.duration_days) {
+      const d = new Date();
+      d.setDate(d.getDate() + Number(m.duration_days));
+      expiresAt = d.toISOString();
     }
 
     const ins = await pool.query(
       `INSERT INTO user_memberships
-         (user_id, membership_id, expires_at, classes_remaining, payment_status, payment_method, is_active)
-       VALUES ($1, $2, $3, $4, 'pending', $5, FALSE)
+         (user_id, membership_id, expires_at, payment_status, payment_method, is_active)
+       VALUES ($1, $2, $3, 'pending', $4, FALSE)
        RETURNING id`,
-      [userId, membershipId, expiresAt, classesRemaining, paymentMethod]
+      [userId, membershipId, expiresAt, paymentMethod]
     );
 
     const res = await pool.query(`${JOIN} WHERE um.id = $1`, [ins.rows[0].id]);

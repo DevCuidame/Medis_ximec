@@ -169,7 +169,6 @@ interface UserConfirmParams {
   planType: string;
   planPrice: number;
   durationDays: number | null;
-  classesRemaining: number | null;
   activatedAt: string;
   expiresAt: string | null;
   appUrl?: string;
@@ -179,13 +178,10 @@ function userConfirmHtml(p: UserConfirmParams): string {
   const url = (p.appUrl ?? 'http://localhost:5173') + '/user/classes';
   const typeLabel = TYPE_LABELS[p.planType] ?? p.planType;
   const typeColor = TYPE_COLORS[p.planType] ?? GOLD;
-  const isUnlimited = p.planType === 'monthly' || p.planType === 'annual';
 
-  const durLine = isUnlimited
-    ? `Clases ilimitadas durante ${p.durationDays ?? '∞'} días`
-    : p.classesRemaining != null
-      ? `${p.classesRemaining} crédito${p.classesRemaining !== 1 ? 's' : ''} de clase incluido${p.classesRemaining !== 1 ? 's' : ''}`
-      : 'Sin vencimiento';
+  const durLine = p.durationDays != null
+    ? `Vigencia de ${p.durationDays} días`
+    : 'Sin vencimiento';
 
   const expLine = p.expiresAt
     ? `Válido hasta: <strong>${new Date(p.expiresAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>`

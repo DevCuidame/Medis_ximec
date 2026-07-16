@@ -46,7 +46,6 @@ interface ActiveMembership {
   id: string;
   startedAt: string;
   expiresAt: string | null;
-  classesRemaining: number | null;
   paymentMethod: 'cash' | 'wompi' | 'free';
   isExpired: boolean;
   sessionsUsed: number;
@@ -621,15 +620,6 @@ export const FinanzasDashboard: React.FC = () => {
                                 {!expires && ' · Sin vencimiento'}
                               </p>
                             </div>
-                            {am.classesRemaining !== null && (
-                              <div style={{ textAlign: 'right' }}>
-                                <p style={{ fontSize: 15, fontWeight: 800, color: am.classesRemaining <= 2 ? '#DC2626' : C.gold, margin: 0 }}>{am.classesRemaining}</p>
-                                <p style={{ fontSize: 10, color: C.textMuted, margin: 0 }}>sesiones</p>
-                              </div>
-                            )}
-                            {am.classesRemaining === null && (
-                              <span style={{ fontSize: 10, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '3px 8px', borderRadius: 99 }}>∞ Ilimitado</span>
-                            )}
                           </div>
                           <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: 6, borderTop: `1px solid ${C.borderLight}` }}>
                             <button

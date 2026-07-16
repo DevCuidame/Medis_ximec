@@ -68,10 +68,17 @@ export const DiscountRepository = {
         `INSERT INTO discount_redemptions (discount_id, user_id, booking_request_id) VALUES ($1, $2, $3)`,
         [discountId, userId, bookingRequestId]
       )
-      await client.query(
-        `UPDATE discounts SET uses_count = uses_count + 1 WHERE id = $1`,
+      const upd = await client.query(
+        `UPDATE discounts SET uses_count = uses_count + 1
+         WHERE id = $1 AND (max_uses_total IS NULL OR uses_count < max_uses_total)`,
         [discountId]
       )
+      if ((upd.rowCount ?? 0) === 0) {
+        // Carrera: otro proceso agotó el cupo entre el chequeo y aquí. Se descarta la
+        // redención (la reserva ya creada conserva su precio); el contador nunca excede el límite.
+        await client.query('ROLLBACK')
+        return
+      }
       await client.query('COMMIT')
     } catch (err) {
       await client.query('ROLLBACK')
