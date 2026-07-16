@@ -68,19 +68,19 @@ const router: Router = Router();
 
 // ─── LOCATIONS ───────────────────────────────────────────────
 router.get(   '/locations',     getLocations);
-router.post(  '/locations',     createLocation);
-router.patch( '/locations/:id', updateLocation);
-router.delete('/locations/:id', deleteLocation);
+router.post(  '/locations',     authenticate, authorize('ADMIN'), createLocation);
+router.patch( '/locations/:id', authenticate, authorize('ADMIN'), updateLocation);
+router.delete('/locations/:id', authenticate, authorize('ADMIN'), deleteLocation);
 
 // ─── OPERATING HOURS ─────────────────────────────────────────
 router.get('/locations/:locationId/hours', getOperatingHours);
-router.put('/locations/:locationId/hours', upsertOperatingHours);
+router.put('/locations/:locationId/hours', authenticate, authorize('ADMIN'), upsertOperatingHours);
 
 // ─── ROOMS ───────────────────────────────────────────────────
 router.get(  '/rooms', getAllRooms);
 router.get(  '/locations/:locationId/rooms', getRoomsByLocation);
-router.post( '/rooms',     createRoom);
-router.patch('/rooms/:id', updateRoom);
+router.post( '/rooms',     authenticate, authorize('ADMIN'), createRoom);
+router.patch('/rooms/:id', authenticate, authorize('ADMIN'), updateRoom);
 
 // ─── SERVICE OFFERS ──────────────────────────────────────────
 router.get(   '/services/offers',     listOffers);

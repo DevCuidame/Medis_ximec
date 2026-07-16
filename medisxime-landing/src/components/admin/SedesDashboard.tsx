@@ -55,6 +55,9 @@ export const SedesDashboard: React.FC = () => {
 
   const [search, setSearch] = useState('');
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => { setSaveError(null); }, [modalState.type]);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'inactive'>('all');
@@ -94,24 +97,32 @@ export const SedesDashboard: React.FC = () => {
   };
 
   const handleFormSuccess = async (data: any) => {
+    setSaveError(null);
     try {
+      let res: Response | undefined;
       if (modalState.type === 'create') {
-        await fetch('/api/locations', {
+        res = await fetch('/api/locations', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
           body: JSON.stringify(data)
         });
       } else if (modalState.type === 'edit') {
-        await fetch(`/api/locations/${modalState.sede.id}`, {
+        res = await fetch(`/api/locations/${modalState.sede.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` },
           body: JSON.stringify(data)
         });
       }
+      if (res && !res.ok) {
+        const json = await res.json().catch(() => null);
+        setSaveError(json?.error ?? 'No se pudo guardar la sede. Intenta de nuevo.');
+        return;
+      }
       loadSedes();
       setModalState({ type: 'none' });
     } catch (error) {
       console.error('Error saving sede', error);
+      setSaveError('Error de conexión al guardar la sede.');
     }
   };
 
@@ -334,7 +345,12 @@ export const SedesDashboard: React.FC = () => {
                 style={{ position: 'fixed', top: 0, right: 0, height: '100%', width: '100%', maxWidth: 700, background: C.white, boxShadow: '-8px 0 32px rgba(0,0,0,0.1)', zIndex: 50, overflowY: 'auto' }}
               >
                 <div style={{ padding: 32 }}>
-                  <FormularioSede 
+                  {saveError && (
+                    <div style={{ background: '#FFF0F0', border: '1px solid #FFCDD2', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#D32F2F', fontWeight: 500 }}>
+                      {saveError}
+                    </div>
+                  )}
+                  <FormularioSede
                     initialData={modalState.type === 'edit' ? modalState.sede : undefined}
                     onCancel={() => setModalState({ type: 'none' })} 
                     onSuccess={handleFormSuccess} 
@@ -365,6 +381,7 @@ export const SedesDashboard: React.FC = () => {
                     <p style={{ margin: '0 0 8px 0' }}><strong style={{ color: C.textBrown }}>Dirección:</strong> {modalState.sede.address}, {modalState.sede.city}</p>
                     <p style={{ margin: '0 0 8px 0' }}><strong style={{ color: C.textBrown }}>Teléfono:</strong> {modalState.sede.phone || 'N/A'}</p>
                     <p style={{ margin: '0 0 8px 0' }}><strong style={{ color: C.textBrown }}>Email:</strong> {modalState.sede.email || 'N/A'}</p>
+                    <p style={{ margin: '0 0 8px 0' }}><strong style={{ color: C.textBrown }}>Código de Prestador:</strong> {modalState.sede.providerCode || 'Sin registrar'}</p>
                     <div style={{ marginTop: 24, paddingTop: 24, borderTop: `1px solid ${C.borderLight}` }}>
                       <h4 style={{ fontWeight: 700, color: C.text, marginBottom: 12 }}>Horarios y Apertura</h4>
                       <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
