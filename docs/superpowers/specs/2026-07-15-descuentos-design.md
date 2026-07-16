@@ -107,10 +107,11 @@ Al crear la reserva con descuento aplicado: se inserta UNA fila en
 `uses_count`. Las redenciones **no se liberan** si el admin luego rechaza la
 solicitud (regla simple aceptada; se revisa si genera fricción real).
 
-Los dos flujos de creación (`createBookingRequest` y
-`createBulkBookingRequests` en `services.controller.ts`) aceptan
-`discountCode?: string` en el body y usan `resolveDiscount`, reemplazando por
-completo el bloque viejo (membresías/créditos/inscripción).
+El flujo con pricing (`createBulkBookingRequests` en `services.controller.ts`
+— el único que calcula montos; `createBookingRequest` individual no calcula
+precios y no se toca) acepta `discountCode?: string` en el body y usa
+`resolveDiscount`, reemplazando por completo el bloque viejo
+(membresías/créditos/inscripción).
 
 ## 3. Eliminación de lo viejo
 
