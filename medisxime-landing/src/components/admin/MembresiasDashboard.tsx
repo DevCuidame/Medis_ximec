@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus,
   CreditCard, Bell, Menu, X, CheckCircle2, XCircle,
   Clock, Tag, Infinity, Edit2, Trash2, ToggleLeft, ToggleRight,
-  RefreshCw, Gift, Percent, Info,
+  RefreshCw,
 } from 'lucide-react';
 import { AdminSidebar } from './AdminSidebar';
 import './MainDashboard.css';
@@ -27,7 +26,6 @@ const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
 const STEPS = [
   { label: 'Básico', desc: 'Nombre y descripción' },
   { label: 'Precio', desc: 'Tipo y valor' },
-  { label: 'Beneficios', desc: 'Qué incluye' },
   { label: 'Confirmar', desc: 'Revisar y crear' },
 ];
 
@@ -51,7 +49,6 @@ interface Membership {
   price: number;
   currency: string;
   durationDays: number | null;
-  benefits: string[];
   isActive: boolean;
 }
 
@@ -81,7 +78,6 @@ const EMPTY_FORM = {
   price: '',
   duration_days: '',
   is_active: true,
-  benefits: [] as string[],
 };
 
 function slugify(str: string) {
@@ -97,14 +93,11 @@ function authHeaders(): HeadersInit {
 }
 
 export const MembresiasDashboard: React.FC = () => {
-  const navigate = useNavigate();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [catalogBenefits, setCatalogBenefits] = useState<{ id: string; name: string; isActive: boolean; benefitType: string; benefitValue: number | null }[]>([]);
 
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<Membership | null>(null);
@@ -136,23 +129,7 @@ export const MembresiasDashboard: React.FC = () => {
     }
   };
 
-  const fetchCatalogBenefits = async () => {
-    try {
-      const res  = await fetch('/api/benefits', { headers: authHeaders() });
-      const data = await res.json();
-      if (data.success) setCatalogBenefits(
-        data.data.benefits.map((b: any) => ({
-          id: b.id,
-          name: b.name,
-          isActive: b.isActive,
-          benefitType: b.benefitType,
-          benefitValue: b.benefitValue ?? null,
-        }))
-      );
-    } catch { /* ignore */ }
-  };
-
-  useEffect(() => { fetchMemberships(); fetchCatalogBenefits(); }, []);
+  useEffect(() => { fetchMemberships(); }, []);
 
   // ── Modal helpers ────────────────────────────────────────────
   const openCreate = () => {
@@ -173,20 +150,10 @@ export const MembresiasDashboard: React.FC = () => {
       price: String(m.price),
       duration_days: m.durationDays != null ? String(m.durationDays) : '',
       is_active: m.isActive,
-      benefits: [...m.benefits],
     });
     setFormErrors({});
     setCurrentStep(0);
     setShowModal(true);
-  };
-
-  const toggleBenefit = (name: string) => {
-    setForm(f => ({
-      ...f,
-      benefits: f.benefits.includes(name)
-        ? f.benefits.filter(b => b !== name)
-        : [...f.benefits, name],
-    }));
   };
 
   const validateStep = (step: number) => {
@@ -235,7 +202,6 @@ export const MembresiasDashboard: React.FC = () => {
       price: Number(form.price),
       currency: 'COP',
       durationDays: form.duration_days ? Number(form.duration_days) : null,
-      benefits: form.benefits,
       isActive: form.is_active,
     };
 
@@ -285,7 +251,6 @@ export const MembresiasDashboard: React.FC = () => {
 
   const hasDuration = form.type === 'monthly' || form.type === 'annual';
   const tPreview = TYPE_COLORS[form.type] ?? TYPE_COLORS.per_class;
-  const isInscriptionType = form.type === 'inscription';
 
   
   const toggleSidebar = () => {
@@ -347,14 +312,6 @@ export const MembresiasDashboard: React.FC = () => {
                 <p style={{ color: C.textMuted, fontSize: '1.05rem' }}>Administra los planes y tarifas disponibles en MEDIS Studio.</p>
               </div>
               <div style={{ display: 'flex', gap: 10 }}>
-                <button
-                  onClick={() => navigate('/admin/benefits')}
-                  style={{ padding: '12px 20px', border: `1.5px solid ${C.borderLight}`, borderRadius: 12, fontSize: 13, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8, background: C.white, color: C.textBrown, transition: 'all 0.2s' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold; e.currentTarget.style.color = C.gold; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = C.borderLight; e.currentTarget.style.color = C.textBrown; }}
-                >
-                  <Gift size={15} /> Gestionar Beneficios
-                </button>
                 <button onClick={openCreate} className="gold-button" style={{ padding: '12px 24px', border: 'none', borderRadius: 12, fontSize: 13, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Plus size={16} strokeWidth={3} /> Nuevo Plan
                 </button>
@@ -438,44 +395,6 @@ export const MembresiasDashboard: React.FC = () => {
                           <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>/ {(TYPE_LABELS[m.type] ?? m.type).toLowerCase()}</span>
                         </div>
 
-                        {m.benefits.length > 0 && (
-                          <div style={{ marginBottom: '1rem' }}>
-                            <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>Incluye</p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                              {m.benefits.filter(b => {
-                                const cb = catalogBenefits.find(x => x.name === b);
-                                return !cb || cb.benefitType !== 'free_classes';
-                              }).map(b => (
-                                <div key={b} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                                  <CheckCircle2 size={12} color="#16A34A" style={{ flexShrink: 0 }} />
-                                  <span style={{ fontSize: 12, color: C.textBrown }}>{b}</span>
-                                </div>
-                              ))}
-                            </div>
-                            {(() => {
-                              const fcBenefits = catalogBenefits.filter(
-                                cb => m.benefits.includes(cb.name) && cb.benefitType === 'free_classes' && cb.benefitValue != null
-                              );
-                              if (fcBenefits.length === 0) return null;
-                              const total = fcBenefits.reduce((sum, cb) => sum + (cb.benefitValue ?? 0), 0);
-                              return (
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 8 }}>
-                                  {fcBenefits.map(cb => (
-                                    <span key={cb.id} style={{ fontSize: 11, fontWeight: 600, color: '#16A34A', background: 'rgba(34,197,94,0.1)', padding: '2px 8px', borderRadius: 20 }}>
-                                      {cb.name}: {cb.benefitValue}
-                                    </span>
-                                  ))}
-                                  {fcBenefits.length > 1 && (
-                                    <span style={{ fontSize: 11, fontWeight: 700, color: '#9C4A2E', background: 'rgba(124,58,237,0.1)', padding: '2px 8px', borderRadius: 20 }}>
-                                      Total: {total} ses.
-                                    </span>
-                                  )}
-                                </div>
-                              );
-                            })()}
-                          </div>
-                        )}
-
                         <div style={{ display: 'flex', gap: 12, alignItems: 'center', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: C.textMuted, fontWeight: 600 }}>
                             {m.durationDays ? <><Clock size={12} />{m.durationDays} días</> : <><Infinity size={12} />Sin vencimiento</>}
@@ -504,7 +423,7 @@ export const MembresiasDashboard: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '1rem' }}>
                         <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#5C3A28' }} />
                         <h2 style={{ fontFamily: FONT_BODONI, fontSize: '1.1rem', color: C.text, margin: 0 }}>Inscripción</h2>
-                        <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}>— Pago único · habilita el acceso a planes y descuentos</span>
+                        <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 600 }}>— Pago único · habilita el acceso a planes</span>
                       </div>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
                         <AnimatePresence>
@@ -711,92 +630,9 @@ export const MembresiasDashboard: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* ── Step 2: Beneficios ── */}
+                    {/* ── Step 2: Confirmar ── */}
                     {currentStep === 2 && (
                       <motion.div key="s2" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
-                        {/* Header + link to catalog */}
-                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                          <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
-                            Selecciona los beneficios incluidos en este plan. <span style={{ color: C.textMuted }}>Es opcional.</span>
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => { setShowModal(false); navigate('/admin/benefits'); }}
-                            style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.07)', border: 'none', borderRadius: 8, padding: '5px 10px', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '0.04em' }}
-                          >
-                            + Gestionar catálogo
-                          </button>
-                        </div>
-
-                        {/* Benefit cards */}
-                        {catalogBenefits.filter(b => b.isActive).length === 0 ? (
-                          <div style={{ textAlign: 'center', padding: '2rem 1rem', background: C.bgPanel, borderRadius: 14, border: `2px dashed ${C.borderLight}` }}>
-                            <Gift size={32} color={C.borderLight} style={{ margin: '0 auto 10px', display: 'block' }} />
-                            <p style={{ fontSize: 13, color: C.textMuted, margin: '0 0 12px', fontWeight: 600 }}>El catálogo de beneficios está vacío.</p>
-                            <button type="button" onClick={() => { setShowModal(false); navigate('/admin/benefits'); }}
-                              style={{ fontSize: 12, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.1)', border: 'none', borderRadius: 8, padding: '8px 16px', cursor: 'pointer' }}>
-                              Ir a agregar beneficios →
-                            </button>
-                          </div>
-                        ) : (
-                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, maxHeight: 280, overflowY: 'auto', paddingRight: 2 }}>
-                            {catalogBenefits.filter(b => b.isActive).map(b => {
-                              const selected = form.benefits.includes(b.name);
-                              const typeConfig: Record<string, { icon: React.ReactNode; color: string; bg: string; label: string }> = {
-                                free_classes:     { icon: <CreditCard size={14} />, color: '#16A34A', bg: 'rgba(34,197,94,0.1)',    label: b.benefitValue ? `${b.benefitValue} sesiones` : 'Sesiones' },
-                                unlimited_classes:{ icon: <Infinity   size={14} />, color: '#9C4A2E', bg: 'rgba(124,58,237,0.08)', label: 'Ilimitado' },
-                                discount_percent: { icon: <Percent    size={14} />, color: '#B45309', bg: 'rgba(234,179,8,0.1)',   label: b.benefitValue ? `${b.benefitValue}% dto.` : 'Descuento' },
-                                informational:    { icon: <Info       size={14} />, color: '#5E5E5E', bg: 'rgba(94,94,94,0.08)',   label: 'Info' },
-                              };
-                              const tc = typeConfig[b.benefitType] ?? typeConfig.informational;
-                              return (
-                                <motion.button key={b.id} type="button" onClick={() => toggleBenefit(b.name)} whileTap={{ scale: 0.97 }}
-                                  style={{
-                                    display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 8,
-                                    padding: '12px 14px', borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                                    border: `2px solid ${selected ? tc.color : C.borderLight}`,
-                                    background: selected ? tc.bg : C.bgPanel,
-                                    boxShadow: selected ? `0 0 0 3px ${tc.bg}` : 'none',
-                                    transition: 'all 0.18s', position: 'relative',
-                                  }}
-                                >
-                                  {/* Selected checkmark */}
-                                  {selected && (
-                                    <div style={{ position: 'absolute', top: 8, right: 8, width: 18, height: 18, borderRadius: '50%', background: tc.color, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                      <span style={{ color: '#fff', fontSize: 10, fontWeight: 800, lineHeight: 1 }}>✓</span>
-                                    </div>
-                                  )}
-                                  {/* Type icon */}
-                                  <div style={{ width: 32, height: 32, borderRadius: 8, background: tc.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: tc.color, flexShrink: 0 }}>
-                                    {tc.icon}
-                                  </div>
-                                  {/* Name */}
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: selected ? tc.color : C.text, lineHeight: 1.3, paddingRight: 20 }}>
-                                    {b.name}
-                                  </span>
-                                  {/* Value badge */}
-                                  <span style={{ fontSize: 10, fontWeight: 700, color: tc.color, background: selected ? 'rgba(255,255,255,0.6)' : tc.bg, padding: '2px 8px', borderRadius: 20 }}>
-                                    {tc.label}
-                                  </span>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-                        )}
-
-                        {/* Selected count */}
-                        {form.benefits.length > 0 && (
-                          <p style={{ fontSize: 12, color: C.gold, fontWeight: 700, margin: 0 }}>
-                            ✓ {form.benefits.length} beneficio{form.benefits.length !== 1 ? 's' : ''} seleccionado{form.benefits.length !== 1 ? 's' : ''}
-                          </p>
-                        )}
-                      </motion.div>
-                    )}
-
-                    {/* ── Step 3: Confirmar ── */}
-                    {currentStep === 3 && (
-                      <motion.div key="s3" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
                           Así quedará el plan. Confirma antes de {editTarget ? 'guardar' : 'crear'}.
                         </p>
@@ -820,47 +656,6 @@ export const MembresiasDashboard: React.FC = () => {
                             <p style={{ fontSize: 12, color: C.textMuted, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Clock size={12} style={{ flexShrink: 0 }} /> {form.duration_days} días de vigencia
                             </p>
-                          )}
-                          {form.benefits.length > 0 && (
-                            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${C.borderLight}` }}>
-                              <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 6px' }}>Incluye</p>
-                              <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                                {form.benefits.filter(b => {
-                                  const cb = catalogBenefits.find(x => x.name === b);
-                                  return !cb || cb.benefitType !== 'free_classes';
-                                }).map(b => (
-                                  <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 6 }}>
-                                    <CheckCircle2 size={12} color="#16A34A" style={{ flexShrink: 0, marginTop: 2 }} />
-                                    <span style={{ fontSize: 12, color: C.textBrown, wordBreak: 'break-word', minWidth: 0 }}>{b}</span>
-                                  </div>
-                                ))}
-                              </div>
-                              {(() => {
-                                const fcBenefits = catalogBenefits.filter(
-                                  cb => form.benefits.includes(cb.name) && cb.benefitType === 'free_classes' && cb.benefitValue != null
-                                );
-                                if (fcBenefits.length === 0) return null;
-                                const total = fcBenefits.reduce((sum, cb) => sum + (cb.benefitValue ?? 0), 0);
-                                return (
-                                  <div style={{ marginTop: 10, padding: '8px 10px', borderRadius: 10, background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)' }}>
-                                    {fcBenefits.map(cb => (
-                                      <div key={cb.id} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3 }}>
-                                        <CheckCircle2 size={12} color="#16A34A" style={{ flexShrink: 0 }} />
-                                        <span style={{ fontSize: 12, color: '#16A34A' }}>{cb.name}: <b>{cb.benefitValue}</b> sesiones</span>
-                                      </div>
-                                    ))}
-                                    {fcBenefits.length > 1 && (
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, paddingTop: 6, borderTop: '1px solid rgba(34,197,94,0.25)' }}>
-                                        <CheckCircle2 size={13} color="#16A34A" style={{ flexShrink: 0 }} />
-                                        <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>
-                                          Total: {total} sesiones incluidas
-                                        </span>
-                                      </div>
-                                    )}
-                                  </div>
-                                );
-                              })()}
-                            </div>
                           )}
                         </div>
 

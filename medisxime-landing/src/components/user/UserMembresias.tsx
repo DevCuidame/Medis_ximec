@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  CreditCard, CheckCircle2, Clock, Infinity as InfinityIcon,
-  Loader2, ChevronRight, ChevronLeft, ChevronDown, ChevronUp, X, ShieldCheck, Lock,
+  CreditCard, Clock,
+  Loader2, ChevronRight, ChevronLeft, X, ShieldCheck,
 } from 'lucide-react'
 import { DoctorPlansAnim } from './DoctorPlansAnim'
 
@@ -30,42 +30,25 @@ function fmtDate(s: string) {
   return new Date(s).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })
 }
 
-function classBadge(benefits: string[], maxClasses?: number | null): { label: string; isUnlimited: boolean } | null {
-  if (maxClasses) return { label: `${maxClasses} clases`, isUnlimited: false }
-  for (const b of benefits) {
-    const lower = b.toLowerCase()
-    if (lower.includes('ilimitad')) return { label: 'Ilimitadas', isUnlimited: true }
-    const m = lower.match(/(\d+)\s+sesi[oó]n/)
-    if (m) {
-      const n = parseInt(m[1])
-      return { label: `${n} sesión${n !== 1 ? 'es' : ''}`, isUnlimited: false }
-    }
-  }
-  return null
-}
-
 interface Plan {
   id: string; name: string; description: string; type: string
-  price: number; durationDays: number; maxClasses: number | null
-  isActive: boolean; benefits: string[]
+  price: number; durationDays: number
+  isActive: boolean
 }
 
 interface ActiveMembership {
   id: string; membershipId: string; paymentStatus: string
   expiresAt: string | null; startedAt: string
-  classesRemaining: number | null
-  coversFreeClasses: boolean; hasClassCredits: boolean
-  membership: { name: string; price: number; durationDays: number | null; maxClasses?: number | null; benefits: string[] }
+  membership: { name: string; price: number; durationDays: number | null }
 }
 
-const CONFIRM_STEPS = ['Resumen', 'Beneficios', 'Pago']
+const CONFIRM_STEPS = ['Resumen', 'Pago']
 
 interface Props { userId?: string }
 
 export const UserMembresias: React.FC<Props> = () => {
   const [plans, setPlans]                 = useState<Plan[]>([])
   const [active, setActive]               = useState<ActiveMembership | null>(null)
-  const [catalogMap, setCatalogMap]       = useState<Map<string, { type: string; value: number | null }>>(new Map())
   const [loading, setLoading]             = useState(true)
   const [confirmPlan, setConfirmPlan]     = useState<Plan | null>(null)
   const [step, setStep]                   = useState(0)
@@ -80,17 +63,9 @@ export const UserMembresias: React.FC<Props> = () => {
     Promise.all([
       fetch('/api/memberships/active', { headers: authH() }).then(r => r.json()),
       fetch('/api/user-memberships/me', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-      fetch('/api/benefits', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-    ]).then(([plansData, activeData, benefitsData]) => {
+    ]).then(([plansData, activeData]) => {
       if (plansData.success) setPlans((plansData.data.memberships || []).filter((p: Plan) => p.isActive))
       if (activeData.success && activeData.data?.membership) setActive(activeData.data.membership)
-      if (benefitsData.success && benefitsData.data?.benefits) {
-        const map = new Map<string, { type: string; value: number | null }>()
-        for (const b of benefitsData.data.benefits) {
-          map.set(b.name, { type: b.benefitType, value: b.benefitValue ?? null })
-        }
-        setCatalogMap(map)
-      }
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
@@ -125,33 +100,6 @@ export const UserMembresias: React.FC<Props> = () => {
     enter: (d: number) => ({ x: d > 0 ? 60 : -60, opacity: 0 }),
     center: { x: 0, opacity: 1 },
     exit:  (d: number) => ({ x: d > 0 ? -60 : 60, opacity: 0 }),
-  }
-
-  // Lookup plan badge info
-  const getPlanMeta = (plan: Plan) => {
-    let sessionLabel: string | null = null
-    let totalSessions = 0
-    let hasFreeClasses = false
-    let isUnlimited = false
-    let discountPct: number | null = null
-    for (const bName of plan.benefits) {
-      const entry = catalogMap.get(bName)
-      if (!entry) continue
-      if (entry.type === 'unlimited_classes') { isUnlimited = true }
-      else if (entry.type === 'free_classes' && entry.value != null) {
-        totalSessions += entry.value
-        hasFreeClasses = true
-      }
-      else if (entry.type === 'discount_percent' && entry.value != null) { discountPct = entry.value }
-    }
-    if (hasFreeClasses) {
-      sessionLabel = `${totalSessions} sesión${totalSessions !== 1 ? 'es incluidas' : ' incluida'}`
-    }
-    if (!sessionLabel && !isUnlimited) {
-      const fb = classBadge(plan.benefits, plan.maxClasses)
-      if (fb) { sessionLabel = fb.label; isUnlimited = fb.isUnlimited }
-    }
-    return { sessionLabel, isUnlimited, discountPct }
   }
 
   return (
@@ -195,21 +143,8 @@ export const UserMembresias: React.FC<Props> = () => {
                   <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Desde: <strong>{fmtDate(active.startedAt)}</strong></span>
                     {active.expiresAt && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Vence: <strong>{fmtDate(active.expiresAt)}</strong></span>}
-                    {active.classesRemaining !== null && <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.85)' }}>Clases restantes: <strong>{active.classesRemaining}</strong></span>}
                   </div>
                 </div>
-                {active.membership.benefits.length > 0 && (
-                  <div style={{ background: 'rgba(92,58,40,0.03)', padding: '18px 24px' }}>
-                    <p style={{ fontSize: 11, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>Beneficios incluidos</p>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                      {active.membership.benefits.map(b => (
-                        <span key={b} style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '8px 14px', borderRadius: 10, background: C.white, border: `1px solid ${C.borderLight}`, fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
-                          <CheckCircle2 size={13} color={C.gold} />{b}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             )}
 
@@ -223,8 +158,6 @@ export const UserMembresias: React.FC<Props> = () => {
             ) : (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 18 }}>
                 {regularPlans.filter(p => p.id !== active?.membershipId).map((plan, i) => {
-                  const { sessionLabel, isUnlimited, discountPct } = getPlanMeta(plan)
-
                   return (
                     <motion.div key={plan.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
                       style={{ background: C.white, borderRadius: 18, overflow: 'hidden', border: `1.5px solid ${C.borderLight}`, boxShadow: '0 4px 16px rgba(0,0,0,0.03)', display: 'flex', flexDirection: 'column', position: 'relative' }}>
@@ -239,28 +172,7 @@ export const UserMembresias: React.FC<Props> = () => {
                               <Clock size={11} /> {plan.durationDays}d
                             </span>
                           )}
-                          {isUnlimited && (
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#9C4A2E', background: 'rgba(124,58,237,0.08)', padding: '4px 10px', borderRadius: 8, display: 'flex', alignItems: 'center', gap: 5 }}>
-                              <InfinityIcon size={11} /> Ilimitadas
-                            </span>
-                          )}
-                          {!isUnlimited && sessionLabel && (
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', background: 'rgba(34,197,94,0.1)', padding: '4px 10px', borderRadius: 8 }}>{sessionLabel}</span>
-                          )}
-                          {discountPct != null && (
-                            <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', background: 'rgba(234,179,8,0.1)', padding: '4px 10px', borderRadius: 8 }}>-{discountPct}% adicional</span>
-                          )}
                         </div>
-                        {plan.benefits.length > 0 && (
-                          <ul style={{ margin: '0 0 14px', padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            {plan.benefits.slice(0, 3).map(b => (
-                              <li key={b} style={{ fontSize: 12, color: C.textBrown, display: 'flex', alignItems: 'center', gap: 6 }}>
-                                <CheckCircle2 size={11} color={C.gold} /> {b}
-                              </li>
-                            ))}
-                            {plan.benefits.length > 3 && <li style={{ fontSize: 11, color: C.textMuted }}>+{plan.benefits.length - 3} más…</li>}
-                          </ul>
-                        )}
                       </div>
                       <div style={{ padding: '0 22px 18px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -315,7 +227,7 @@ export const UserMembresias: React.FC<Props> = () => {
                                 <span style={{ fontSize: 10, fontWeight: 800, color: step >= idx ? barColor : C.white }}>{idx + 1}</span>
                               </div>
                               <span style={{ fontSize: 11, fontWeight: 700, color: step >= idx ? C.white : 'rgba(255,255,255,0.6)' }}>{s}</span>
-                              {idx < 2 && <ChevronRight size={12} color="rgba(255,255,255,0.5)" />}
+                              {idx < CONFIRM_STEPS.length - 1 && <ChevronRight size={12} color="rgba(255,255,255,0.5)" />}
                             </div>
                           ))}
                         </div>
@@ -337,53 +249,24 @@ export const UserMembresias: React.FC<Props> = () => {
                               )}
                               <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.4rem', color: C.text, margin: '0 0 6px' }}>{confirmPlan.name}</h3>
                               {confirmPlan.description && <p style={{ fontSize: 13, color: C.textMuted, margin: '0 0 16px', lineHeight: 1.5 }}>{confirmPlan.description}</p>}
-                              {(() => {
-                                const { sessionLabel, isUnlimited, discountPct } = getPlanMeta(confirmPlan)
-                                const boxes = [
-                                  confirmPlan.durationDays ? { icon: <Clock size={16} color={barColor} />, value: String(confirmPlan.durationDays), label: 'días de vigencia' } : null,
-                                  isUnlimited ? { icon: <InfinityIcon size={16} color="#7C3AED" />, value: '∞', label: 'acceso ilimitado', color: '#9C4A2E', bg: 'rgba(124,58,237,0.06)' }
-                                    : sessionLabel != null ? { icon: <CreditCard size={16} color="#16A34A" />, value: String(confirmPlan.maxClasses ?? ''), label: sessionLabel, color: '#16A34A', bg: 'rgba(34,197,94,0.06)' } : null,
-                                  discountPct != null ? { icon: <span style={{ fontSize: 14, fontWeight: 800, color: '#B45309' }}>%</span>, value: `-${discountPct}%`, label: 'dto. adicional', color: '#B45309', bg: 'rgba(234,179,8,0.06)' } : null,
-                                ].filter(Boolean) as { icon: React.ReactNode; value: string; label: string; color?: string; bg?: string }[]
-
-                                return (
-                                  <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                                    {boxes.map((box, idx) => (
-                                      <div key={idx} style={{ flex: 1, minWidth: 80, padding: '12px 8px', background: box.bg ?? `${barColor}08`, borderRadius: 12, textAlign: 'center' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}>{box.icon}</div>
-                                        <p style={{ fontFamily: FONT_BODONI, fontSize: 20, color: box.color ?? barColor, margin: '0 0 3px', lineHeight: 1 }}>{box.value}</p>
-                                        <p style={{ fontSize: 9, color: C.textMuted, margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>{box.label}</p>
-                                      </div>
-                                    ))}
-                                    <div style={{ flex: 1, minWidth: 80, padding: '12px 8px', background: `${barColor}08`, borderRadius: 12, textAlign: 'center' }}>
-                                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><CreditCard size={16} color={barColor} /></div>
-                                      <p style={{ fontFamily: FONT_BODONI, fontSize: 16, color: barColor, margin: '0 0 3px', lineHeight: 1 }}>{fmtPrice(confirmPlan.price)}</p>
-                                      <p style={{ fontSize: 9, color: C.textMuted, margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>COP</p>
-                                    </div>
+                              <div style={{ display: 'flex', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+                                {confirmPlan.durationDays && (
+                                  <div style={{ flex: 1, minWidth: 80, padding: '12px 8px', background: `${barColor}08`, borderRadius: 12, textAlign: 'center' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><Clock size={16} color={barColor} /></div>
+                                    <p style={{ fontFamily: FONT_BODONI, fontSize: 20, color: barColor, margin: '0 0 3px', lineHeight: 1 }}>{confirmPlan.durationDays}</p>
+                                    <p style={{ fontSize: 9, color: C.textMuted, margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', lineHeight: 1.3 }}>días de vigencia</p>
                                   </div>
-                                )
-                              })()}
+                                )}
+                                <div style={{ flex: 1, minWidth: 80, padding: '12px 8px', background: `${barColor}08`, borderRadius: 12, textAlign: 'center' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 6 }}><CreditCard size={16} color={barColor} /></div>
+                                  <p style={{ fontFamily: FONT_BODONI, fontSize: 16, color: barColor, margin: '0 0 3px', lineHeight: 1 }}>{fmtPrice(confirmPlan.price)}</p>
+                                  <p style={{ fontSize: 9, color: C.textMuted, margin: 0, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>COP</p>
+                                </div>
+                              </div>
                             </motion.div>
                           )}
                           {step === 1 && (
                             <motion.div key="s1" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22 }}>
-                              <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.2rem', color: C.text, margin: '0 0 14px' }}>Beneficios incluidos</h3>
-                              {confirmPlan.benefits.length === 0 ? (
-                                <p style={{ fontSize: 13, color: C.textMuted, fontStyle: 'italic' }}>Sin beneficios adicionales.</p>
-                              ) : (
-                                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8 }}>
-                                  {confirmPlan.benefits.map(b => (
-                                    <li key={b} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: `${barColor}06`, borderRadius: 10 }}>
-                                      <CheckCircle2 size={14} color={barColor} />
-                                      <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>{b}</span>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </motion.div>
-                          )}
-                          {step === 2 && (
-                            <motion.div key="s2" custom={direction} variants={slideVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22 }}>
                               <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.2rem', color: C.text, margin: '0 0 14px' }}>Método de pago</h3>
                               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 14 }}>
                                 {([['cash','💵','Efectivo','Paga en el estudio'],['wompi','💳','Wompi','Pago en línea']] as const).map(([v,emoji,label,desc]) => (
@@ -413,7 +296,7 @@ export const UserMembresias: React.FC<Props> = () => {
                           style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: 'transparent', color: C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
                           <ChevronLeft size={14} /> {step === 0 ? 'Cancelar' : 'Atrás'}
                         </button>
-                        {step < 2 ? (
+                        {step < CONFIRM_STEPS.length - 1 ? (
                           <button onClick={() => goTo(step + 1)}
                             style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${barColor}, ${barColorLight})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5 }}>
                             Continuar <ChevronRight size={14} />

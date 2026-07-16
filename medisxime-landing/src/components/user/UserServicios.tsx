@@ -51,15 +51,6 @@ function padTime(h: number, m: number) {
   return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
 }
 
-/** Map a discipline name to a session category — must match backend getDisciplineCategory() */
-function getDisciplineCategory(disciplineName: string | null | undefined): string | null {
-  if (!disciplineName) return null
-  const n = disciplineName.toLowerCase()
-  if (n.includes('pole')) return 'pole'
-  if (n.includes('fuerza') || n.includes('flexibilidad') || n.includes('flex')) return 'complementary'
-  return 'general'
-}
-
 function groupOffers(offers: any[]): ServiceGroup[] {
   const map = new Map<string, ServiceGroup>()
   for (const o of offers) {
@@ -96,24 +87,11 @@ function groupOffers(offers: any[]): ServiceGroup[] {
     .sort((a, b) => (a.firstDate.getTime() || Infinity) - (b.firstDate.getTime() || Infinity))
 }
 
-interface CategoryCredit { total: number; used: number; remaining: number }
-
-interface ActiveMembership {
-  coversFreeClasses: boolean
-  hasClassCredits: boolean
-  classesRemaining: number | null
-  discountPercent: number | null
-  sessionsUsed: number
-  categoryCredits: Record<string, CategoryCredit>
-  membership: { name: string; benefits: string[] }
-}
-
 interface Props { userId?: string }
 
 export const UserServicios: React.FC<Props> = () => {
   const [offers, setOffers]         = useState<any[]>([])
   const [loading, setLoading]       = useState(true)
-  const [activeMembership, setActiveMembership] = useState<ActiveMembership | null>(null)
 
   const [enrolledIds, setEnrolledIds] = useState<Set<string>>(new Set())
   const [pendingIds, setPendingIds]   = useState<Set<string>>(new Set())
@@ -121,23 +99,21 @@ export const UserServicios: React.FC<Props> = () => {
   const [filterType, setFilterType] = useState('all')
   const [enrolling, setEnrolling]   = useState<string | null>(null)
   const [toast, setToast]           = useState<{ msg: string; ok: boolean } | null>(null)
-  const [discountConfirm, setDiscountConfirm] = useState<{ ids: string[]; key: string; price: number; discountPct: number } | null>(null)
   const [payMethod, setPayMethod] = useState<'cash' | 'wompi'>('cash')
-  const [limitModal, setLimitModal] = useState<{
-    ids: string[]; key: string; title: string; sessionCount: number;
-    freeSessions: number; paidSessions: number; pricePerSession: number; discountPct: number | null
+  const [confirmBooking, setConfirmBooking] = useState<{
+    ids: string[]; key: string; title: string; sessionCount: number; price: number
   } | null>(null)
+  const [discountCode, setDiscountCode] = useState('')
+  const [bookingError, setBookingError] = useState<string | null>(null)
 
   const showToast = (msg: string, ok: boolean) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 3500) }
 
   useEffect(() => {
     Promise.all([
       fetch('/api/services/offers?limit=200', { headers: authH() }).then(r => r.json()),
-      fetch('/api/user-memberships/me', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
       fetch('/api/services/my-requests', { headers: authH() }).then(r => r.json()).catch(() => ({ success: false })),
-    ]).then(([offersData, membershipData, bookingsData]) => {
+    ]).then(([offersData, bookingsData]) => {
       if (offersData.success) setOffers((offersData.data.offers || []).filter((o: any) => o.status === 'published'))
-      if (membershipData.success && membershipData.data?.membership) setActiveMembership(membershipData.data.membership)
       if (bookingsData.success) {
         const requests: any[] = bookingsData.data.requests || []
         setEnrolledIds(new Set(requests.filter((r: any) => r.status === 'approved').map((r: any) => r.offerId)))
@@ -146,37 +122,47 @@ export const UserServicios: React.FC<Props> = () => {
     }).catch(() => {}).finally(() => setLoading(false))
   }, [])
 
+  const openConfirm = (g: ServiceGroup) => {
+    const parts = (g.title ?? '').split(' — ')
+    setConfirmBooking({ ids: g.ids, key: g.key, title: parts[1] || parts[0], sessionCount: g.ids.length, price: g.price })
+    setDiscountCode('')
+    setBookingError(null)
+    setPayMethod('cash')
+  }
+
   const handleEnroll = async (
     ids: string[], groupKey: string,
-    opts?: { paymentMethod?: 'cash' | 'wompi'; expectedAmount?: number; discountPct?: number }
-  ) => {
+    opts?: { paymentMethod?: 'cash' | 'wompi'; discountCode?: string }
+  ): Promise<boolean> => {
     setEnrolling(groupKey)
+    setBookingError(null)
     try {
+      const body: Record<string, unknown> = {
+        offerIds: ids,
+        paymentMethod: opts?.paymentMethod ?? 'cash',
+      }
+      const code = opts?.discountCode?.trim()
+      if (code) body.discountCode = code
       const res = await fetch('/api/services/requests/bulk', {
         method: 'POST', headers: authH(),
-        body: JSON.stringify({
-          offerIds: ids,
-          paymentMethod:  opts?.paymentMethod  ?? 'cash',
-          expectedAmount: opts?.expectedAmount  ?? null,
-          discountPct:    opts?.discountPct     ?? null,
-        }),
+        body: JSON.stringify(body),
       })
       const data = await res.json()
       if (!res.ok || !data.success) throw new Error(data.error ?? 'Error al inscribirse')
       const created = data.data?.created ?? ids.length
-      if (opts?.paymentMethod === 'wompi' && opts?.expectedAmount) {
+      if (opts?.paymentMethod === 'wompi') {
         showToast('Redirigiendo a Wompi para completar el pago…', true)
         // TODO: redirect to Wompi checkout URL when integration is ready
       } else {
-        showToast(`¡${created} sesión${created !== 1 ? 'es enviadas' : ' enviada'}! El estudio confirmará tu pago en efectivo.`, true)
+        showToast(`¡${created} sesión${created !== 1 ? 'es enviadas' : ' enviada'}! El consultorio confirmará tu pago en efectivo.`, true)
       }
       setPendingIds(prev => new Set([...prev, ids[0]]))
+      return true
     } catch (e: any) {
-      showToast(e.message, false)
+      setBookingError(e.message)
+      return false
     } finally { setEnrolling(null) }
   }
-
-  const effectiveDiscountPercent = activeMembership?.discountPercent ?? null
 
   const groups = groupOffers(offers)
 
@@ -207,50 +193,6 @@ export const UserServicios: React.FC<Props> = () => {
             <DoctorServicesAnim size={190} color={C.goldLight} />
           </div>
         </div>
-
-        {/* Membership banner */}
-        {activeMembership && (
-          <div style={{ marginBottom: 20, padding: '14px 18px', borderRadius: 12, background: 'rgba(34,197,94,0.06)', border: '1.5px solid rgba(34,197,94,0.22)', display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>✦</span>
-            <div style={{ flex: 1 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, color: '#15803D' }}>{activeMembership.membership.name}</span>
-              <div style={{ display: 'flex', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                {/* Unlimited plan */}
-                {activeMembership.coversFreeClasses && activeMembership.classesRemaining === null && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#16A34A', background: 'rgba(34,197,94,0.12)', padding: '3px 10px', borderRadius: 99 }}>
-                    Acceso ilimitado
-                  </span>
-                )}
-                {/* Per-category credits */}
-                {Object.entries(activeMembership.categoryCredits ?? {}).map(([cat, credit]) => {
-                  const LABEL: Record<string, string> = { pole: 'Consultas', complementary: 'Valoraciones', general: 'Servicios' }
-                  const label = LABEL[cat] ?? cat
-                  const ok = credit.remaining > 0
-                  return (
-                    <span key={cat} style={{ fontSize: 11, fontWeight: 700, color: ok ? '#16A34A' : '#B45309', background: ok ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)', padding: '3px 10px', borderRadius: 99 }}>
-                      {label}: {credit.remaining}/{credit.total}
-                    </span>
-                  )
-                })}
-                {/* Fallback single pool (no categoryCredits) */}
-                {Object.keys(activeMembership.categoryCredits ?? {}).length === 0 && activeMembership.classesRemaining !== null && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: activeMembership.classesRemaining > 0 ? '#16A34A' : '#B45309', background: activeMembership.classesRemaining > 0 ? 'rgba(34,197,94,0.12)' : 'rgba(234,179,8,0.12)', padding: '3px 10px', borderRadius: 99 }}>
-                    {activeMembership.classesRemaining > 0
-                      ? `${activeMembership.classesRemaining} sesión${activeMembership.classesRemaining !== 1 ? 'es' : ''} restante${activeMembership.classesRemaining !== 1 ? 's' : ''}`
-                      : 'Sesiones agotadas'}
-                  </span>
-                )}
-                {activeMembership.discountPercent != null && (
-                  <span style={{ fontSize: 11, fontWeight: 700, color: '#B45309', background: 'rgba(234,179,8,0.12)', padding: '3px 10px', borderRadius: 99 }}>
-                    {activeMembership.discountPercent}% dto. adicionales
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-
 
         {/* Search + filter */}
         <div style={{ display: 'flex', gap: 10, marginBottom: 24, flexWrap: 'wrap' }}>
@@ -334,19 +276,10 @@ export const UserServicios: React.FC<Props> = () => {
                         </span>
                       )}
                     </div>
-                    {/* Price / membership / enrollment indicator */}
+                    {/* Price / enrollment indicator */}
                     {(() => {
                       const isEnrolled  = enrolledIds.has(g.ids[0])
                       const isPending   = pendingIds.has(g.ids[0])
-                      const unlimited   = activeMembership?.coversFreeClasses && activeMembership.classesRemaining === null
-                      const offerCat    = getDisciplineCategory(g.disciplineName)
-                      const catCredit   = offerCat && activeMembership?.categoryCredits
-                        ? (activeMembership.categoryCredits[offerCat] ?? activeMembership.categoryCredits['general'])
-                        : null
-                      const hasFreeForThis = unlimited || (catCredit?.remaining ?? 0) > 0
-                      const hasDiscount = !hasFreeForThis && effectiveDiscountPercent != null
-                      const discPct     = effectiveDiscountPercent ?? 0
-                      const discPrice   = g.price > 0 ? Math.round(g.price * (1 - discPct / 100)) : 0
                       return (
                         <div style={{ paddingTop: 12, borderTop: `1px solid ${C.borderLight}` }}>
                           {isEnrolled ? (
@@ -357,21 +290,6 @@ export const UserServicios: React.FC<Props> = () => {
                             <span style={{ fontSize: 12, fontWeight: 700, color: '#B45309', background: 'rgba(234,179,8,0.1)', padding: '4px 12px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                               ⏳ Inscripción pendiente de aprobación
                             </span>
-                          ) : hasFreeForThis ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                              <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A', background: 'rgba(34,197,94,0.1)', padding: '4px 12px', borderRadius: 99 }}>
-                                ✓ Incluido en tu plan
-                              </span>
-                              {!unlimited && catCredit && catCredit.remaining !== null && (
-                                <span style={{ fontSize: 11, color: C.textMuted }}>{catCredit.remaining} restante{catCredit.remaining !== 1 ? 's' : ''}</span>
-                              )}
-                            </div>
-                          ) : hasDiscount ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <span style={{ fontSize: 15, fontWeight: 800, color: '#B45309', fontFamily: FONT_BODONI }}>{fmtPrice(discPrice)}</span>
-                              <span style={{ fontSize: 11, color: C.textMuted, textDecoration: 'line-through' }}>{fmtPrice(g.price)}</span>
-                              <span style={{ fontSize: 10, fontWeight: 700, color: '#B45309', background: 'rgba(234,179,8,0.12)', padding: '2px 7px', borderRadius: 99 }}>-{discPct}%</span>
-                            </div>
                           ) : (
                             <>
                               <span style={{ fontSize: 15, fontWeight: 800, color: C.gold, fontFamily: FONT_BODONI }}>{fmtPrice(g.price)}</span>
@@ -384,18 +302,8 @@ export const UserServicios: React.FC<Props> = () => {
                   </div>
                   <div style={{ padding: '0 20px 18px' }}>
                     {(() => {
-                      const isEnrolled     = enrolledIds.has(g.ids[0])
-                      const isPending      = pendingIds.has(g.ids[0])
-                      const unlimited      = activeMembership?.coversFreeClasses && activeMembership.classesRemaining === null
-                      const offerCat       = getDisciplineCategory(g.disciplineName)
-                      const catCredit      = offerCat && activeMembership?.categoryCredits
-                        ? (activeMembership.categoryCredits[offerCat] ?? activeMembership.categoryCredits['general'])
-                        : null
-                      const freeRemaining  = catCredit?.remaining ?? 0
-                      const hasFreeForThis = unlimited || freeRemaining > 0
-                      const hasDiscount    = !hasFreeForThis && effectiveDiscountPercent != null
-                      const discPct        = effectiveDiscountPercent ?? 0
-                      const discPrice      = g.price > 0 ? Math.round(g.price * (1 - discPct / 100)) : 0
+                      const isEnrolled = enrolledIds.has(g.ids[0])
+                      const isPending  = pendingIds.has(g.ids[0])
 
                       if (isEnrolled) {
                         return (
@@ -411,45 +319,8 @@ export const UserServicios: React.FC<Props> = () => {
                           </button>
                         )
                       }
-                      if (hasFreeForThis) {
-                        const sessionCount = g.ids.length
-                        const parts2       = (g.title ?? '').split(' — ')
-                        const groupTitle   = parts2[1] || parts2[0]
-                        // Group has more sessions than remaining free credits for this category
-                        if (!unlimited && sessionCount > freeRemaining) {
-                          const paidSessions = sessionCount - freeRemaining
-                          return (
-                            <button
-                              onClick={() => setLimitModal({
-                                ids: g.ids, key: g.key, title: groupTitle, sessionCount,
-                                freeSessions: freeRemaining, paidSessions,
-                                pricePerSession: g.price, discountPct: effectiveDiscountPercent,
-                              })}
-                              disabled={enrolling === g.key}
-                              style={{ width: '100%', padding: '11px', borderRadius: 10, border: '1.5px solid #B45309', background: 'rgba(234,179,8,0.07)', color: '#B45309', fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                              {enrolling === g.key ? 'Enviando…' : `✓ Inscribirse · Ver costo (${freeRemaining} gratis)`}
-                            </button>
-                          )
-                        }
-                        return (
-                          <button onClick={() => handleEnroll(g.ids, g.key)} disabled={enrolling === g.key}
-                            style={{ width: '100%', padding: '11px', borderRadius: 10, border: '1.5px solid #16A34A', background: 'rgba(34,197,94,0.08)', color: '#16A34A', fontSize: 13, fontWeight: 700, cursor: enrolling === g.key ? 'not-allowed' : 'pointer', opacity: enrolling === g.key ? 0.7 : 1, fontFamily: FONT_INTER }}>
-                            {enrolling === g.key ? 'Enviando…' : '✓ Inscribirse · Plan'}
-                          </button>
-                        )
-                      }
-                      if (hasDiscount) {
-                        return (
-                          <button
-                            onClick={() => setDiscountConfirm({ ids: g.ids, key: g.key, price: g.price, discountPct: discPct })}
-                            disabled={enrolling === g.key}
-                            style={{ width: '100%', padding: '11px', borderRadius: 10, border: '1.5px solid #B45309', background: 'rgba(234,179,8,0.08)', color: '#B45309', fontSize: 13, fontWeight: 700, cursor: enrolling === g.key ? 'not-allowed' : 'pointer', fontFamily: FONT_INTER }}>
-                            {enrolling === g.key ? 'Enviando…' : `Inscribirse · ${fmtPrice(discPrice)} (-${discPct}%)`}
-                          </button>
-                        )
-                      }
                       return (
-                        <button onClick={() => handleEnroll(g.ids, g.key)} disabled={enrolling === g.key}
+                        <button onClick={() => openConfirm(g)} disabled={enrolling === g.key}
                           style={{ width: '100%', padding: '11px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: enrolling === g.key ? 'not-allowed' : 'pointer', opacity: enrolling === g.key ? 0.7 : 1, fontFamily: FONT_INTER }}>
                           {enrolling === g.key ? 'Enviando…' : 'Solicitar inscripción'}
                         </button>
@@ -463,171 +334,90 @@ export const UserServicios: React.FC<Props> = () => {
         </div>
       </div>
 
-      {/* Limit warning modal — group exceeds remaining free sessions */}
+      {/* Booking confirmation modal */}
       <AnimatePresence>
-        {limitModal && (
+        {confirmBooking && (
           <>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setLimitModal(null)}
+              onClick={() => setConfirmBooking(null)}
               style={{ position: 'fixed', inset: 0, background: 'rgba(27,28,28,0.5)', backdropFilter: 'blur(6px)', zIndex: 100 }} />
             <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
               style={{ position: 'fixed', inset: 0, zIndex: 101, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', pointerEvents: 'none' }}>
               <div style={{ background: C.white, borderRadius: 20, maxWidth: 420, width: '100%', padding: '28px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)', pointerEvents: 'all' }}>
-                {/* Header */}
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(234,179,8,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px' }}>
-                  <span style={{ fontSize: 22 }}>⚠️</span>
-                </div>
-                <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.15rem', color: C.text, textAlign: 'center', margin: '0 0 6px' }}>
-                  Límite de plan alcanzado
+                <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.2rem', color: C.text, textAlign: 'center', margin: '0 0 6px' }}>
+                  Confirmar inscripción
                 </h3>
                 <p style={{ fontSize: 12, color: C.textMedium, textAlign: 'center', margin: '0 0 20px', lineHeight: 1.6 }}>
-                  <strong>{limitModal.title}</strong> tiene <strong>{limitModal.sessionCount} sesiones</strong>, pero tu plan solo cubre <strong>{limitModal.freeSessions}</strong>.
+                  <strong>{confirmBooking.title}</strong> · {confirmBooking.sessionCount} sesión{confirmBooking.sessionCount !== 1 ? 'es' : ''}
                 </p>
 
-                {/* Breakdown */}
-                <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '14px 16px', marginBottom: 20, border: `1px solid ${C.borderLight}` }}>
-                  {/* Free sessions */}
-                  {limitModal.freeSessions > 0 && (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingBottom: 10, borderBottom: `1px dashed ${C.borderLight}` }}>
-                      <span style={{ fontSize: 12, color: '#16A34A', fontWeight: 600 }}>
-                        ✓ {limitModal.freeSessions} sesión{limitModal.freeSessions !== 1 ? 'es' : ''} gratis (plan)
-                      </span>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: '#16A34A' }}>$0</span>
-                    </div>
-                  )}
-                  {/* Paid sessions */}
-                  <div style={{ marginBottom: limitModal.discountPct ? 8 : 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: 12, color: C.textMedium }}>
-                        {limitModal.paidSessions} sesión{limitModal.paidSessions !== 1 ? 'es' : ''} adicional{limitModal.paidSessions !== 1 ? 'es' : ''}{' '}
-                        ({fmtPrice(limitModal.pricePerSession)} c/u)
-                      </span>
-                      <span style={{ fontSize: 12, color: C.textMuted, textDecoration: limitModal.discountPct ? 'line-through' : 'none' }}>
-                        {fmtPrice(limitModal.paidSessions * limitModal.pricePerSession)}
-                      </span>
-                    </div>
-                    {limitModal.discountPct && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6 }}>
-                        <span style={{ fontSize: 12, color: '#B45309', fontWeight: 600 }}>
-                          Descuento plan ({limitModal.discountPct}%)
-                        </span>
-                        <span style={{ fontSize: 13, fontWeight: 800, color: '#B45309', fontFamily: FONT_BODONI }}>
-                          {fmtPrice(Math.round(limitModal.paidSessions * limitModal.pricePerSession * (1 - limitModal.discountPct / 100)))}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Total */}
-                  <div style={{ height: 1, background: C.borderLight, margin: '10px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>
-                      {limitModal.freeSessions > 0 ? 'Costo adicional' : 'Total a pagar'}
+                {/* Price summary */}
+                <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '14px 16px', marginBottom: 18, border: `1px solid ${C.borderLight}` }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ fontSize: 12, color: C.textMedium }}>
+                      {confirmBooking.sessionCount} sesión{confirmBooking.sessionCount !== 1 ? 'es' : ''} ({fmtPrice(confirmBooking.price)} c/u)
                     </span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: '#B45309', fontFamily: FONT_BODONI }}>
-                      {fmtPrice(Math.round(limitModal.paidSessions * limitModal.pricePerSession * (limitModal.discountPct ? (1 - limitModal.discountPct / 100) : 1)))}
+                    <span style={{ fontSize: 12, color: C.textMedium }}>{fmtPrice(confirmBooking.sessionCount * confirmBooking.price)}</span>
+                  </div>
+                  <div style={{ height: 1, background: C.borderLight, margin: '8px 0' }} />
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>Total</span>
+                    <span style={{ fontSize: 14, fontWeight: 800, color: C.gold, fontFamily: FONT_BODONI }}>
+                      {fmtPrice(confirmBooking.sessionCount * confirmBooking.price)}
                     </span>
                   </div>
                 </div>
+
+                {/* Discount code */}
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>
+                  Código de descuento (opcional)
+                </label>
+                <input
+                  value={discountCode}
+                  onChange={e => { setDiscountCode(e.target.value.toUpperCase()); setBookingError(null) }}
+                  placeholder="Ej: SALUD20"
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: `1.5px solid ${bookingError ? '#DC2626' : C.borderLight}`, background: C.white, fontSize: 13, color: C.text, outline: 'none', boxSizing: 'border-box', fontFamily: FONT_INTER, letterSpacing: '0.05em', marginBottom: 6 }}
+                  onFocus={e => { if (!bookingError) e.target.style.borderColor = C.gold }}
+                  onBlur={e => { if (!bookingError) e.target.style.borderColor = C.borderLight }}
+                />
+                <p style={{ fontSize: 11, color: C.textMuted, margin: '0 0 14px', lineHeight: 1.5 }}>
+                  Si el código es válido, el descuento se aplicará al confirmar la inscripción.
+                </p>
 
                 {/* Payment method */}
                 <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Método de pago</p>
                 <div style={{ display: 'flex', gap: 8, marginBottom: 14 }}>
                   {(['cash', 'wompi'] as const).map(m => (
                     <button key={m} onClick={() => setPayMethod(m)}
-                      style={{ flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${payMethod === m ? '#B45309' : C.borderLight}`, background: payMethod === m ? 'rgba(234,179,8,0.08)' : 'transparent', color: payMethod === m ? '#B45309' : C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
+                      style={{ flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${payMethod === m ? C.gold : C.borderLight}`, background: payMethod === m ? 'rgba(92,58,40,0.06)' : 'transparent', color: payMethod === m ? C.gold : C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
                       {m === 'cash' ? '💵 Efectivo' : '💳 Wompi'}
                     </button>
                   ))}
                 </div>
-                {payMethod === 'cash' && <p style={{ fontSize: 11, color: C.textMuted, margin: '0 0 16px', lineHeight: 1.5 }}>El estudio confirmará tu inscripción y te cobrará el monto en efectivo.</p>}
-                {payMethod === 'wompi' && <p style={{ fontSize: 11, color: C.textMuted, margin: '0 0 16px', lineHeight: 1.5 }}>Serás redirigido a Wompi para completar el pago en línea.</p>}
+                {payMethod === 'cash' && <p style={{ fontSize: 11, color: C.textMuted, margin: '0 0 14px', lineHeight: 1.5 }}>Paga en el consultorio. El administrador confirmará tu inscripción.</p>}
+                {payMethod === 'wompi' && <p style={{ fontSize: 11, color: C.textMuted, margin: '0 0 14px', lineHeight: 1.5 }}>Serás redirigido a Wompi para completar el pago en línea.</p>}
+
+                {/* Error banner (invalid code / server error) */}
+                {bookingError && (
+                  <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, padding: '10px 14px', marginBottom: 14 }}>
+                    <span style={{ fontSize: 12, color: '#DC2626', fontWeight: 600 }}>{bookingError}</span>
+                  </div>
+                )}
 
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => setLimitModal(null)}
+                  <button onClick={() => setConfirmBooking(null)}
                     style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: 'transparent', color: C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
                     Cancelar
                   </button>
                   <button
-                    onClick={() => {
-                      const m = limitModal!
-                      const paidTotal = Math.round(m.paidSessions * m.pricePerSession * (m.discountPct ? (1 - m.discountPct / 100) : 1))
-                      setLimitModal(null)
-                      handleEnroll(m.ids, m.key, { paymentMethod: payMethod, expectedAmount: paidTotal, discountPct: m.discountPct ?? undefined })
+                    disabled={enrolling === confirmBooking.key}
+                    onClick={async () => {
+                      const b = confirmBooking
+                      const ok = await handleEnroll(b.ids, b.key, { paymentMethod: payMethod, discountCode })
+                      if (ok) { setConfirmBooking(null); setDiscountCode('') }
                     }}
-                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #B45309, #D97706)', color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                    {payMethod === 'wompi' ? '💳 Pagar con Wompi' : '✓ Confirmar inscripción'}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
-      {/* Discount confirmation modal */}
-      <AnimatePresence>
-        {discountConfirm && (
-          <>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              onClick={() => setDiscountConfirm(null)}
-              style={{ position: 'fixed', inset: 0, background: 'rgba(27,28,28,0.5)', backdropFilter: 'blur(6px)', zIndex: 100 }} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              style={{ position: 'fixed', inset: 0, zIndex: 101, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', pointerEvents: 'none' }}>
-              <div style={{ background: C.white, borderRadius: 20, maxWidth: 400, width: '100%', padding: '28px', boxShadow: '0 24px 80px rgba(0,0,0,0.18)', pointerEvents: 'all' }}>
-                {/* Icon */}
-                <div style={{ width: 52, height: 52, borderRadius: '50%', background: 'rgba(234,179,8,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
-                  <span style={{ fontSize: 24 }}>%</span>
-                </div>
-                <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.2rem', color: C.text, textAlign: 'center', margin: '0 0 10px' }}>
-                  Sesión con descuento
-                </h3>
-                <p style={{ fontSize: 13, color: C.textMedium, textAlign: 'center', lineHeight: 1.6, margin: '0 0 20px' }}>
-                  Has usado todas las sesiones incluidas en tu plan. Esta inscripción tiene un costo adicional con tu descuento aplicado.
-                </p>
-                {/* Price breakdown */}
-                <div style={{ background: '#FFFFFF', borderRadius: 12, padding: '14px 18px', marginBottom: 20, border: `1px solid ${C.borderLight}` }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, color: C.textMuted }}>Precio original</span>
-                    <span style={{ fontSize: 12, color: C.textMuted, textDecoration: 'line-through' }}>{fmtPrice(discountConfirm.price)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-                    <span style={{ fontSize: 12, color: '#B45309' }}>Descuento plan ({discountConfirm.discountPct}%)</span>
-                    <span style={{ fontSize: 12, color: '#B45309' }}>-{fmtPrice(Math.round(discountConfirm.price * discountConfirm.discountPct / 100))}</span>
-                  </div>
-                  <div style={{ height: 1, background: C.borderLight, margin: '8px 0' }} />
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Total a pagar</span>
-                    <span style={{ fontSize: 14, fontWeight: 800, color: '#B45309', fontFamily: FONT_BODONI }}>
-                      {fmtPrice(Math.round(discountConfirm.price * (1 - discountConfirm.discountPct / 100)))}
-                    </span>
-                  </div>
-                </div>
-                {/* Payment method */}
-                <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 8px' }}>Método de pago</p>
-                <div style={{ display: 'flex', gap: 8, marginBottom: 20 }}>
-                  {(['cash', 'wompi'] as const).map(m => (
-                    <button key={m} onClick={() => setPayMethod(m)}
-                      style={{ flex: 1, padding: '10px', borderRadius: 10, border: `2px solid ${payMethod === m ? '#B45309' : C.borderLight}`, background: payMethod === m ? 'rgba(234,179,8,0.08)' : 'transparent', color: payMethod === m ? '#B45309' : C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                      {m === 'cash' ? '💵 Efectivo' : '💳 Wompi'}
-                    </button>
-                  ))}
-                </div>
-                {payMethod === 'cash' && <p style={{ fontSize: 11, color: C.textMuted, margin: '-12px 0 16px', lineHeight: 1.5 }}>Paga en el estudio. El admin confirmará tu inscripción.</p>}
-                {payMethod === 'wompi' && <p style={{ fontSize: 11, color: C.textMuted, margin: '-12px 0 16px', lineHeight: 1.5 }}>Serás redirigido a Wompi para completar el pago en línea.</p>}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button onClick={() => setDiscountConfirm(null)}
-                    style={{ flex: 1, padding: '12px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: 'transparent', color: C.textBrown, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => {
-                      const c = discountConfirm!
-                      const amt = Math.round(c.price * (1 - c.discountPct / 100))
-                      setDiscountConfirm(null)
-                      handleEnroll(c.ids, c.key, { paymentMethod: payMethod, expectedAmount: amt, discountPct: c.discountPct })
-                    }}
-                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: 'linear-gradient(135deg, #B45309, #D97706)', color: C.white, fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: FONT_INTER }}>
-                    {payMethod === 'wompi' ? '💳 Pagar con Wompi' : '✓ Confirmar inscripción'}
+                    style={{ flex: 2, padding: '12px', borderRadius: 10, border: 'none', background: `linear-gradient(135deg, ${C.gold}, ${C.goldLight})`, color: C.white, fontSize: 13, fontWeight: 700, cursor: enrolling === confirmBooking.key ? 'not-allowed' : 'pointer', opacity: enrolling === confirmBooking.key ? 0.7 : 1, fontFamily: FONT_INTER }}>
+                    {enrolling === confirmBooking.key ? 'Enviando…' : payMethod === 'wompi' ? '💳 Pagar con Wompi' : '✓ Confirmar inscripción'}
                   </button>
                 </div>
               </div>

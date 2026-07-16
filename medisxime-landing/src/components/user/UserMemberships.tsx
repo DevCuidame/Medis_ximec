@@ -58,21 +58,16 @@ interface Plan {
   price: number;
   currency: string;
   durationDays: number | null;
-  maxClasses: number | null;
-  benefits: string[];
   isActive: boolean;
 }
 
 interface ActiveMembership {
   id: string;
-  membership: { id: string; name: string; type: string; price: number; benefits: string[]; durationDays: number | null };
+  membership: { id: string; name: string; type: string; price: number; durationDays: number | null };
   startedAt: string;
   expiresAt: string | null;
-  classesRemaining: number | null;
   isActive: boolean;
   isExpired: boolean;
-  coversFreeClasses: boolean;
-  hasClassCredits: boolean;
 }
 
 // ── slide variants for step transitions ─────────────────────────────────────
@@ -82,24 +77,7 @@ const slideVariants = {
   exit:  (d: number) => ({ x: d > 0 ? -36 : 36, opacity: 0 }),
 };
 
-function howItWorks(plan: Plan): { icon: string; title: string; desc: string } {
-  switch (plan.type) {
-    case 'monthly':
-      return { icon: '∞', title: 'Clases ilimitadas', desc: `Durante ${plan.durationDays ?? 30} días podrás reservar cualquier clase del catálogo sin costo adicional.` };
-    case 'annual':
-      return { icon: '∞', title: 'Clases ilimitadas todo el año', desc: `Durante ${plan.durationDays ?? 365} días podrás reservar cualquier clase del catálogo sin costo adicional.` };
-    case 'per_class':
-      return { icon: '🎫', title: '1 crédito de clase', desc: 'Úsalo para inscribirte a cualquier clase del catálogo. Se descuenta automáticamente al reservar.' };
-    case 'pack':
-      return { icon: '🎫', title: `${plan.maxClasses ?? 10} créditos de clase`, desc: 'Úsalos para las clases que prefieras. Cada reserva descuenta un crédito automáticamente.' };
-    case 'private':
-      return { icon: '🎯', title: 'Sesión privada personalizada', desc: 'Una sesión individual con instructor dedicado, adaptada a tus objetivos y ritmo de práctica.' };
-    default:
-      return { icon: '✓', title: 'Plan activado', desc: 'Al activar este plan, podrás acceder a todos sus beneficios inmediatamente.' };
-  }
-}
-
-const CONFIRM_STEPS = ['Resumen', 'Beneficios', 'Pago'];
+const CONFIRM_STEPS = ['Resumen', 'Pago'];
 
 export const UserMemberships: React.FC = () => {
   const navigate = useNavigate();
@@ -180,9 +158,7 @@ export const UserMemberships: React.FC = () => {
 
   const activeBadge = () => {
     if (!active || !active.isActive || active.isExpired) return null;
-    if (active.coversFreeClasses) return { label: 'Clases ilimitadas activas', color: '#16A34A', bg: 'rgba(34,197,94,0.1)' };
-    if (active.hasClassCredits) return { label: `${active.classesRemaining} clases restantes`, color: '#C97B5A', bg: 'rgba(59,130,246,0.1)' };
-    return null;
+    return { label: `Plan activo: ${active.membership.name}`, color: '#16A34A', bg: 'rgba(34,197,94,0.1)' };
   };
 
   const badge = activeBadge();
@@ -237,23 +213,15 @@ export const UserMemberships: React.FC = () => {
               <div>
                 <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', opacity: 0.8, margin: '0 0 6px' }}>Plan Activo</p>
                 <h3 style={{ fontFamily: FONT_BODONI, fontSize: '1.5rem', margin: '0 0 4px' }}>{active.membership.name}</h3>
-                <p style={{ fontSize: 13, opacity: 0.85, margin: 0 }}>
-                  {active.coversFreeClasses
-                    ? `Clases ilimitadas${active.expiresAt ? ` · Vence ${new Date(active.expiresAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}` : ''}`
-                    : active.hasClassCredits
-                      ? `${active.classesRemaining} clase${active.classesRemaining !== 1 ? 's' : ''} disponible${active.classesRemaining !== 1 ? 's' : ''}`
-                      : 'Sin créditos disponibles'
-                  }
-                </p>
+                {active.expiresAt && (
+                  <p style={{ fontSize: 13, opacity: 0.85, margin: 0 }}>
+                    Vence {new Date(active.expiresAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}
+                  </p>
+                )}
               </div>
               <div style={{ textAlign: 'right' }}>
                 <p style={{ fontSize: 11, opacity: 0.7, margin: '0 0 2px' }}>Desde</p>
                 <p style={{ fontSize: 14, fontWeight: 700, margin: 0 }}>{new Date(active.startedAt).toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                {active.coversFreeClasses && (
-                  <button onClick={() => navigate('/user/classes')} style={{ marginTop: 10, padding: '8px 18px', borderRadius: 8, border: `1.5px solid rgba(255,255,255,0.6)`, background: 'transparent', color: C.white, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
-                    Reservar clase →
-                  </button>
-                )}
               </div>
             </motion.div>
           )}
@@ -280,7 +248,6 @@ export const UserMemberships: React.FC = () => {
                 const tc = TYPE_COLORS[plan.type] ?? TYPE_COLORS.per_class;
                 const isCurrentPlan = active?.membership.id === plan.id && active.isActive && !active.isExpired;
                 const isBuying = purchasing === plan.id;
-                const isUnlimited = plan.type === 'monthly' || plan.type === 'annual';
 
                 return (
                   <motion.div
@@ -309,23 +276,12 @@ export const UserMemberships: React.FC = () => {
                       <span style={{ fontSize: 12, color: C.textMuted, fontWeight: 600 }}>COP</span>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.textMuted, fontWeight: 600, marginBottom: 14 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: C.textMuted, fontWeight: 600, marginBottom: 14, flex: 1 }}>
                       {plan.durationDays
                         ? <><Clock size={13} color={C.goldLight} /> {plan.durationDays} días de vigencia</>
-                        : <><Infinity size={13} color={C.goldLight} /> {isUnlimited ? 'Clases ilimitadas' : 'Sin vencimiento'}</>
+                        : <><Infinity size={13} color={C.goldLight} /> Sin vencimiento</>
                       }
                     </div>
-
-                    {plan.benefits.length > 0 && (
-                      <div style={{ marginBottom: 18, flex: 1 }}>
-                        {plan.benefits.map(b => (
-                          <div key={b} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
-                            <CheckCircle2 size={14} color="#16A34A" style={{ flexShrink: 0, marginTop: 1 }} />
-                            <span style={{ fontSize: 13, color: C.textMedium, lineHeight: 1.4 }}>{b}</span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
 
                     <button
                       onClick={() => { if (!isCurrentPlan) openConfirm(plan); }}
@@ -363,8 +319,6 @@ export const UserMemberships: React.FC = () => {
       <AnimatePresence>
         {confirmPlan && (() => {
           const tc = TYPE_COLORS[confirmPlan.type] ?? TYPE_COLORS.per_class;
-          const isUnlimited = confirmPlan.type === 'monthly' || confirmPlan.type === 'annual';
-          const hw = howItWorks(confirmPlan);
           return (
             <>
               {/* Backdrop */}
@@ -472,62 +426,12 @@ export const UserMemberships: React.FC = () => {
                                   </p>
                                 </div>
                               </div>
-                              <div style={{ flex: 1, minWidth: 120, background: C.bgPanel, borderRadius: 12, padding: '12px 14px', display: 'flex', gap: 10, alignItems: 'center' }}>
-                                {isUnlimited
-                                  ? <Infinity size={16} color={C.goldLight} style={{ flexShrink: 0 }} />
-                                  : <CreditCard size={16} color={C.goldLight} style={{ flexShrink: 0 }} />
-                                }
-                                <div>
-                                  <p style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Clases</p>
-                                  <p style={{ fontSize: 14, fontWeight: 700, color: C.text, margin: 0 }}>
-                                    {isUnlimited
-                                      ? 'Ilimitadas'
-                                      : `${confirmPlan.maxClasses ?? 1} crédito${(confirmPlan.maxClasses ?? 1) !== 1 ? 's' : ''}`
-                                    }
-                                  </p>
-                                </div>
-                              </div>
                             </div>
                           </div>
                         )}
 
-                        {/* STEP 1: Beneficios */}
+                        {/* STEP 1: Pago */}
                         {confirmStep === 1 && (
-                          <div>
-                            <h4 style={{ fontFamily: FONT_BODONI, fontSize: '1.1rem', color: C.text, margin: '0 0 1rem' }}>
-                              ¿Qué incluye este plan?
-                            </h4>
-
-                            {confirmPlan.benefits.length > 0 ? (
-                              <div style={{ marginBottom: 18 }}>
-                                {confirmPlan.benefits.map((b, bi) => (
-                                  <div key={bi} style={{ display: 'flex', gap: 10, marginBottom: 8, alignItems: 'flex-start' }}>
-                                    <CheckCircle2 size={15} color="#16A34A" style={{ flexShrink: 0, marginTop: 1 }} />
-                                    <span style={{ fontSize: 13, color: C.textMedium, lineHeight: 1.45 }}>{b}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p style={{ fontSize: 13, color: C.textMuted, marginBottom: 18 }}>
-                                Sin beneficios adicionales listados.
-                              </p>
-                            )}
-
-                            {/* How it works card */}
-                            <div style={{ background: tc.bg, border: `1.5px solid ${tc.badge}`, borderRadius: 14, padding: '1rem 1.1rem', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
-                              <div style={{ width: 40, height: 40, borderRadius: 10, background: tc.badge, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 20, lineHeight: 1 }}>
-                                {hw.icon}
-                              </div>
-                              <div>
-                                <p style={{ fontSize: 13, fontWeight: 700, color: tc.color, margin: '0 0 5px' }}>{hw.title}</p>
-                                <p style={{ fontSize: 12, color: C.textMedium, margin: 0, lineHeight: 1.6 }}>{hw.desc}</p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* STEP 2: Pago */}
-                        {confirmStep === 2 && (
                           <div>
                             {/* Compact plan summary */}
                             <div style={{ background: C.bgPanel, borderRadius: 14, padding: '0.9rem 1.1rem', marginBottom: 18, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, border: `1.5px solid ${C.borderLight}` }}>
