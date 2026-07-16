@@ -12,6 +12,7 @@
 //  GET    /locations/:locationId/rooms          → público
 //  POST   /rooms                                → ADMIN
 //  PATCH  /rooms/:id                            → ADMIN
+//  DELETE /rooms/:id                            → ADMIN (409 si tiene servicios/citas)
 //
 //  SERVICE OFFERS
 //  GET    /services/offers                      → público (con filtros)
@@ -39,6 +40,7 @@ import {
   getRoomsByLocation,
   createRoom,
   updateRoom,
+  deleteRoom,
   listOffers,
   getOffer,
   createOffer,
@@ -79,8 +81,9 @@ router.put('/locations/:locationId/hours', authenticate, authorize('ADMIN'), ups
 // ─── ROOMS ───────────────────────────────────────────────────
 router.get(  '/rooms', getAllRooms);
 router.get(  '/locations/:locationId/rooms', getRoomsByLocation);
-router.post( '/rooms',     authenticate, authorize('ADMIN'), createRoom);
-router.patch('/rooms/:id', authenticate, authorize('ADMIN'), updateRoom);
+router.post(  '/rooms',     authenticate, authorize('ADMIN'), createRoom);
+router.patch( '/rooms/:id', authenticate, authorize('ADMIN'), updateRoom);
+router.delete('/rooms/:id', authenticate, authorize('ADMIN'), deleteRoom);
 
 // ─── SERVICE OFFERS ──────────────────────────────────────────
 router.get(   '/services/offers',     listOffers);

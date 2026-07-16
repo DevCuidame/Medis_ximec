@@ -102,6 +102,23 @@ export async function updateRoom(req: Request, res: Response): Promise<void> {
   }
 }
 
+/** ADMIN ONLY */
+export async function deleteRoom(req: Request, res: Response): Promise<void> {
+  try {
+    const { id } = req.params;
+    const deleted = await RoomRepository.delete(id);
+    if (!deleted) { res.status(404).json({ success: false, error: 'Salón no encontrado' }); return; }
+    res.json({ success: true, data: null });
+  } catch (err: unknown) {
+    // 23503 = foreign_key_violation: el espacio tiene servicios/citas asociados (ON DELETE RESTRICT)
+    if ((err as { code?: string }).code === '23503') {
+      res.status(409).json({ success: false, error: 'No se puede eliminar: el espacio tiene servicios o citas asociados. Desactívalo en su lugar.' });
+      return;
+    }
+    res.status(500).json({ success: false, error: (err as Error).message });
+  }
+}
+
 // ─── SERVICE OFFERS ──────────────────────────────────────────
 
 export async function listOffers(req: Request, res: Response): Promise<void> {

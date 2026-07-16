@@ -57,6 +57,9 @@ export const EspaciosDashboard: React.FC = () => {
   
   const [modalState, setModalState] = useState<ModalEspacioState>({ type: 'none' });
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  useEffect(() => { setDeleteError(null); }, [modalState]);
 
   const filteredEspacios = espacios
     .filter(e => e.name.toLowerCase().includes(search.toLowerCase()))
@@ -77,15 +80,22 @@ export const EspaciosDashboard: React.FC = () => {
 
   const handleDelete = async () => {
     if (modalState.type === 'delete') {
+      setDeleteError(null);
       try {
-        await fetch(`/api/rooms/${modalState.espacio.id}`, {
+        const res = await fetch(`/api/rooms/${modalState.espacio.id}`, {
           method: 'DELETE',
           headers: { 'Authorization': `Bearer ${localStorage.getItem('accessToken')}` }
         });
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          setDeleteError(json?.error ?? 'No se pudo eliminar el espacio. Intenta de nuevo.');
+          return;
+        }
         loadData();
         setModalState({ type: 'none' });
       } catch (error) {
         console.error('Error deleting', error);
+        setDeleteError('Error de conexión al eliminar el espacio.');
       }
     }
   };
@@ -395,6 +405,11 @@ export const EspaciosDashboard: React.FC = () => {
                   </div>
                   <h3 style={{ fontFamily: FONT_BODONI, fontSize: 20, fontWeight: 700, color: C.text, margin: '0 0 8px 0' }}>Eliminar Espacio</h3>
                   <p style={{ fontSize: 14, color: C.textMedium, margin: '0 0 32px 0' }}>¿Estás seguro de eliminar <strong>{modalState.espacio.name}</strong>? Esta acción no se puede deshacer.</p>
+                  {deleteError && (
+                    <div style={{ background: '#FFF0F0', border: '1px solid #FFCDD2', borderRadius: 10, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#D32F2F', fontWeight: 500, textAlign: 'left' }}>
+                      {deleteError}
+                    </div>
+                  )}
                   <div style={{ display: 'flex', gap: 12 }}>
                     <button onClick={() => setModalState({ type: 'none' })} style={{ flex: 1, padding: '10px 0', background: C.bgPanel, border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', color: C.textMedium, cursor: 'pointer' }}>Cancelar</button>
                     <button onClick={handleDelete} style={{ flex: 1, padding: '10px 0', background: '#ef4444', border: 'none', borderRadius: 12, fontWeight: 700, fontSize: 12, textTransform: 'uppercase', color: C.white, cursor: 'pointer' }}>Sí, Eliminar</button>
