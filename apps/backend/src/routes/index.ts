@@ -8,6 +8,7 @@ import servicesRoutes from './services.routes.js';
 import membershipsRoutes from './memberships.routes.js';
 import userMembershipsRoutes from './user-memberships.routes.js';
 import benefitsRoutes from './benefits.routes.js';
+import discountsRoutes from './discounts.routes.js';
 
 const router: Router = Router();
 
@@ -21,5 +22,6 @@ router.use('/', servicesRoutes);
 router.use('/memberships', membershipsRoutes);
 router.use('/user-memberships', userMembershipsRoutes);
 router.use('/benefits', benefitsRoutes);
+router.use('/discounts', discountsRoutes);
 
 export default router;
