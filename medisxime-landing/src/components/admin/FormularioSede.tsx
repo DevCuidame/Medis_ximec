@@ -240,7 +240,7 @@ export const FormularioSede: React.FC<FormularioSedeProps> = ({ initialData, onC
                 {...register('providerCode')}
                 inputMode="numeric"
                 maxLength={12}
-                onChange={e => setValue('providerCode', e.target.value.replace(/\D/g, ''), { shouldValidate: false })}
+                onChange={e => setValue('providerCode', e.target.value.replace(/\D/g, ''), { shouldValidate: true })}
                 style={{ width: '100%', boxSizing: 'border-box', background: C.bgPanel, border: `1px solid ${C.border}`, borderRadius: 8, padding: '12px 16px', fontSize: 14, color: C.text, outline: 'none' }}
                 placeholder="Ej. 0500123456"
               />
