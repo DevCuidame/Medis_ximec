@@ -57,7 +57,7 @@ export const SedesDashboard: React.FC = () => {
   const [modalState, setModalState] = useState<ModalState>({ type: 'none' });
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  useEffect(() => { setSaveError(null); }, [modalState.type]);
+  useEffect(() => { setSaveError(null); }, [modalState]);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const [filterMode, setFilterMode] = useState<'all' | 'active' | 'inactive'>('all');
