@@ -1,0 +1,455 @@
+# Catálogo de Servicios de Salud — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** El formulario de servicios crea ítems de catálogo de salud (consecutivo, nombre, clasificación REPS, CUPS, modalidades, estado, duración, precio, imagen y textos clínicos) sin día/hora, conservando Sede/Espacio; las vistas y descuentos siguen funcionando con `scheduledAt` nullable.
+
+**Architecture:** Migración 020 hace `scheduled_at` nullable y agrega los campos de catálogo a `service_offers`. Shared-types y el repositorio exponen el shape nuevo (`scheduledAt: string | null`). El pricing de descuentos usa la nueva columna `specialty` (fallback: prefijo del título). Frontend: `serviciosCatalogo.ts` (listas encadenadas editables) + `servicioSchema.ts`/`FormularioServicio.tsx` reescritos + ajustes de render en `ServiciosDashboard`/`UserServicios`.
+
+**Tech Stack:** Express + pg, node:test vía tsx; React 19 + React Hook Form + Zod; pnpm workspaces (`@medisxime/shared-types` se recompila con `pnpm -F @medisxime/shared-types build`).
+
+**Spec:** `docs/superpowers/specs/2026-07-16-catalogo-servicios-design.md` (los briefs son autosuficientes).
+
+## Global Constraints
+
+- Sede y Espacio del formulario: **idénticos a hoy** (mismos selects encadenados sede→espacio).
+- Se eliminan del formulario: días de la semana, válido desde/hasta, horas, Grupal/Individual, y la generación de ocurrencias.
+- GRUPOS (códigos exactos): `01` Consulta externa · `02` Apoyo diagnóstico y complementación terapéutica · `03` Internación · `04` Quirurjico · `05` Atención inmediata.
+- MODALIDADES (códigos exactos, multi-selección, mínimo 1): `01` INTRAMURAL · `02` EXTRAMURAL DOMICILIARIA · `03` EXTRAMURAL UNIDAD MOVIL · `04` TELEMEDICINA INTERACTIVA · `05` TELEMEDICINA NO INTERACTIVA · `06` TELESALUD · `08` EXTRAMURAL CENTRO DE ENCUENTRO · `09` EXTRAMURAL OTROS (no existe 07).
+- CUPS: `/^[A-Za-z0-9]{6}$/`, se guarda en MAYÚSCULAS. Consecutivo: autogenerado, mostrado `SRV-` + 4 dígitos.
+- ESTADO: Activo→`status='published'`, No activo→`status='draft'`. Sin columna nueva.
+- Servicios de catálogo: `scheduled_at = null`, `capacity = 999` por defecto, `offer_type = 'appointment'`.
+- Duración (`durationMinutes` > 0) y Precio (>= 0) obligatorios.
+- Descuentos: specialty de la oferta = columna `specialty` ?? prefijo del título (`split(' — ')[0]`) ?? `discipline?.name` ?? null.
+- Respuestas API `{ success, data }` / `{ success:false, error }`; textos en español formal.
+
+## Ejecución en paralelo
+
+- **Task 1 (backend)**, **Task 2 (formulario)** y **Task 3 (vistas)** son paralelizables (archivos disjuntos; 2 y 3 compilan contra el contrato descrito en sus briefs). Integración por cherry-pick en orden 1→2→3.
+- **Task 4**: verificación e2e final.
+
+---
+
+### Task 1: Backend — migración, shared-types, repositorio, validaciones y specialty
+
+**Files:**
+- Create: `apps/backend/migrations/020_service_catalog.sql`
+- Modify: `packages/shared-types/src/models/services.types.ts` (y recompilar el paquete)
+- Modify: `apps/backend/src/repositories/services.repository.ts` (rowToOffer, OFFER_SELECT, create, update)
+- Modify: `apps/backend/src/controllers/services.controller.ts` (validaciones en createOffer/updateOffer + specialty en createBulkBookingRequests)
+- Test: `apps/backend/src/controllers/services.catalog.test.ts`
+
+**Interfaces:**
+- Consumes: módulo Descuentos existente (`resolveDiscount`).
+- Produces (contrato para Tasks 2–3):
+  - `ServiceOfferPublic` gana `consecutive: number | null`, `specialty: string | null`, `serviceGroup/serviceSubgroup/serviceCategory/serviceSubcategory: string | null`, `cups: string | null`, `modalities: string[] | null`, `imageUrl: string | null`, `instructions/restrictions/risks/contraindications: string | null`; `scheduledAt` pasa a `string | null`.
+  - `POST /api/services/offers` (ADMIN) acepta además `specialty?, serviceGroup?, serviceSubgroup?, serviceCategory?, serviceSubcategory?, cups?, modalities?, imageUrl?, instructions?, restrictions?, risks?, contraindications?` y ya NO exige `scheduledAt` ni `capacity` (defaults: null y 999). Valida: `title` requerido; `serviceGroup` ∈ {01..05} si viene; `cups` con regex si viene; `modalities` ⊆ códigos válidos si viene; `durationMinutes` > 0; `price >= 0` si viene → 400 con mensaje.
+  - `PATCH /api/services/offers/:id` acepta los mismos campos.
+
+- [ ] **Step 1: Migración**
+
+`apps/backend/migrations/020_service_catalog.sql`:
+
+```sql
+-- ============================================================
+-- Migration 020: Catálogo de servicios de salud
+-- ============================================================
+
+ALTER TABLE service_offers ALTER COLUMN scheduled_at DROP NOT NULL;
+
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS consecutive INTEGER GENERATED BY DEFAULT AS IDENTITY;
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS specialty            VARCHAR(100);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS service_group        VARCHAR(60);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS service_subgroup     VARCHAR(60);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS service_category     VARCHAR(60);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS service_subcategory  VARCHAR(60);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS cups                 VARCHAR(10);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS modalities           TEXT[];
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS image_url            VARCHAR(500);
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS instructions         TEXT;
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS restrictions         TEXT;
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS risks                TEXT;
+ALTER TABLE service_offers ADD COLUMN IF NOT EXISTS contraindications    TEXT;
+```
+
+Run: `pnpm -F @medisxime/backend migrate` (si no hay DB, continuar y reportar).
+
+- [ ] **Step 2: Shared-types**
+
+En `packages/shared-types/src/models/services.types.ts`:
+
+`ServiceOfferPublic`: cambiar `scheduledAt: string;` por `scheduledAt: string | null;` y agregar tras `currency`:
+
+```ts
+  consecutive: number | null;
+  specialty: string | null;
+  serviceGroup: string | null;
+  serviceSubgroup: string | null;
+  serviceCategory: string | null;
+  serviceSubcategory: string | null;
+  cups: string | null;
+  modalities: string[] | null;
+  imageUrl: string | null;
+  instructions: string | null;
+  restrictions: string | null;
+  risks: string | null;
+  contraindications: string | null;
+```
+
+`CreateServiceOfferPayload`: `capacity` y `scheduledAt` pasan a opcionales (`capacity?: number; scheduledAt?: string | null;`) y se agregan:
+
+```ts
+  specialty?: string;
+  serviceGroup?: string;
+  serviceSubgroup?: string;
+  serviceCategory?: string;
+  serviceSubcategory?: string;
+  cups?: string;
+  modalities?: string[];
+  imageUrl?: string;
+  instructions?: string;
+  restrictions?: string;
+  risks?: string;
+  contraindications?: string;
+```
+
+`UpdateServiceOfferPayload`: agregar los mismos 12 campos opcionales.
+
+Si existe `services.types.d.ts` duplicado en src, aplicar el mismo cambio o regenerarlo. Recompilar: `pnpm -F @medisxime/shared-types build`.
+
+- [ ] **Step 3: Test que falla**
+
+`apps/backend/src/controllers/services.catalog.test.ts`:
+
+```ts
+import { test, beforeEach } from 'node:test'
+import assert from 'node:assert'
+
+process.env.DATABASE_URL ||= 'postgres://test:test@localhost:5432/test'
+process.env.JWT_SECRET ||= 'clave-de-prueba'
+
+const { createOffer } = await import('./services.controller.js')
+const { ServiceOfferRepository } = await import('../repositories/services.repository.js')
+
+function fakeRes() {
+  const res: any = { statusCode: 200, body: null }
+  res.status = (c: number) => { res.statusCode = c; return res }
+  res.json = (b: unknown) => { res.body = b; return res }
+  return res
+}
+
+let captured: any
+beforeEach(() => {
+  captured = null
+  ;(ServiceOfferRepository as any).create = async (payload: any) => { captured = payload; return { id: 'o1', ...payload } }
+})
+
+function req(body: Record<string, unknown>) {
+  return { user: { id: 'admin1', email: 'a@b.co', role: 'ADMIN' }, body } as any
+}
+
+const base = {
+  locationId: 'loc-1', offerType: 'appointment', title: 'Consulta de Medicina Laboral',
+  durationMinutes: 45, price: 120000,
+}
+
+test('catálogo válido → 201 con defaults (capacity 999, scheduledAt null) y cups en MAYÚSCULAS', async () => {
+  const res = fakeRes()
+  await createOffer(req({ ...base, serviceGroup: '01', cups: 'ab12cd', modalities: ['01', '04'], specialty: 'Medicina Laboral' }), res)
+  assert.strictEqual(res.statusCode, 201)
+  assert.strictEqual(captured.capacity, 999)
+  assert.strictEqual(captured.scheduledAt ?? null, null)
+  assert.strictEqual(captured.cups, 'AB12CD')
+})
+
+test('title vacío → 400', async () => {
+  const res = fakeRes()
+  await createOffer(req({ ...base, title: '  ' }), res)
+  assert.strictEqual(res.statusCode, 400)
+})
+
+test('serviceGroup desconocido → 400', async () => {
+  const res = fakeRes()
+  await createOffer(req({ ...base, serviceGroup: '07' }), res)
+  assert.strictEqual(res.statusCode, 400)
+})
+
+test('cups inválido → 400', async () => {
+  for (const bad of ['12345', '1234567', 'AB-123']) {
+    const res = fakeRes()
+    await createOffer(req({ ...base, cups: bad }), res)
+    assert.strictEqual(res.statusCode, 400, `debió rechazar "${bad}"`)
+  }
+})
+
+test('modalidad desconocida → 400 (07 no existe)', async () => {
+  const res = fakeRes()
+  await createOffer(req({ ...base, modalities: ['01', '07'] }), res)
+  assert.strictEqual(res.statusCode, 400)
+})
+
+test('durationMinutes 0 → 400; price negativo → 400', async () => {
+  let res = fakeRes()
+  await createOffer(req({ ...base, durationMinutes: 0 }), res)
+  assert.strictEqual(res.statusCode, 400)
+  res = fakeRes()
+  await createOffer(req({ ...base, price: -1 }), res)
+  assert.strictEqual(res.statusCode, 400)
+})
+```
+
+Run (apps/backend): `npx tsx --test src/controllers/services.catalog.test.ts` → FAIL.
+
+- [ ] **Step 4: Repositorio**
+
+En `services.repository.ts`:
+
+`rowToOffer`: `scheduledAt: row['scheduled_at'] ? (row['scheduled_at'] as Date).toISOString() : null,` y agregar el mapeo de los campos nuevos (`consecutive`, `specialty`, `service_group AS serviceGroup`… — snake→camel; `modalities` llega como array de pg tal cual; null-safe con `?? null`).
+
+`OFFER_SELECT`: agregar `so.consecutive, so.specialty, so.service_group, so.service_subgroup, so.service_category, so.service_subcategory, so.cups, so.modalities, so.image_url, so.instructions, so.restrictions, so.risks, so.contraindications,` a la lista de columnas.
+
+`create`: el INSERT incluye las columnas nuevas; `scheduled_at` acepta `payload.scheduledAt ?? null`; `capacity` = `payload.capacity ?? 999`. Mantener el resto (specialty_id vía disciplineId sigue igual).
+
+`update`: extender el `map` camel→snake con los 12 campos nuevos (`specialty: 'specialty'`, `serviceGroup: 'service_group'`, …, `imageUrl: 'image_url'`, etc.).
+
+`findAll`: el `ORDER BY so.scheduled_at ASC` pasa a `ORDER BY so.scheduled_at ASC NULLS LAST, so.consecutive ASC` (los de catálogo al final, estables).
+
+- [ ] **Step 5: Controlador**
+
+En `services.controller.ts`, arriba:
+
+```ts
+const SERVICE_GROUP_CODES = ['01', '02', '03', '04', '05'];
+const MODALITY_CODES = ['01', '02', '03', '04', '05', '06', '08', '09'];
+const CUPS_RE = /^[A-Za-z0-9]{6}$/;
+
+/** Valida y normaliza el payload de catálogo. Lanza {statusCode:400} con mensaje. */
+function validateOfferPayload(body: Record<string, unknown>, partial: boolean): void {
+  const err = (msg: string) => { throw Object.assign(new Error(msg), { statusCode: 400 }); };
+  if (!partial || body.title !== undefined) {
+    if (typeof body.title !== 'string' || !body.title.trim()) err('El nombre del servicio es requerido.');
+  }
+  if (body.serviceGroup !== undefined && body.serviceGroup !== null && !SERVICE_GROUP_CODES.includes(String(body.serviceGroup))) {
+    err('Grupo de servicio inválido.');
+  }
+  if (body.cups !== undefined && body.cups !== null && body.cups !== '') {
+    if (!CUPS_RE.test(String(body.cups))) err('El código CUPS debe tener 6 caracteres alfanuméricos.');
+    body.cups = String(body.cups).toUpperCase();
+  }
+  if (body.modalities !== undefined && body.modalities !== null) {
+    if (!Array.isArray(body.modalities) || (body.modalities as unknown[]).some(m => !MODALITY_CODES.includes(String(m)))) {
+      err('Modalidad de servicio inválida.');
+    }
+  }
+  if (!partial || body.durationMinutes !== undefined) {
+    if (typeof body.durationMinutes !== 'number' || body.durationMinutes <= 0) err('La duración del servicio debe ser mayor a 0.');
+  }
+  if (body.price !== undefined && body.price !== null && (typeof body.price !== 'number' || body.price < 0)) {
+    err('El precio no puede ser negativo.');
+  }
+}
+```
+
+En `createOffer`, antes de llamar al repositorio: `validateOfferPayload(req.body, false);` y en el catch responder con `err.statusCode ?? (msg.includes('supera la del salón') ? 400 : 500)`. En `updateOffer`: `validateOfferPayload(req.body, true);` con el mismo manejo.
+
+En `createBulkBookingRequests` (bloque de pricing), la resolución de specialty queda:
+
+```ts
+    const titleCategory = typeof lead.title === 'string' && lead.title.trim()
+      ? lead.title.split(' — ')[0].trim()
+      : null;
+    const offerSpecialty = (lead as { specialty?: string | null }).specialty ?? titleCategory ?? lead.discipline?.name ?? null;
+```
+
+(sustituye el cálculo actual; `offerSpecialty` se pasa igual a `resolveDiscount`).
+
+- [ ] **Step 6: Verificar y commitear**
+
+- `npx tsx --test src/controllers/services.catalog.test.ts src/controllers/services.pricing.test.ts src/services/discount.service.test.ts` → PASS
+- `pnpm -F @medisxime/shared-types build && pnpm -F @medisxime/backend build` → limpios
+- `grep -n "toISOString" apps/backend/src/repositories/services.repository.ts` → cada uso sobre `scheduled_at` con guard de null.
+
+```bash
+git add apps/backend/migrations/020_service_catalog.sql packages/shared-types/src apps/backend/src/repositories/services.repository.ts apps/backend/src/controllers/services.controller.ts apps/backend/src/controllers/services.catalog.test.ts
+git commit -m "feat(backend): catalogo de servicios de salud (migracion 020, scheduled_at nullable, validaciones y specialty)"
+```
+
+---
+
+### Task 2: Frontend — listas del catálogo, schema y FormularioServicio
+
+**Files:**
+- Create: `medisxime-landing/src/lib/serviciosCatalogo.ts`
+- Rewrite: `medisxime-landing/src/components/admin/servicioSchema.ts`
+- Rewrite: `medisxime-landing/src/components/admin/FormularioServicio.tsx`
+
+**Interfaces:**
+- Consumes (contrato de Task 1, compila sin backend): `POST /api/services/offers` con Bearer ADMIN y body `{ locationId, roomId?, offerType: 'appointment', title, description?, professionalId?, specialty?, serviceGroup?, serviceSubgroup?, serviceCategory?, serviceSubcategory?, cups?, modalities?, imageUrl?, instructions?, restrictions?, risks?, contraindications?, durationMinutes, price, status }` → 201 `{ success, data: { offer } }` con `offer.consecutive`. Errores 400 `{ success:false, error }`.
+- Produces (contrato para Task 3): `servicioSchema` exporta `servicioSchema` (Zod) y `ServicioFormValues`; `FormularioServicio` mantiene props `{ initialData?, onCancel, onSuccess }` donde `onSuccess(payload)` entrega el payload camelCase listo para POST/PATCH (Task 3 hace el fetch, como hoy). `serviciosCatalogo.ts` exporta `GRUPOS`, `MODALIDADES` y `CATALOGO` (árbol grupo→subgrupos→categorías→subcategorías).
+
+- [ ] **Step 1: `serviciosCatalogo.ts`** (editable por la clínica; estructura exacta):
+
+```ts
+// Listas de habilitación del catálogo de servicios.
+// EDITABLE: la clínica puede ajustar códigos y nombres aquí sin tocar el resto del código.
+
+export interface CatalogoNivel { code: string; name: string; children?: CatalogoNivel[] }
+
+export const GRUPOS: { code: string; name: string }[] = [
+  { code: '01', name: 'Consulta externa' },
+  { code: '02', name: 'Apoyo diagnóstico y complementación terapéutica' },
+  { code: '03', name: 'Internación' },
+  { code: '04', name: 'Quirurjico' },
+  { code: '05', name: 'Atención inmediata' },
+];
+
+export const MODALIDADES: { code: string; name: string }[] = [
+  { code: '01', name: 'Intramural' },
+  { code: '02', name: 'Extramural domiciliaria' },
+  { code: '03', name: 'Extramural unidad móvil' },
+  { code: '04', name: 'Telemedicina interactiva' },
+  { code: '05', name: 'Telemedicina no interactiva' },
+  { code: '06', name: 'Telesalud' },
+  { code: '08', name: 'Extramural centro de encuentro' },
+  { code: '09', name: 'Extramural otros' },
+];
+
+// Árbol: grupo → subgrupos → categorías → subcategorías
+export const CATALOGO: Record<string, CatalogoNivel[]> = {
+  '01': [
+    { code: '0101', name: 'Medicina general', children: [
+      { code: '010101', name: 'Consulta primera vez', children: [
+        { code: '01010101', name: 'Presencial' }, { code: '01010199', name: 'Otras' } ] },
+      { code: '010102', name: 'Consulta de control', children: [
+        { code: '01010201', name: 'Presencial' }, { code: '01010299', name: 'Otras' } ] },
+      { code: '010199', name: 'Otras', children: [ { code: '01019999', name: 'Otras' } ] },
+    ]},
+    { code: '0102', name: 'Medicina especializada', children: [
+      { code: '010201', name: 'Medicina bioreguladora', children: [
+        { code: '01020101', name: 'Primera vez' }, { code: '01020102', name: 'Control' }, { code: '01020199', name: 'Otras' } ] },
+      { code: '010202', name: 'Medicina laboral', children: [
+        { code: '01020201', name: 'Valoración médica' }, { code: '01020202', name: 'Certificación' }, { code: '01020299', name: 'Otras' } ] },
+      { code: '010299', name: 'Otras especialidades', children: [ { code: '01029999', name: 'Otras' } ] },
+    ]},
+    { code: '0103', name: 'Salud ocupacional', children: [
+      { code: '010301', name: 'Examen de ingreso', children: [ { code: '01030101', name: 'Con énfasis osteomuscular' }, { code: '01030199', name: 'Otros' } ] },
+      { code: '010302', name: 'Examen periódico', children: [ { code: '01030299', name: 'Otros' } ] },
+      { code: '010303', name: 'Examen de egreso', children: [ { code: '01030399', name: 'Otros' } ] },
+      { code: '010399', name: 'Otros', children: [ { code: '01039999', name: 'Otros' } ] },
+    ]},
+    { code: '0104', name: 'Psicología y terapias', children: [
+      { code: '010401', name: 'Psicología', children: [ { code: '01040199', name: 'Otras' } ] },
+      { code: '010499', name: 'Otras terapias', children: [ { code: '01049999', name: 'Otras' } ] },
+    ]},
+    { code: '0199', name: 'Otros', children: [ { code: '019999', name: 'Otros', children: [ { code: '01999999', name: 'Otros' } ] } ] },
+  ],
+  '02': [
+    { code: '0201', name: 'Laboratorio clínico', children: [ { code: '020101', name: 'Toma de muestras', children: [ { code: '02010199', name: 'Otras' } ] }, { code: '020199', name: 'Otros', children: [ { code: '02019999', name: 'Otros' } ] } ] },
+    { code: '0202', name: 'Imágenes diagnósticas', children: [ { code: '020299', name: 'Otras', children: [ { code: '02029999', name: 'Otras' } ] } ] },
+    { code: '0203', name: 'Terapias de complementación', children: [ { code: '020399', name: 'Otras', children: [ { code: '02039999', name: 'Otras' } ] } ] },
+    { code: '0299', name: 'Otros apoyos', children: [ { code: '029999', name: 'Otros', children: [ { code: '02999999', name: 'Otros' } ] } ] },
+  ],
+  '03': [ { code: '0301', name: 'Hospitalización general', children: [ { code: '030199', name: 'Otras', children: [ { code: '03019999', name: 'Otras' } ] } ] }, { code: '0399', name: 'Otros', children: [ { code: '039999', name: 'Otros', children: [ { code: '03999999', name: 'Otros' } ] } ] } ],
+  '04': [ { code: '0401', name: 'Cirugía ambulatoria', children: [ { code: '040199', name: 'Otras', children: [ { code: '04019999', name: 'Otras' } ] } ] }, { code: '0499', name: 'Otros', children: [ { code: '049999', name: 'Otros', children: [ { code: '04999999', name: 'Otros' } ] } ] } ],
+  '05': [ { code: '0501', name: 'Urgencias', children: [ { code: '050199', name: 'Otras', children: [ { code: '05019999', name: 'Otras' } ] } ] }, { code: '0599', name: 'Otros', children: [ { code: '059999', name: 'Otros', children: [ { code: '05999999', name: 'Otros' } ] } ] } ],
+};
+```
+
+- [ ] **Step 2: `servicioSchema.ts` nuevo** (conserva y exporta `categoriaEnum` tal cual está hoy — otros archivos lo importan; elimina `generateOccurrences`, `DIA_NOMBRES` y todo lo de recurrencia SOLO si `grep -rn "generateOccurrences\|DIA_NOMBRES" medisxime-landing/src` no muestra otros consumidores; si los hay, se dejan y se reporta):
+
+```ts
+import { z } from 'zod';
+
+export const categoriaEnum = z.enum([
+  'Medicina Bioreguladora',
+  'Exámenes Médico Ocupacionales',
+  'Medicina Laboral',
+  'Consultoría en SG-SST',
+  'Salud en el Trabajo',
+  'Otros'
+]);
+
+export const servicioSchema = z.object({
+  locationId: z.string().min(1, 'Selecciona una sede'),
+  roomId: z.string().optional(),
+  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  descripcion: z.string().optional(),
+  categoria: categoriaEnum,                 // Categoría Principal (especialidad → specialty)
+  professionalId: z.string().optional(),
+  serviceGroup: z.string().min(1, 'Selecciona el grupo de servicio'),
+  serviceSubgroup: z.string().optional(),
+  serviceCategory: z.string().optional(),
+  serviceSubcategory: z.string().optional(),
+  cups: z.string().regex(/^[A-Za-z0-9]{6}$/, 'El CUPS debe tener 6 caracteres alfanuméricos'),
+  modalities: z.array(z.string()).min(1, 'Selecciona al menos una modalidad'),
+  isActive: z.boolean(),
+  durationMinutes: z.string().refine(v => Number.isInteger(Number(v)) && Number(v) > 0, 'Duración en minutos, mayor a 0'),
+  price: z.string().refine(v => v !== '' && Number(v) >= 0, 'Precio requerido (0 o más)'),
+  imageUrl: z.string().optional(),
+  instructions: z.string().optional(),
+  restrictions: z.string().optional(),
+  risks: z.string().optional(),
+  contraindications: z.string().optional(),
+});
+
+export type ServicioFormValues = z.infer<typeof servicioSchema>;
+```
+
+- [ ] **Step 3: `FormularioServicio.tsx` reescrito.** Lee el archivo actual ANTES de reescribir y conserva intactos: el objeto `C`/estilos, la carga de sedes (`fetch('/api/locations')`), la carga de espacios por sede (`fetch('/api/rooms?locationId=…')` o el patrón que exista) y la carga de profesionales (`fetch('/api/professionals')`), y las props `{ initialData?, onCancel, onSuccess }`. Estructura nueva (React Hook Form + zodResolver con `servicioSchema`):
+  1. **Ubicación y Salón** — Sede* y Espacio (idénticos a hoy: espacio deshabilitado hasta elegir sede).
+  2. **Identificación del Servicio** — "Consecutivo del servicio" (solo lectura: `SRV-${String(initialData?.consecutive ?? 0).padStart(4,'0')}` en edición, "Se asigna al guardar" en creación), "Nombre del servicio"*, "Descripción del servicio" (textarea), "Categoría principal" (select `categoriaEnum`), "Profesional a cargo" (select opcional).
+  3. **Clasificación (habilitación)** — "Grupo de servicio"* (select `GRUPOS`), "Subgrupo" / "Categoría" / "Subcategoría" (selects encadenados desde `CATALOGO`: cambiar un nivel resetea los inferiores), "Código CUPS"* (input, `maxLength 6`, mayúsculas automáticas), "Modalidad de servicio"* (checkboxes múltiples de `MODALIDADES`).
+  4. **Condiciones** — "Duración del servicio (minutos)"*, "Precio por sesión (COP)"*, "Estado del servicio" (toggle Activo/No activo, default Activo), "Imagen del servicio (URL)", "Instrucciones", "Restricciones", "Riesgos", "Contraindicaciones" (textareas).
+  - **Eliminado**: días de la semana, válido desde/hasta, horas, Grupal/Individual, generación de ocurrencias.
+  - `onSubmit`: construye y entrega a `onSuccess` el payload camelCase del contrato (números convertidos, opcionales vacíos como undefined, `specialty: values.categoria`, `title: values.nombre`, `offerType: 'appointment'`, `status: values.isActive ? 'published' : 'draft'`, `cups` en MAYÚSCULAS).
+
+- [ ] **Step 4: Verificar y commitear**
+
+`cd medisxime-landing; pnpm build` → sin errores (Task 3 ajusta los consumidores; si `ServiciosDashboard` no compila contra el schema nuevo por campos que Task 3 va a tocar, coordinarlo está prohibido: en ese caso ajusta SOLO lo mínimo tipográfico en tu propio archivo y repórtalo como concern).
+
+```bash
+git add medisxime-landing/src/lib/serviciosCatalogo.ts medisxime-landing/src/components/admin/servicioSchema.ts medisxime-landing/src/components/admin/FormularioServicio.tsx
+git commit -m "feat(admin): formulario de catalogo de servicios de salud sin dia/hora"
+```
+
+---
+
+### Task 3: Frontend — ServiciosDashboard y portal del paciente
+
+**Files:**
+- Modify: `medisxime-landing/src/components/admin/ServiciosDashboard.tsx`
+- Modify: `medisxime-landing/src/components/user/UserServicios.tsx`
+
+**Interfaces:**
+- Consumes: contrato de Task 1 (`offer.scheduledAt: string | null` + campos nuevos incl. `consecutive`, `cups`, `serviceGroup`, `instructions/restrictions/risks/contraindications`) y de Task 2 (`FormularioServicio` entrega a `onSuccess` el payload camelCase listo; `ServicioFormValues` nuevo — el mapeo `initialData` de edición debe construirse desde la oferta del API con los campos nuevos, SIN parsear el título).
+- Produces: nada.
+
+- [ ] **Step 1: ServiciosDashboard**
+  - Tarjetas: mostrar `SRV-####` (consecutive), nombre (title), CUPS y grupo si existen, precio, estado (Activo/Inactivo desde status) y, en lugar de fecha para servicios de catálogo, "Horario por coordinar" cuando `scheduledAt` es null (las ofertas viejas siguen mostrando su fecha). Proteger TODO formateo de fecha con el null.
+  - Edición: construir `initialData` para `FormularioServicio` desde los campos nuevos de la oferta (`nombre: s.title`, `categoria: s.specialty ?? 'Otros'`, `serviceGroup: s.serviceGroup ?? ''`, etc.). **Eliminar** el parseo `title.split(' — ')` y el cast con categorías de pole ("Práctica Libre", "Clases de Pole", etc.).
+  - Guardar: POST/PATCH a `/api/services/offers` con el payload que entrega `onSuccess` (mismo fetch de hoy); errores del servidor visibles sin cerrar el modal (patrón `saveError` de SedesDashboard).
+- [ ] **Step 2: UserServicios**
+  - Servicios con `scheduledAt` null: tarjeta de catálogo con "Horario por coordinar con el consultorio" en lugar de fecha/hora; el flujo de solicitud es el mismo (bulk de 1 sesión + código de descuento).
+  - Detalle/modal: si existen, mostrar Instrucciones / Restricciones / Riesgos / Contraindicaciones como bloques de texto con sus títulos.
+  - Proteger todo `new Date(scheduledAt)`/orden por fecha con el null (los null van al final).
+- [ ] **Step 3: Verificar y commitear**
+
+`cd medisxime-landing; pnpm build` → sin errores. `grep -n "Práctica Libre\|Clases de Pole\|Disciplinas Complementarias" src/components/admin/ServiciosDashboard.tsx` → 0.
+
+```bash
+git add medisxime-landing/src/components/admin/ServiciosDashboard.tsx medisxime-landing/src/components/user/UserServicios.tsx
+git commit -m "feat(frontend): vistas de catalogo de servicios sin fecha (admin y paciente)"
+```
+
+---
+
+### Task 4: Verificación end-to-end (tras integrar 1–3)
+
+**Files:** ninguno.
+
+- [ ] **Step 1:** Migración 020 aplicada; builds backend/shared-types/frontend en la rama integrada; suites de tests completas en verde.
+- [ ] **Step 2:** `POST /api/services/offers` (ADMIN) con payload de catálogo completo → 201 con `consecutive` asignado y campos persistidos; CUPS inválido → 400; modalidad '07' → 400.
+- [ ] **Step 3:** `GET /api/services/offers` (público) incluye el servicio sin fecha con todos los campos.
+- [ ] **Step 4:** Descuento automático por la specialty del servicio nuevo → reserva bulk de 1 sesión aplica el descuento (monto correcto) — verifica que la columna specialty manda sobre el título.
+- [ ] **Step 5:** Ofertas viejas con fecha siguen respondiendo igual (GET, reserva).
+- [ ] **Step 6:** Limpieza de datos de prueba.
