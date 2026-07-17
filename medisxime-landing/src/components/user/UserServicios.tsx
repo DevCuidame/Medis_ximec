@@ -13,8 +13,8 @@ const C = {
 const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
 const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
-const TYPE_COLOR: Record<string, string> = { class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E' }
-const TYPE_LABEL: Record<string, string> = { class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen' }
+const TYPE_COLOR: Record<string, string> = { class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E', appointment: '#5C3A28' }
+const TYPE_LABEL: Record<string, string> = { class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen', appointment: 'Consulta' }
 
 function authH(): HeadersInit {
   const t = localStorage.getItem('accessToken')

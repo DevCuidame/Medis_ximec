@@ -53,6 +53,21 @@ function fmtPrice(n: number) {
   return n > 0 ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n) : 'Gratuito'
 }
 
+/** Convierte scheduledAt (string | null | undefined) a Date válida o null. Nunca lanza (evita "1 ENE 1970"). */
+function safeDate(value: unknown): Date | null {
+  if (!value) return null
+  const d = new Date(value as string)
+  return isNaN(d.getTime()) ? null : d
+}
+
+/** Orden ascendente por fecha con los servicios sin fecha (catálogo) siempre al final. */
+function compareByDateAsc(a: Date | null, b: Date | null): number {
+  if (a && b) return a.getTime() - b.getTime()
+  if (a && !b) return -1
+  if (!a && b) return 1
+  return 0
+}
+
 interface Props { me: { id: string } | null }
 
 export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
@@ -88,12 +103,13 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
   })()
 
   const offersForDay = (day: Date) =>
-    offers.filter(o => isSameDay(new Date(o.scheduledAt), day))
-      .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
+    offers.filter(o => { const d = safeDate(o.scheduledAt); return d ? isSameDay(d, day) : false })
+      .sort((a, b) => compareByDateAsc(safeDate(a.scheduledAt), safeDate(b.scheduledAt)))
 
+  // Servicios de catálogo (sin scheduledAt) no cuentan como "próximos": su horario está por coordinar.
   const upcoming = [...offers]
-    .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
-    .filter(o => new Date(o.scheduledAt) >= today)
+    .sort((a, b) => compareByDateAsc(safeDate(a.scheduledAt), safeDate(b.scheduledAt)))
+    .filter(o => { const d = safeDate(o.scheduledAt); return d ? d >= today : false })
 
   return (
     <main style={{ flex: 1, overflowY: 'auto', background: C.bg }}>
@@ -227,18 +243,25 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
           /* ── LIST VIEW ── */
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <AnimatePresence>
-              {[...offers].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()).map((o, i) => {
+              {[...offers].sort((a, b) => compareByDateAsc(safeDate(a.scheduledAt), safeDate(b.scheduledAt))).map((o, i) => {
                 const color   = TYPE_COLOR[o.offerType] ?? C.gold
                 const parts   = (o.title ?? '').split(' — ')
-                const date    = new Date(o.scheduledAt)
-                const isPast  = date < today
+                // Servicio de catálogo (sin scheduledAt): no tiene fecha aún, nunca se marca como pasado.
+                const date    = safeDate(o.scheduledAt)
+                const isPast  = date ? date < today : false
                 return (
                   <motion.div key={o.id} layout initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
                     style={{ background: C.white, borderTop: `1px solid ${C.borderLight}`, borderRight: `1px solid ${C.borderLight}`, borderBottom: `1px solid ${C.borderLight}`, borderLeft: `5px solid ${color}`, borderRadius: 14, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16, opacity: isPast ? 0.55 : 1, flexWrap: 'wrap' }}>
                     {/* Date */}
                     <div style={{ textAlign: 'center', minWidth: 52, flexShrink: 0 }}>
-                      <div style={{ fontFamily: FONT_BODONI, fontSize: 28, fontWeight: 700, color: isPast ? C.textMuted : color, lineHeight: 1 }}>{date.getDate()}</div>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: isPast ? C.textMuted : color, textTransform: 'uppercase' }}>{MONTH_NAMES[date.getMonth()].slice(0,3)}</div>
+                      {date ? (
+                        <>
+                          <div style={{ fontFamily: FONT_BODONI, fontSize: 28, fontWeight: 700, color: isPast ? C.textMuted : color, lineHeight: 1 }}>{date.getDate()}</div>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: isPast ? C.textMuted : color, textTransform: 'uppercase' }}>{MONTH_NAMES[date.getMonth()].slice(0,3)}</div>
+                        </>
+                      ) : (
+                        <div style={{ fontSize: 18, fontWeight: 700, color: C.textMuted, lineHeight: 1 }}>—</div>
+                      )}
                     </div>
 
                     <div style={{ width: 1, height: 48, background: C.borderLight, flexShrink: 0 }} />
@@ -258,7 +281,7 @@ export const ProfessionalClasses: React.FC<Props> = ({ me }) => {
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', flexShrink: 0 }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                         <span style={{ fontSize: 11, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 5 }}>
-                          <Clock size={12} color={C.gold} /> {fmtTime(o.scheduledAt, o.durationMinutes)}
+                          <Clock size={12} color={C.gold} /> {date ? fmtTime(o.scheduledAt, o.durationMinutes) : 'Horario por coordinar'}
                         </span>
                         {o.location?.name && (
                           <span style={{ fontSize: 11, color: C.textMuted, display: 'flex', alignItems: 'center', gap: 5 }}>

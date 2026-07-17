@@ -129,28 +129,35 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
     setValue('modalities', next, { shouldValidate: true });
   };
 
+  // En edición, un campo opcional vaciado por el usuario debe enviarse como `null` explícito
+  // para que el PATCH lo limpie en el backend; `undefined` se omite del payload y el valor
+  // viejo persiste (grave en textos clínicos como instrucciones/riesgos/contraindicaciones).
+  // En creación, en cambio, no hay valor previo que limpiar: se omite con `undefined`.
+  const isEditing = !!initialData;
+  const optionalOrNull = (v: string): string | null | undefined => v ? v : (isEditing ? null : undefined);
+
   const handleFormSubmit = async (data: ServicioFormValues) => {
     setIsSubmitting(true);
     try {
       const payload = {
         locationId: data.locationId,
-        roomId: data.roomId || undefined,
+        roomId: optionalOrNull(data.roomId),
         offerType: 'appointment' as const,
         title: data.nombre,
-        description: data.descripcion || undefined,
-        professionalId: data.professionalId || undefined,
+        description: optionalOrNull(data.descripcion),
+        professionalId: optionalOrNull(data.professionalId),
         specialty: data.categoria,
         serviceGroup: data.serviceGroup || undefined,
-        serviceSubgroup: data.serviceSubgroup || undefined,
-        serviceCategory: data.serviceCategory || undefined,
-        serviceSubcategory: data.serviceSubcategory || undefined,
+        serviceSubgroup: optionalOrNull(data.serviceSubgroup),
+        serviceCategory: optionalOrNull(data.serviceCategory),
+        serviceSubcategory: optionalOrNull(data.serviceSubcategory),
         cups: data.cups ? data.cups.toUpperCase() : undefined,
         modalities: data.modalities,
-        imageUrl: data.imageUrl || undefined,
-        instructions: data.instructions || undefined,
-        restrictions: data.restrictions || undefined,
-        risks: data.risks || undefined,
-        contraindications: data.contraindications || undefined,
+        imageUrl: optionalOrNull(data.imageUrl),
+        instructions: optionalOrNull(data.instructions),
+        restrictions: optionalOrNull(data.restrictions),
+        risks: optionalOrNull(data.risks),
+        contraindications: optionalOrNull(data.contraindications),
         durationMinutes: Number(data.durationMinutes),
         price: Number(data.price),
         status: data.isActive ? 'published' : 'draft',

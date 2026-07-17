@@ -3,6 +3,7 @@ import { Plus, Calendar, MapPin, User, Clock, ChevronRight, Edit2, Trash2, Repea
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormularioServicio } from './FormularioServicio';
 import { DoctorSedesAnim } from './DoctorSedesAnim';
+import { GRUPOS } from '../../lib/serviciosCatalogo';
 
 const C = {
   gold: '#5C3A28', goldLight: '#9C4A2E',
@@ -18,23 +19,18 @@ const DAY_NAMES_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const DAY_ORDER = [1, 2, 3, 4, 5, 6, 0]; // Mon→Sun display order
 
 const OFFER_TYPE_LABEL: Record<string, string> = {
-  class: 'Consulta', open_pole: 'Examen', event: 'Corporativo', workshop: 'Taller',
+  class: 'Consulta', open_pole: 'Examen', event: 'Corporativo', workshop: 'Taller', appointment: 'Consulta',
 };
 const OFFER_TYPE_COLOR: Record<string, { bg: string; color: string }> = {
   class:      { bg: 'rgba(92,58,40,0.1)',    color: '#5C3A28' },
   open_pole:  { bg: 'rgba(124,58,237,0.1)',  color: '#9C4A2E' },
   event:      { bg: 'rgba(59,130,246,0.1)',  color: '#C97B5A' },
   workshop:   { bg: 'rgba(236,72,153,0.1)',  color: '#9C4A2E' },
+  appointment:{ bg: 'rgba(92,58,40,0.1)',    color: '#5C3A28' },
 };
 
-// Grupo de servicio (REPS) — etiquetas locales (ver serviciosCatalogo.ts del formulario para la fuente completa).
-const GRUPO_LABELS: Record<string, string> = {
-  '01': 'Consulta externa',
-  '02': 'Apoyo diagnóstico y complementación terapéutica',
-  '03': 'Internación',
-  '04': 'Quirúrgico',
-  '05': 'Atención inmediata',
-};
+// Grupo de servicio (REPS) — derivado de la fuente única en lib/serviciosCatalogo.ts.
+const GRUPO_LABELS: Record<string, string> = Object.fromEntries(GRUPOS.map(g => [g.code, g.name]));
 
 interface ServiceGroup {
   key: string;
@@ -163,7 +159,7 @@ export const ServiciosDashboard: React.FC = () => {
 
   const loadServicios = async () => {
     try {
-      const res  = await fetch('/api/services/offers');
+      const res  = await fetch('/api/services/offers?limit=200');
       const json = await res.json();
       if (json.success) setServicios(json.data.offers || []);
     } catch { /* ignore */ }

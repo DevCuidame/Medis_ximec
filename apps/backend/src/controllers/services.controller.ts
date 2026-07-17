@@ -39,6 +39,7 @@ function validateOfferPayload(body: Record<string, unknown>, partial: boolean): 
   }
   if (body.cups !== undefined && body.cups !== null && body.cups !== '') {
     if (!CUPS_RE.test(String(body.cups))) err('El código CUPS debe tener 6 caracteres alfanuméricos.');
+    // Mutación intencional: normaliza el CUPS a mayúsculas en el propio body antes de persistirlo.
     body.cups = String(body.cups).toUpperCase();
   }
   if (body.modalities !== undefined && body.modalities !== null) {

@@ -9,7 +9,7 @@ export type DayOfWeek =
   | 'monday' | 'tuesday' | 'wednesday'
   | 'thursday' | 'friday' | 'saturday' | 'sunday';
 
-export type OfferType = 'class' | 'open_pole' | 'workshop' | 'event';
+export type OfferType = 'class' | 'open_pole' | 'workshop' | 'event' | 'appointment';
 
 export type OfferStatus = 'draft' | 'published' | 'cancelled' | 'completed';
 
@@ -147,9 +147,9 @@ export interface CreateServiceOfferPayload {
 
 export interface UpdateServiceOfferPayload {
   title?: string;
-  description?: string;
-  roomId?: string;
-  professionalId?: string;
+  description?: string | null;
+  roomId?: string | null;
+  professionalId?: string | null;
   disciplineId?: string;
   capacity?: number;
   durationMinutes?: number;
@@ -159,16 +159,16 @@ export interface UpdateServiceOfferPayload {
   status?: OfferStatus;
   specialty?: string;
   serviceGroup?: string;
-  serviceSubgroup?: string;
-  serviceCategory?: string;
-  serviceSubcategory?: string;
+  serviceSubgroup?: string | null;
+  serviceCategory?: string | null;
+  serviceSubcategory?: string | null;
   cups?: string;
   modalities?: string[];
-  imageUrl?: string;
-  instructions?: string;
-  restrictions?: string;
-  risks?: string;
-  contraindications?: string;
+  imageUrl?: string | null;
+  instructions?: string | null;
+  restrictions?: string | null;
+  risks?: string | null;
+  contraindications?: string | null;
 }
 
 export interface ServiceOffersFilter {
