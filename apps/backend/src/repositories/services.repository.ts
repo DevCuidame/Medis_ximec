@@ -255,7 +255,7 @@ export const ServiceOfferRepository = {
           scheduled_at, price, currency, created_by,
           specialty, service_group, service_subgroup, service_category, service_subcategory,
           cups, modalities, image_url, instructions, restrictions, risks, contraindications)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
        RETURNING id`,
       [
         data.locationId, data.roomId ?? null, data.offerType, data.title,
