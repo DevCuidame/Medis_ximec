@@ -30,7 +30,7 @@ const OFFER_TYPE_COLOR: Record<string, { bg: string; color: string }> = {
 // Grupo de servicio (REPS) — etiquetas locales (ver serviciosCatalogo.ts del formulario para la fuente completa).
 const GRUPO_LABELS: Record<string, string> = {
   '01': 'Consulta externa',
-  '02': 'Apoyo diagnóstico',
+  '02': 'Apoyo diagnóstico y complementación terapéutica',
   '03': 'Internación',
   '04': 'Quirúrgico',
   '05': 'Atención inmediata',
@@ -295,7 +295,7 @@ export const ServiciosDashboard: React.FC = () => {
       await loadServicios();
       setIsFormOpen(false);
       setEditingGroup(null);
-    } catch (e: unknown) {
+    } catch {
       setSaveError('Error de conexión al guardar el servicio.');
     }
   };
@@ -524,7 +524,7 @@ export const ServiciosDashboard: React.FC = () => {
                             <div style={{ display: 'flex', gap: 4, flexShrink: 0, alignItems: 'center' }}>
                               <button
                                 onClick={() => { setEditingGroup(g); setIsFormOpen(true); }}
-                                title="Editar todas las sesiones"
+                                title="Editar servicio"
                                 style={{ width: 30, height: 30, borderRadius: 8, background: 'rgba(92,58,40,0.07)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.gold, transition: 'background 0.2s' }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(92,58,40,0.14)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'rgba(92,58,40,0.07)'}
@@ -690,6 +690,12 @@ export const ServiciosDashboard: React.FC = () => {
           </motion.div>
         ) : (
           <motion.div key="form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} style={{ maxWidth: 1140, margin: '0 auto' }}>
+            {/* Aviso: este grupo agrupa varias sesiones antiguas (recurrencia); guardar solo actualiza la sesión principal */}
+            {editingGroup && editingGroup.sessionCount > 1 && (
+              <div style={{ background: '#FFF8E6', border: '1px solid #F5D77A', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#8A6D1F', fontWeight: 500 }}>
+                Este grupo tiene {editingGroup.sessionCount} sesiones antiguas; los cambios solo se aplican a la sesión principal.
+              </div>
+            )}
             {/* Errores del servidor visibles sin cerrar el formulario (patrón saveError de SedesDashboard) */}
             {saveError && (
               <div style={{ background: '#FFF0F0', border: '1px solid #FFCDD2', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#D32F2F', fontWeight: 500 }}>
