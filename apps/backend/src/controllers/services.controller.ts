@@ -24,6 +24,36 @@ import type {
   ResolveBookingRequestPayload,
 } from '@medisxime/shared-types';
 
+const SERVICE_GROUP_CODES = ['01', '02', '03', '04', '05'];
+const MODALITY_CODES = ['01', '02', '03', '04', '05', '06', '08', '09'];
+const CUPS_RE = /^[A-Za-z0-9]{6}$/;
+
+/** Valida y normaliza el payload de catálogo. Lanza {statusCode:400} con mensaje. */
+function validateOfferPayload(body: Record<string, unknown>, partial: boolean): void {
+  const err = (msg: string) => { throw Object.assign(new Error(msg), { statusCode: 400 }); };
+  if (!partial || body.title !== undefined) {
+    if (typeof body.title !== 'string' || !body.title.trim()) err('El nombre del servicio es requerido.');
+  }
+  if (body.serviceGroup !== undefined && body.serviceGroup !== null && !SERVICE_GROUP_CODES.includes(String(body.serviceGroup))) {
+    err('Grupo de servicio inválido.');
+  }
+  if (body.cups !== undefined && body.cups !== null && body.cups !== '') {
+    if (!CUPS_RE.test(String(body.cups))) err('El código CUPS debe tener 6 caracteres alfanuméricos.');
+    body.cups = String(body.cups).toUpperCase();
+  }
+  if (body.modalities !== undefined && body.modalities !== null) {
+    if (!Array.isArray(body.modalities) || (body.modalities as unknown[]).some(m => !MODALITY_CODES.includes(String(m)))) {
+      err('Modalidad de servicio inválida.');
+    }
+  }
+  if (!partial || body.durationMinutes !== undefined) {
+    if (typeof body.durationMinutes !== 'number' || body.durationMinutes <= 0) err('La duración del servicio debe ser mayor a 0.');
+  }
+  if (body.price !== undefined && body.price !== null && (typeof body.price !== 'number' || body.price < 0)) {
+    err('El precio no puede ser negativo.');
+  }
+}
+
 // ─── OPERATING HOURS ─────────────────────────────────────────
 
 export async function getOperatingHours(req: Request, res: Response): Promise<void> {
@@ -164,12 +194,15 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
       res.status(400).json({ success: false, error: 'No se encontró un administrador en la BD para asignar creador.' });
       return;
     }
+    validateOfferPayload(req.body, false);
+    if (req.body.capacity === undefined) req.body.capacity = 999;
+    if (req.body.scheduledAt === undefined) req.body.scheduledAt = null;
     const payload = req.body as CreateServiceOfferPayload;
     const offer = await ServiceOfferRepository.create(payload, adminId);
     res.status(201).json({ success: true, data: { offer } });
   } catch (err: unknown) {
     const msg = (err as Error).message;
-    const status = msg.includes('supera la del salón') ? 400 : 500;
+    const status = (err as { statusCode?: number }).statusCode ?? (msg.includes('supera la del salón') ? 400 : 500);
     res.status(status).json({ success: false, error: msg });
   }
 }
@@ -177,13 +210,14 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
 /** ADMIN ONLY */
 export async function updateOffer(req: Request, res: Response): Promise<void> {
   try {
+    validateOfferPayload(req.body, true);
     const payload = req.body as UpdateServiceOfferPayload;
     const offer = await ServiceOfferRepository.update(req.params['id']!, payload);
     if (!offer) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
     res.json({ success: true, data: { offer } });
   } catch (err: unknown) {
     const msg = (err as Error).message;
-    const status = msg.includes('supera la del salón') ? 400 : 500;
+    const status = (err as { statusCode?: number }).statusCode ?? (msg.includes('supera la del salón') ? 400 : 500);
     res.status(status).json({ success: false, error: msg });
   }
 }
@@ -266,7 +300,7 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
     const titleCategory = typeof lead.title === 'string' && lead.title.trim()
       ? lead.title.split(' — ')[0].trim()
       : null;
-    const offerSpecialty = titleCategory ?? lead.discipline?.name ?? null;
+    const offerSpecialty = (lead as { specialty?: string | null }).specialty ?? titleCategory ?? lead.discipline?.name ?? null;
 
     let applied: AppliedDiscount | null = null;
     try {

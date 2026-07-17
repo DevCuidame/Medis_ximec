@@ -82,12 +82,25 @@ export interface ServiceOfferPublic {
   description: string | null;
   offerType: OfferType;
   status: OfferStatus;
-  scheduledAt: string;        // ISO 8601
+  scheduledAt: string | null; // ISO 8601
   durationMinutes: number;
   capacity: number;
   enrolledCount: number;
   price: number | null;
   currency: string;
+  consecutive: number | null;
+  specialty: string | null;
+  serviceGroup: string | null;
+  serviceSubgroup: string | null;
+  serviceCategory: string | null;
+  serviceSubcategory: string | null;
+  cups: string | null;
+  modalities: string[] | null;
+  imageUrl: string | null;
+  instructions: string | null;
+  restrictions: string | null;
+  risks: string | null;
+  contraindications: string | null;
   // Relations (joined)
   location: { id: string; name: string };
   room: { id: string; name: string; capacity: number } | null;
@@ -112,11 +125,23 @@ export interface CreateServiceOfferPayload {
   description?: string;
   professionalId?: string;
   disciplineId?: string;
-  capacity: number;
+  capacity?: number;
   durationMinutes: number;
-  scheduledAt: string;    // ISO 8601
+  scheduledAt?: string | null;    // ISO 8601
   price?: number;
   currency?: string;
+  specialty?: string;
+  serviceGroup?: string;
+  serviceSubgroup?: string;
+  serviceCategory?: string;
+  serviceSubcategory?: string;
+  cups?: string;
+  modalities?: string[];
+  imageUrl?: string;
+  instructions?: string;
+  restrictions?: string;
+  risks?: string;
+  contraindications?: string;
 }
 
 export interface UpdateServiceOfferPayload {
@@ -131,6 +156,18 @@ export interface UpdateServiceOfferPayload {
   price?: number;
   currency?: string;
   status?: OfferStatus;
+  specialty?: string;
+  serviceGroup?: string;
+  serviceSubgroup?: string;
+  serviceCategory?: string;
+  serviceSubcategory?: string;
+  cups?: string;
+  modalities?: string[];
+  imageUrl?: string;
+  instructions?: string;
+  restrictions?: string;
+  risks?: string;
+  contraindications?: string;
 }
 
 export interface ServiceOffersFilter {

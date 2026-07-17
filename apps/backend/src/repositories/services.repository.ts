@@ -147,12 +147,25 @@ function rowToOffer(row: Record<string, unknown>): ServiceOfferPublic {
     description:     (row['description'] as string) ?? null,
     offerType:       row['offer_type'] as ServiceOfferPublic['offerType'],
     status:          row['status'] as ServiceOfferPublic['status'],
-    scheduledAt:     (row['scheduled_at'] as Date).toISOString(),
+    scheduledAt:     row['scheduled_at'] ? (row['scheduled_at'] as Date).toISOString() : null,
     durationMinutes: row['duration_minutes'] as number,
     capacity:        row['capacity'] as number,
     enrolledCount:   row['enrolled_count'] as number,
     price:           (row['price'] as number) ?? null,
     currency:        row['currency'] as string,
+    consecutive:        (row['consecutive'] as number) ?? null,
+    specialty:          (row['specialty'] as string) ?? null,
+    serviceGroup:       (row['service_group'] as string) ?? null,
+    serviceSubgroup:    (row['service_subgroup'] as string) ?? null,
+    serviceCategory:    (row['service_category'] as string) ?? null,
+    serviceSubcategory: (row['service_subcategory'] as string) ?? null,
+    cups:               (row['cups'] as string) ?? null,
+    modalities:         (row['modalities'] as string[]) ?? null,
+    imageUrl:           (row['image_url'] as string) ?? null,
+    instructions:       (row['instructions'] as string) ?? null,
+    restrictions:       (row['restrictions'] as string) ?? null,
+    risks:              (row['risks'] as string) ?? null,
+    contraindications:  (row['contraindications'] as string) ?? null,
     location: {
       id:   row['location_id'] as string,
       name: row['location_name'] as string,
@@ -181,6 +194,9 @@ const OFFER_SELECT = `
     so.id, so.title, so.description, so.offer_type, so.status,
     so.scheduled_at, so.duration_minutes, so.capacity, so.enrolled_count,
     so.price, so.currency,
+    so.consecutive, so.specialty, so.service_group, so.service_subgroup,
+    so.service_category, so.service_subcategory, so.cups, so.modalities,
+    so.image_url, so.instructions, so.restrictions, so.risks, so.contraindications,
     l.id AS location_id, l.name AS location_name,
     r.id AS room_id, r.name AS room_name, r.capacity AS room_capacity,
     u.id AS professional_id, u.first_name AS professional_first,
@@ -218,7 +234,7 @@ export const ServiceOfferRepository = {
     values.push(limit, offset);
 
     const { rows } = await pool.query(
-      `${OFFER_SELECT} ${whereClause} ORDER BY so.scheduled_at ASC LIMIT $${i++} OFFSET $${i++}`,
+      `${OFFER_SELECT} ${whereClause} ORDER BY so.scheduled_at ASC NULLS LAST, so.consecutive ASC LIMIT $${i++} OFFSET $${i++}`,
       values
     );
     return { data: rows.map(rowToOffer), total };
@@ -236,14 +252,21 @@ export const ServiceOfferRepository = {
       `INSERT INTO service_offers
          (location_id, room_id, offer_type, title, description,
           professional_id, specialty_id, capacity, duration_minutes,
-          scheduled_at, price, currency, created_by)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
+          scheduled_at, price, currency, created_by,
+          specialty, service_group, service_subgroup, service_category, service_subcategory,
+          cups, modalities, image_url, instructions, restrictions, risks, contraindications)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24)
        RETURNING id`,
       [
         data.locationId, data.roomId ?? null, data.offerType, data.title,
         data.description ?? null, data.professionalId ?? null,
-        data.disciplineId ?? null, data.capacity, data.durationMinutes,
-        data.scheduledAt, data.price ?? null, data.currency ?? 'COP', createdBy,
+        data.disciplineId ?? null, data.capacity ?? 999, data.durationMinutes,
+        data.scheduledAt ?? null, data.price ?? null, data.currency ?? 'COP', createdBy,
+        data.specialty ?? null, data.serviceGroup ?? null, data.serviceSubgroup ?? null,
+        data.serviceCategory ?? null, data.serviceSubcategory ?? null,
+        data.cups ?? null, data.modalities ?? null, data.imageUrl ?? null,
+        data.instructions ?? null, data.restrictions ?? null, data.risks ?? null,
+        data.contraindications ?? null,
       ]
     );
     return (await this.findById(rows[0].id))!;
@@ -256,6 +279,12 @@ export const ServiceOfferRepository = {
       capacity: 'capacity', durationMinutes: 'duration_minutes',
       scheduledAt: 'scheduled_at', price: 'price', currency: 'currency',
       status: 'status',
+      specialty: 'specialty', serviceGroup: 'service_group',
+      serviceSubgroup: 'service_subgroup', serviceCategory: 'service_category',
+      serviceSubcategory: 'service_subcategory', cups: 'cups',
+      modalities: 'modalities', imageUrl: 'image_url',
+      instructions: 'instructions', restrictions: 'restrictions',
+      risks: 'risks', contraindications: 'contraindications',
     };
     const sets: string[] = [];
     const values: unknown[] = [];
