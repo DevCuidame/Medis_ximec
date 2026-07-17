@@ -9,76 +9,40 @@ export const categoriaEnum = z.enum([
   'Otros'
 ]);
 
-export const modalidadEnum = z.enum(['Grupal', 'Individual']);
-export const nivelEnum = z.enum(['Principiante', 'Intermedio', 'Avanzado', 'Todos los niveles']);
+export const servicioSchema = z.object({
+  locationId: z.string().min(1, 'Selecciona una sede'),
+  roomId: z.string().optional(),
+  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+  descripcion: z.string().optional(),
+  categoria: categoriaEnum,                 // Categoría Principal (especialidad → specialty)
+  professionalId: z.string().optional(),
+  serviceGroup: z.string().min(1, 'Selecciona el grupo de servicio'),
+  serviceSubgroup: z.string().optional(),
+  serviceCategory: z.string().optional(),
+  serviceSubcategory: z.string().optional(),
+  cups: z.string().regex(/^[A-Za-z0-9]{6}$/, 'El CUPS debe tener 6 caracteres alfanuméricos'),
+  modalities: z.array(z.string()).min(1, 'Selecciona al menos una modalidad'),
+  isActive: z.boolean(),
+  durationMinutes: z.string().refine(v => Number.isInteger(Number(v)) && Number(v) > 0, 'Duración en minutos, mayor a 0'),
+  price: z.string().refine(v => v !== '' && Number(v) >= 0, 'Precio requerido (0 o más)'),
+  imageUrl: z.string().optional(),
+  instructions: z.string().optional(),
+  restrictions: z.string().optional(),
+  risks: z.string().optional(),
+  contraindications: z.string().optional(),
+});
 
-export const DIA_LABELS: Record<string, string> = {
-  lun: 'L', mar: 'M', mie: 'X', jue: 'J', vie: 'V', sab: 'S', dom: 'D',
+export type ServicioFormValues = z.infer<typeof servicioSchema>;
+
+// ── Legado: usado por ServiciosDashboard.tsx (pendiente de migrar en otra tarea) ──
+// JS getDay(): 0=dom, 1=lun, 2=mar, 3=mie, 4=jue, 5=vie, 6=sab
+const DIA_JS_DAY: Record<string, number> = {
+  dom: 0, lun: 1, mar: 2, mie: 3, jue: 4, vie: 5, sab: 6,
 };
 export const DIA_NOMBRES: Record<string, string> = {
   lun: 'Lunes', mar: 'Martes', mie: 'Miércoles', jue: 'Jueves',
   vie: 'Viernes', sab: 'Sábado', dom: 'Domingo',
 };
-export const DIAS_ORDEN = ['lun', 'mar', 'mie', 'jue', 'vie', 'sab', 'dom'];
-// JS getDay(): 0=dom, 1=lun, 2=mar, 3=mie, 4=jue, 5=vie, 6=sab
-export const DIA_JS_DAY: Record<string, number> = {
-  dom: 0, lun: 1, mar: 2, mie: 3, jue: 4, vie: 5, sab: 6,
-};
-
-const baseSchema = z.object({
-  locationId:      z.string().min(1, 'La sede es obligatoria'),
-  roomId:          z.string().min(1, 'El espacio es obligatorio'),
-  categoria:       categoriaEnum,
-  tipoServicio:    z.string().min(1, 'El tipo de servicio es obligatorio'),
-  // Schedule
-  diasSemana:      z.array(z.string()).min(1, 'Selecciona al menos un día'),
-  fechaDesde:      z.string().min(1, 'La fecha de inicio es obligatoria'),
-  fechaHasta:      z.string().min(1, 'La fecha de fin es obligatoria'),
-  horaInicio:      z.string().min(1, 'La hora de inicio es obligatoria'),
-  horaFin:         z.string().min(1, 'La hora de fin es obligatoria'),
-  precio:          z.number().min(0, 'El precio no puede ser negativo'),
-  // Conditional
-  modalidad:       z.preprocess((val) => (val === '' || val === null ? undefined : val), modalidadEnum.optional()) as z.ZodType<'Grupal' | 'Individual' | undefined>,
-  instructorId:    z.preprocess((val) => (val === '' || val === null ? undefined : val), z.string().optional()) as z.ZodType<string | undefined>,
-  nivelDificultad: z.preprocess((val) => (val === '' || val === null ? undefined : val), nivelEnum.optional()) as z.ZodType<'Principiante' | 'Intermedio' | 'Avanzado' | 'Todos los niveles' | undefined>,
-  capacidad:       z.number().optional(),
-});
-
-export const servicioSchema = baseSchema.superRefine((data, ctx) => {
-  const requiereInstructor =
-    data.categoria !== 'Otros';
-
-  if (requiereInstructor) {
-    if (!data.modalidad) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La modalidad es obligatoria para clases y disciplinas', path: ['modalidad'] });
-    }
-    if (!data.instructorId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El instructor es obligatorio para este servicio', path: ['instructorId'] });
-    }
-    if (data.modalidad === 'Grupal') {
-      if (!data.nivelDificultad) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'El nivel de dificultad es obligatorio para clases grupales', path: ['nivelDificultad'] });
-      }
-      if (!data.capacidad || data.capacidad < 2 || data.capacidad > 5) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La capacidad grupal debe ser entre 2 y 5', path: ['capacidad'] });
-      }
-    }
-  }
-
-  if (data.horaInicio && data.horaFin) {
-    const [hI, mI] = data.horaInicio.split(':').map(Number);
-    const [hF, mF] = data.horaFin.split(':').map(Number);
-    if (!isNaN(hI) && !isNaN(hF) && hI * 60 + (mI || 0) >= hF * 60 + (mF || 0)) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La hora de fin debe ser posterior a la de inicio', path: ['horaFin'] });
-    }
-  }
-
-  if (data.fechaDesde && data.fechaHasta && data.fechaDesde > data.fechaHasta) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'La fecha de fin debe ser igual o posterior a la de inicio', path: ['fechaHasta'] });
-  }
-});
-
-export type ServicioFormValues = z.infer<typeof baseSchema>;
 
 /** Generate all dates (ISO strings) matching the selected days within the range */
 export function generateOccurrences(
