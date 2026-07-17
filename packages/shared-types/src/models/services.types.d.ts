@@ -98,6 +98,7 @@ export interface CreateServiceOfferPayload {
     locationId: string;
     roomId?: string;
     offerType: OfferType;
+    status?: OfferStatus;
     title: string;
     description?: string;
     professionalId?: string;

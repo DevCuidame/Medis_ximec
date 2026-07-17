@@ -254,8 +254,8 @@ export const ServiceOfferRepository = {
           professional_id, specialty_id, capacity, duration_minutes,
           scheduled_at, price, currency, created_by,
           specialty, service_group, service_subgroup, service_category, service_subcategory,
-          cups, modalities, image_url, instructions, restrictions, risks, contraindications)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25)
+          cups, modalities, image_url, instructions, restrictions, risks, contraindications, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
        RETURNING id`,
       [
         data.locationId, data.roomId ?? null, data.offerType, data.title,
@@ -266,7 +266,7 @@ export const ServiceOfferRepository = {
         data.serviceCategory ?? null, data.serviceSubcategory ?? null,
         data.cups ?? null, data.modalities ?? null, data.imageUrl ?? null,
         data.instructions ?? null, data.restrictions ?? null, data.risks ?? null,
-        data.contraindications ?? null,
+        data.contraindications ?? null, data.status ?? 'draft',
       ]
     );
     return (await this.findById(rows[0].id))!;
