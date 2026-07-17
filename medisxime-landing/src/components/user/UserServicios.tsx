@@ -36,9 +36,11 @@ const DAY_ORDER = [1,2,3,4,5,6,0]
 interface ServiceGroup {
   key: string; title: string; offerType: string; description: string | null
   location: { name: string } | null; professional: { firstName: string; lastName: string } | null
-  timeStart: string; timeEnd: string; durationMinutes: number; price: number
-  firstDate: Date; lastDate: Date; days: string[]; sessionCount: number; ids: string[]
+  timeStart: string | null; timeEnd: string | null; durationMinutes: number; price: number
+  firstDate: Date | null; lastDate: Date | null; days: string[]; sessionCount: number; ids: string[]
   disciplineName: string | null
+  /** Oferta original — se usa para leer los campos de catálogo (instructions/restrictions/etc.) en el detalle. */
+  representative: any
 }
 
 function validDate(s: any): Date | null {
@@ -55,27 +57,29 @@ function groupOffers(offers: any[]): ServiceGroup[] {
   const map = new Map<string, ServiceGroup>()
   for (const o of offers) {
     const d  = validDate(o.scheduledAt)
-    const tS = d ? padTime(d.getHours(), d.getMinutes()) : '--:--'
-    // group key: same title+prof+location+time slot
-    const key = [o.title, o.professionalId??'', o.locationId??'', o.roomId??'', tS, o.durationMinutes ?? 0].join('|')
+    const tS = d ? padTime(d.getHours(), d.getMinutes()) : null
+    // Los servicios de catálogo (sin scheduledAt) nunca se agrupan entre sí: cada oferta es su propia tarjeta.
+    const key = d
+      ? [o.title, o.professionalId??'', o.locationId??'', o.roomId??'', tS, o.durationMinutes ?? 0].join('|')
+      : `catalog:${o.id}`
     if (!map.has(key)) {
-      let tE = '--:--'
+      let tE: string | null = null
       if (d && o.durationMinutes) {
         const eD = new Date(d.getTime() + o.durationMinutes * 60000)
         tE = padTime(eD.getHours(), eD.getMinutes())
       }
-      const fallbackDate = d ?? new Date(0)
-      map.set(key, { key, title: o.title ?? '', offerType: o.offerType ?? '', description: o.description ?? null, location: o.location ?? null, professional: o.professional ?? null, timeStart: tS, timeEnd: tE, durationMinutes: o.durationMinutes ?? 0, price: o.price ?? 0, firstDate: fallbackDate, lastDate: fallbackDate, days: [], sessionCount: 0, ids: [], disciplineName: o.discipline?.name ?? null })
+      map.set(key, { key, title: o.title ?? '', offerType: o.offerType ?? '', description: o.description ?? null, location: o.location ?? null, professional: o.professional ?? null, timeStart: tS, timeEnd: tE, durationMinutes: o.durationMinutes ?? 0, price: o.price ?? 0, firstDate: d, lastDate: d, days: [], sessionCount: 0, ids: [], disciplineName: o.discipline?.name ?? null, representative: o })
     }
     const g = map.get(key)!
     g.ids.push(o.id)
     g.sessionCount++
     if (d) {
-      if (d < g.firstDate || g.firstDate.getTime() === 0) g.firstDate = d
-      if (d > g.lastDate)  g.lastDate = d
+      if (!g.firstDate || d < g.firstDate) g.firstDate = d
+      if (!g.lastDate || d > g.lastDate)  g.lastDate = d
     }
   }
   for (const g of map.values()) {
+    if (!g.firstDate) continue
     const daySet = new Set(
       offers.filter(o => g.ids.includes(o.id))
             .map((o: any) => validDate(o.scheduledAt)?.getDay())
@@ -83,8 +87,14 @@ function groupOffers(offers: any[]): ServiceGroup[] {
     )
     g.days = DAY_ORDER.filter(d => daySet.has(d)).map(d => DAY_NAMES_SHORT[d])
   }
+  // Servicios con fecha primero (ordenados por fecha); servicios de catálogo (sin fecha) al final.
   return Array.from(map.values())
-    .sort((a, b) => (a.firstDate.getTime() || Infinity) - (b.firstDate.getTime() || Infinity))
+    .sort((a, b) => {
+      if (a.firstDate && b.firstDate) return a.firstDate.getTime() - b.firstDate.getTime()
+      if (a.firstDate && !b.firstDate) return -1
+      if (!a.firstDate && b.firstDate) return 1
+      return 0
+    })
 }
 
 interface Props { userId?: string }
@@ -102,6 +112,7 @@ export const UserServicios: React.FC<Props> = () => {
   const [payMethod, setPayMethod] = useState<'cash' | 'wompi'>('cash')
   const [confirmBooking, setConfirmBooking] = useState<{
     ids: string[]; key: string; title: string; sessionCount: number; price: number
+    instructions: string | null; restrictions: string | null; risks: string | null; contraindications: string | null
   } | null>(null)
   const [discountCode, setDiscountCode] = useState('')
   const [bookingError, setBookingError] = useState<string | null>(null)
@@ -124,7 +135,14 @@ export const UserServicios: React.FC<Props> = () => {
 
   const openConfirm = (g: ServiceGroup) => {
     const parts = (g.title ?? '').split(' — ')
-    setConfirmBooking({ ids: g.ids, key: g.key, title: parts[1] || parts[0], sessionCount: g.ids.length, price: g.price })
+    const s = g.representative ?? {}
+    setConfirmBooking({
+      ids: g.ids, key: g.key, title: parts[1] || parts[0], sessionCount: g.ids.length, price: g.price,
+      instructions: s.instructions ?? null,
+      restrictions: s.restrictions ?? null,
+      risks: s.risks ?? null,
+      contraindications: s.contraindications ?? null,
+    })
     setDiscountCode('')
     setBookingError(null)
     setPayMethod('cash')
@@ -251,7 +269,7 @@ export const UserServicios: React.FC<Props> = () => {
                       <span style={{ fontSize: 12, color: C.textMedium, display: 'flex', alignItems: 'center', gap: 6 }}>
                         <Repeat size={12} color={C.gold} />
                         <strong>{g.sessionCount}</strong>&nbsp;sesión{g.sessionCount!==1?'es':''}
-                        {g.firstDate.getTime() > 0 && <>&nbsp;· {fmtDateShort(g.firstDate)}{g.sessionCount > 1 ? ` → ${fmtDateShort(g.lastDate)}` : ''}</>}
+                        {g.firstDate && <>&nbsp;· {fmtDateShort(g.firstDate)}{g.sessionCount > 1 && g.lastDate ? ` → ${fmtDateShort(g.lastDate)}` : ''}</>}
                       </span>
                       {g.days.length > 0 && (
                         <span style={{ fontSize: 12, color: C.textMedium, display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -259,10 +277,14 @@ export const UserServicios: React.FC<Props> = () => {
                           {g.days.join(' · ')}
                         </span>
                       )}
-                      {g.timeStart !== '--:--' && (
+                      {g.timeStart ? (
                         <span style={{ fontSize: 12, color: C.textMedium, display: 'flex', alignItems: 'center', gap: 6 }}>
                           <Clock size={12} color={C.gold} /> {g.timeStart} – {g.timeEnd}
                           <span style={{ color: C.textMuted }}>({g.durationMinutes} min)</span>
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 12, color: C.textMedium, display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <Clock size={12} color={C.gold} /> Horario por coordinar con el consultorio
                         </span>
                       )}
                       {g.location?.name && (
@@ -367,6 +389,36 @@ export const UserServicios: React.FC<Props> = () => {
                     </span>
                   </div>
                 </div>
+
+                {/* Textos clínicos del servicio (si existen) */}
+                {(confirmBooking.instructions || confirmBooking.restrictions || confirmBooking.risks || confirmBooking.contraindications) && (
+                  <div style={{ marginBottom: 18, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    {confirmBooking.instructions && (
+                      <div>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Instrucciones</p>
+                        <p style={{ fontSize: 12, color: C.textMedium, margin: 0, lineHeight: 1.5 }}>{confirmBooking.instructions}</p>
+                      </div>
+                    )}
+                    {confirmBooking.restrictions && (
+                      <div>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Restricciones</p>
+                        <p style={{ fontSize: 12, color: C.textMedium, margin: 0, lineHeight: 1.5 }}>{confirmBooking.restrictions}</p>
+                      </div>
+                    )}
+                    {confirmBooking.risks && (
+                      <div>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Riesgos</p>
+                        <p style={{ fontSize: 12, color: C.textMedium, margin: 0, lineHeight: 1.5 }}>{confirmBooking.risks}</p>
+                      </div>
+                    )}
+                    {confirmBooking.contraindications && (
+                      <div>
+                        <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 4px' }}>Contraindicaciones</p>
+                        <p style={{ fontSize: 12, color: C.textMedium, margin: 0, lineHeight: 1.5 }}>{confirmBooking.contraindications}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Discount code */}
                 <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.06em', margin: '0 0 6px' }}>

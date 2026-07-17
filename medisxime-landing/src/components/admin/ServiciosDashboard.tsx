@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, Calendar, MapPin, User, Clock, ChevronRight, Edit2, Trash2, Repeat, Search, SlidersHorizontal, X, ToggleLeft, ToggleRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FormularioServicio } from './FormularioServicio';
-import { generateOccurrences, DIA_NOMBRES } from './servicioSchema';
 import { DoctorSedesAnim } from './DoctorSedesAnim';
 
 const C = {
@@ -28,6 +27,15 @@ const OFFER_TYPE_COLOR: Record<string, { bg: string; color: string }> = {
   workshop:   { bg: 'rgba(236,72,153,0.1)',  color: '#9C4A2E' },
 };
 
+// Grupo de servicio (REPS) — etiquetas locales (ver serviciosCatalogo.ts del formulario para la fuente completa).
+const GRUPO_LABELS: Record<string, string> = {
+  '01': 'Consulta externa',
+  '02': 'Apoyo diagnóstico',
+  '03': 'Internación',
+  '04': 'Quirúrgico',
+  '05': 'Atención inmediata',
+};
+
 interface ServiceGroup {
   key: string;
   title: string;
@@ -37,32 +45,45 @@ interface ServiceGroup {
   location: { name: string } | null;
   room: { name: string } | null;
   professional: { firstName: string; lastName: string } | null;
-  timeStart: string;
-  timeEnd: string;
+  timeStart: string | null;
+  timeEnd: string | null;
   durationMinutes: number;
   price: number;
-  firstDate: Date;
-  lastDate: Date;
+  firstDate: Date | null;
+  lastDate: Date | null;
   days: string[];
   sessionCount: number;
   ids: string[];
   representative: any;
+  consecutive: number | null;
+  cups: string | null;
+  serviceGroup: string | null;
+}
+
+/** Convierte scheduledAt (string | null | undefined) a Date válida o null. Nunca lanza. */
+function safeDate(value: unknown): Date | null {
+  if (!value) return null;
+  const d = new Date(value as string);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 function groupOffers(offers: any[]): ServiceGroup[] {
   const map = new Map<string, ServiceGroup>();
 
   for (const o of offers) {
-    const d = new Date(o.scheduledAt);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    const timeStart = `${hh}:${mm}`;
-    const key = [o.title, o.professionalId ?? '', o.locationId ?? '', o.roomId ?? '', timeStart, o.durationMinutes].join('|');
+    const d = safeDate(o.scheduledAt);
+    const timeStart = d ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : null;
+    // Los servicios de catálogo (sin fecha) nunca se agrupan entre sí: cada oferta es su propia tarjeta.
+    const key = d
+      ? [o.title, o.professionalId ?? '', o.locationId ?? '', o.roomId ?? '', timeStart, o.durationMinutes].join('|')
+      : `catalog:${o.id}`;
 
     if (!map.has(key)) {
-      const endMs  = d.getTime() + o.durationMinutes * 60000;
-      const endD   = new Date(endMs);
-      const timeEnd = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+      let timeEnd: string | null = null;
+      if (d && o.durationMinutes) {
+        const endD = new Date(d.getTime() + o.durationMinutes * 60000);
+        timeEnd = `${String(endD.getHours()).padStart(2, '0')}:${String(endD.getMinutes()).padStart(2, '0')}`;
+      }
       map.set(key, {
         key, title: o.title, offerType: o.offerType, status: o.status,
         description: o.description ?? null,
@@ -75,30 +96,48 @@ function groupOffers(offers: any[]): ServiceGroup[] {
         firstDate: d, lastDate: d,
         days: [], sessionCount: 0,
         ids: [], representative: o,
+        consecutive: o.consecutive ?? null,
+        cups: o.cups ?? null,
+        serviceGroup: o.serviceGroup ?? null,
       });
     }
 
     const g = map.get(key)!;
     g.ids.push(o.id);
     g.sessionCount++;
-    if (d < g.firstDate) g.firstDate = d;
-    if (d > g.lastDate)  g.lastDate  = d;
+    if (d) {
+      if (!g.firstDate || d < g.firstDate) g.firstDate = d;
+      if (!g.lastDate || d > g.lastDate)  g.lastDate  = d;
+    }
   }
 
-  // Compute unique days
+  // Compute unique days (solo para grupos con fecha)
   for (const g of map.values()) {
+    if (!g.firstDate) continue;
     const daySet = new Set<number>();
     for (const o of offers.filter(o => g.ids.includes(o.id))) {
-      daySet.add(new Date(o.scheduledAt).getDay());
+      const od = safeDate(o.scheduledAt);
+      if (od) daySet.add(od.getDay());
     }
     g.days = DAY_ORDER.filter(d => daySet.has(d)).map(d => DAY_NAMES_SHORT[d]);
   }
 
-  return Array.from(map.values()).sort((a, b) => a.firstDate.getTime() - b.firstDate.getTime());
+  // Servicios con fecha primero (ordenados por fecha); servicios de catálogo (sin fecha) al final, por consecutivo.
+  return Array.from(map.values()).sort((a, b) => {
+    if (a.firstDate && b.firstDate) return a.firstDate.getTime() - b.firstDate.getTime();
+    if (a.firstDate && !b.firstDate) return -1;
+    if (!a.firstDate && b.firstDate) return 1;
+    return (a.consecutive ?? 0) - (b.consecutive ?? 0);
+  });
 }
 
-function fmtDate(d: Date) {
+function fmtDate(d: Date | null) {
+  if (!d) return '';
   return d.toLocaleDateString('es-CO', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+function fmtPrice(n: number) {
+  return n > 0 ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n) : 'Gratuito';
 }
 
 export const ServiciosDashboard: React.FC = () => {
@@ -107,6 +146,7 @@ export const ServiciosDashboard: React.FC = () => {
   const [servicios, setServicios]         = useState<any[]>([]);
   const [deletingKey, setDeletingKey]     = useState<string | null>(null);
   const [toast, setToast]                 = useState<{ msg: string; ok: boolean } | null>(null);
+  const [saveError, setSaveError]         = useState<string | null>(null);
 
   // ── Filters ───────────────────────────────────────────────────────────────
   const [search, setSearch]               = useState('');
@@ -130,6 +170,7 @@ export const ServiciosDashboard: React.FC = () => {
   };
 
   useEffect(() => { loadServicios(); }, []);
+  useEffect(() => { setSaveError(null); }, [isFormOpen, editingGroup]);
 
   // Close filter panel on outside click
   useEffect(() => {
@@ -200,112 +241,63 @@ export const ServiciosDashboard: React.FC = () => {
     }
   };
 
-  // ── Edit group: map representative + full range ───────────────────────────
-  const mapGroupToFormValues = (g: ServiceGroup) => {
+  // ── Edit group: construir initialData desde los campos del catálogo (sin parsear el título) ──
+  // Tipado laxo a propósito: el schema/formulario nuevo (Task 2) define ServicioFormValues; este
+  // worktree aún compila contra el schema viejo. Se retorna `any` para que compile hoy y siga
+  // compilando cuando el contrato nuevo llegue (mismos nombres de campo que el brief).
+  const mapGroupToFormValues = (g: ServiceGroup): any => {
     const s = g.representative;
-    let categoria = 'Clases de Pole'; let tipoServicio = '';
-    if (s.title) { const p = s.title.split(' — '); categoria = p[0]; tipoServicio = p[1] || ''; }
-
-    const toDateStr = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-
-    // Reconstruct diasSemana codes from day names in group
-    const dayCodeByName: Record<string, string> = { Dom: 'dom', Lun: 'lun', Mar: 'mar', Mié: 'mie', Jue: 'jue', Vie: 'vie', Sáb: 'sab' };
-    const diasSemana = g.days.map(n => dayCodeByName[n]).filter(Boolean);
-
-    let modalidad: string | undefined;
-    if (s.description?.includes('Modalidad:')) modalidad = s.description.replace('Modalidad:', '').trim();
-
     return {
-      locationId: s.locationId || '', roomId: s.roomId || '',
-      categoria: categoria as "Práctica Libre" | "Clases de Pole" | "Disciplinas Complementarias" | "Eventos" | "Otros",
-      tipoServicio,
-      diasSemana: diasSemana.length ? diasSemana : ['lun'],
-      fechaDesde: toDateStr(g.firstDate),
-      fechaHasta: toDateStr(g.lastDate),
-      horaInicio: g.timeStart,
-      horaFin: g.timeEnd,
-      precio: g.price,
-      modalidad: modalidad as "Grupal" | "Individual" | undefined,
-      instructorId: s.professionalId || '',
-      nivelDificultad: undefined,
-      capacidad: s.capacity,
+      locationId: s.locationId || '',
+      roomId: s.roomId || '',
+      nombre: s.title || '',
+      descripcion: s.description || '',
+      categoria: s.specialty ?? 'Otros',
+      professionalId: s.professionalId || '',
+      serviceGroup: s.serviceGroup || '',
+      serviceSubgroup: s.serviceSubgroup || '',
+      serviceCategory: s.serviceCategory || '',
+      serviceSubcategory: s.serviceSubcategory || '',
+      cups: s.cups || '',
+      modalities: s.modalities || [],
+      isActive: s.status !== 'draft',
+      durationMinutes: s.durationMinutes != null ? String(s.durationMinutes) : '',
+      price: s.price != null ? String(s.price) : '',
+      imageUrl: s.imageUrl || '',
+      instructions: s.instructions || '',
+      restrictions: s.restrictions || '',
+      risks: s.risks || '',
+      contraindications: s.contraindications || '',
+      consecutive: s.consecutive ?? null,
     };
   };
 
-  // ── Save (create or update group) ─────────────────────────────────────────
-  const handleFormSuccess = async (data: any) => {
-    const offerTypeMap: Record<string, string> = {
-      'Medicina Bioreguladora': 'class', 'Medicina Laboral': 'class',
-      'Exámenes Médico Ocupacionales': 'open_pole', 'Consultoría en SG-SST': 'event', 'Salud en el Trabajo': 'event', 'Otros': 'workshop',
-    };
+  // ── Save (create or update) ────────────────────────────────────────────────
+  // `payload` llega listo en camelCase desde FormularioServicio (onSuccess), tal como define el
+  // contrato del brief; aquí solo se decide POST (crear) vs PATCH (editar) y se hace el fetch.
+  const handleFormSuccess = async (payload: any) => {
+    setSaveError(null);
     const headers = authH();
-
-    const tempStart = new Date(`${data.fechaDesde}T${data.horaInicio}`);
-    const tempEnd   = new Date(`${data.fechaDesde}T${data.horaFin}`);
-    const durationMinutes = Math.max(Math.round((tempEnd.getTime() - tempStart.getTime()) / 60000), 30);
-
-    const basePayload = {
-      locationId:      data.locationId,
-      roomId:          data.roomId || undefined,
-      offerType:       offerTypeMap[data.categoria] ?? 'class',
-      title:           `${data.categoria}${data.tipoServicio ? ` — ${data.tipoServicio}` : ''}`,
-      description:     data.modalidad ? `Modalidad: ${data.modalidad}` : undefined,
-      professionalId:  data.instructorId || undefined,
-      capacity:        data.capacidad ?? (data.roomCapacity ?? 10),
-      durationMinutes,
-      price:           data.precio ?? 0,
-      currency:        'COP',
-    };
-
-    // If editing, delete old group first then recreate
-    if (editingGroup) {
-      await Promise.all(editingGroup.ids.map(id =>
-        fetch(`/api/services/offers/${id}`, { method: 'DELETE', headers })
-      ));
-    }
-
-    const occurrences = generateOccurrences(data.diasSemana, data.fechaDesde, data.fechaHasta, data.horaInicio);
-    if (!occurrences.length) {
-      const diasNombres = (data.diasSemana as string[]).map((d: string) => DIA_NOMBRES[d] ?? d).join(', ');
-      showToast(
-        `Ningún ${diasNombres || 'día seleccionado'} cae entre ${data.fechaDesde} y ${data.fechaHasta}. Amplía el rango de fechas.`,
-        false
-      );
-      return;
-    }
-
-    let errCount = 0;
-    let lastError = '';
-    for (const occ of occurrences) {
-      try {
-        const res  = await fetch('/api/services/offers', { method: 'POST', headers, body: JSON.stringify({ ...basePayload, scheduledAt: occ.toISOString() }) });
-        const json = await res.json();
-        if (!res.ok || !json.success) {
-          errCount++;
-          lastError = json.error ?? `Error ${res.status}`;
-        }
-      } catch (e: unknown) {
-        errCount++;
-        lastError = (e as Error).message ?? 'Error de red';
+    try {
+      let res: Response;
+      if (editingGroup) {
+        const id = editingGroup.ids[0];
+        res = await fetch(`/api/services/offers/${id}`, { method: 'PATCH', headers, body: JSON.stringify(payload) });
+      } else {
+        res = await fetch('/api/services/offers', { method: 'POST', headers, body: JSON.stringify(payload) });
       }
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json?.success) {
+        setSaveError(json?.error ?? 'No se pudo guardar el servicio. Intenta de nuevo.');
+        return;
+      }
+      showToast(editingGroup ? 'Servicio actualizado ✓' : 'Servicio creado ✓', true);
+      await loadServicios();
+      setIsFormOpen(false);
+      setEditingGroup(null);
+    } catch (e: unknown) {
+      setSaveError('Error de conexión al guardar el servicio.');
     }
-
-    if (errCount > 0) {
-      const created = occurrences.length - errCount;
-      showToast(
-        created > 0
-          ? `${created}/${occurrences.length} sesiones creadas. Error: ${lastError}`
-          : `No se crearon sesiones. Error: ${lastError}`,
-        false
-      );
-    } else {
-      showToast(`${occurrences.length} sesión${occurrences.length !== 1 ? 'es' : ''} ${editingGroup ? 'actualizadas' : 'creadas'} ✓`, true);
-    }
-
-    await loadServicios();
-    setIsFormOpen(false);
-    setEditingGroup(null);
   };
 
   return (
@@ -567,15 +559,31 @@ export const ServiciosDashboard: React.FC = () => {
                             </span>
                           </button>
 
+                          {/* Consecutivo / CUPS / Grupo */}
+                          {(g.consecutive != null || g.cups || g.serviceGroup) && (
+                            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
+                              {g.consecutive != null && (
+                                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
+                                  SRV-{String(g.consecutive).padStart(4, '0')}
+                                </span>
+                              )}
+                              {g.cups && (
+                                <span style={{ fontSize: 10, fontWeight: 700, color: C.textBrown, background: 'rgba(92,58,40,0.06)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
+                                  CUPS {g.cups}
+                                </span>
+                              )}
+                              {g.serviceGroup && (
+                                <span style={{ fontSize: 10, fontWeight: 700, color: C.textBrown, background: 'rgba(92,58,40,0.06)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
+                                  {GRUPO_LABELS[g.serviceGroup] ?? g.serviceGroup}
+                                </span>
+                              )}
+                            </div>
+                          )}
+
                           {/* Title */}
                           <h3 style={{ fontFamily: FONT_BODONI, fontSize: 19, fontWeight: 700, color: C.text, margin: '0 0 4px', lineHeight: 1.2 }}>
-                            {g.title.split(' — ')[0]}
+                            {g.title}
                           </h3>
-                          {g.title.includes(' — ') && (
-                            <p style={{ fontFamily: FONT_INTER, fontSize: 13, color: C.gold, fontWeight: 600, margin: '0 0 4px' }}>
-                              {g.title.split(' — ')[1]}
-                            </p>
-                          )}
                           {g.description && (
                             <p style={{ fontSize: 12, color: C.textMuted, margin: '0 0 14px', fontWeight: 500 }}>{g.description}</p>
                           )}
@@ -586,43 +594,62 @@ export const ServiciosDashboard: React.FC = () => {
                           {/* ── Info rows ── */}
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
 
-                            {/* Sessions count + date range */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Repeat size={13} color={C.gold} />
-                              </div>
-                              <div>
-                                <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>
-                                  {g.sessionCount} sesión{g.sessionCount !== 1 ? 'es' : ''}
-                                </span>
-                                <span style={{ fontSize: 12, color: C.textMuted, marginLeft: 6 }}>
-                                  {fmtDate(g.firstDate)} → {fmtDate(g.lastDate)}
-                                </span>
-                              </div>
-                            </div>
+                            {g.firstDate ? (
+                              <>
+                                {/* Sessions count + date range */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Repeat size={13} color={C.gold} />
+                                  </div>
+                                  <div>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: C.text }}>
+                                      {g.sessionCount} sesión{g.sessionCount !== 1 ? 'es' : ''}
+                                    </span>
+                                    <span style={{ fontSize: 12, color: C.textMuted, marginLeft: 6 }}>
+                                      {fmtDate(g.firstDate)} → {fmtDate(g.lastDate)}
+                                    </span>
+                                  </div>
+                                </div>
 
-                            {/* Days */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Calendar size={13} color={C.gold} />
-                              </div>
-                              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                                {g.days.map(d => (
-                                  <span key={d} style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '2px 7px', borderRadius: 6 }}>{d}</span>
-                                ))}
-                              </div>
-                            </div>
+                                {/* Days */}
+                                {g.days.length > 0 && (
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                      <Calendar size={13} color={C.gold} />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                                      {g.days.map(d => (
+                                        <span key={d} style={{ fontSize: 11, fontWeight: 700, color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '2px 7px', borderRadius: 6 }}>{d}</span>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
 
-                            {/* Time */}
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                              <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Clock size={13} color={C.gold} />
+                                {/* Time */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                  <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                    <Clock size={13} color={C.gold} />
+                                  </div>
+                                  <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
+                                    {g.timeStart} – {g.timeEnd}
+                                    <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500, marginLeft: 6 }}>({g.durationMinutes} min)</span>
+                                  </span>
+                                </div>
+                              </>
+                            ) : (
+                              /* Servicio de catálogo: sin scheduledAt — el consultorio coordina el horario */
+                              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <div style={{ width: 28, height: 28, borderRadius: 8, background: 'rgba(92,58,40,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                  <Clock size={13} color={C.gold} />
+                                </div>
+                                <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
+                                  Horario por coordinar
+                                  {g.durationMinutes ? (
+                                    <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500, marginLeft: 6 }}>({g.durationMinutes} min)</span>
+                                  ) : null}
+                                </span>
                               </div>
-                              <span style={{ fontSize: 13, color: C.textBrown, fontWeight: 600 }}>
-                                {g.timeStart} – {g.timeEnd}
-                                <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 500, marginLeft: 6 }}>({g.durationMinutes} min)</span>
-                              </span>
-                            </div>
+                            )}
 
                             {/* Location + room */}
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -646,14 +673,12 @@ export const ServiciosDashboard: React.FC = () => {
                             )}
 
                             {/* Price */}
-                            {g.price > 0 && (
-                              <div style={{ marginTop: 4, paddingTop: 10, borderTop: `1px dashed ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Precio por sesión</span>
-                                <span style={{ fontSize: 15, fontWeight: 800, color: C.gold, fontFamily: FONT_BODONI }}>
-                                  {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(g.price)}
-                                </span>
-                              </div>
-                            )}
+                            <div style={{ marginTop: 4, paddingTop: 10, borderTop: `1px dashed ${C.borderLight}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontSize: 11, color: C.textMuted, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Precio por sesión</span>
+                              <span style={{ fontSize: 15, fontWeight: 800, color: C.gold, fontFamily: FONT_BODONI }}>
+                                {fmtPrice(g.price)}
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </motion.div>
@@ -665,9 +690,14 @@ export const ServiciosDashboard: React.FC = () => {
           </motion.div>
         ) : (
           <motion.div key="form" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }} style={{ maxWidth: 1140, margin: '0 auto' }}>
+            {/* Errores del servidor visibles sin cerrar el formulario (patrón saveError de SedesDashboard) */}
+            {saveError && (
+              <div style={{ background: '#FFF0F0', border: '1px solid #FFCDD2', borderRadius: 10, padding: '12px 16px', marginBottom: 16, fontSize: 13, color: '#D32F2F', fontWeight: 500 }}>
+                {saveError}
+              </div>
+            )}
             <FormularioServicio
               initialData={editingGroup ? mapGroupToFormValues(editingGroup) : undefined}
-              editingOfferId={editingGroup?.ids[0]}
               onCancel={() => { setIsFormOpen(false); setEditingGroup(null); }}
               onSuccess={handleFormSuccess}
             />
