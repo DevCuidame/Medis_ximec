@@ -17,10 +17,10 @@ const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','A
 const DAY_SHORT   = ['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM']
 
 const TYPE_COLOR: Record<string, string> = {
-  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E',
+  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#9C4A2E', appointment: '#5C3A28',
 }
 const TYPE_LABEL: Record<string, string> = {
-  class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen',
+  class: 'Consulta', open_pole: 'Valoración', event: 'Procedimiento', workshop: 'Examen', appointment: 'Consulta',
 }
 
 function authH(): HeadersInit {
