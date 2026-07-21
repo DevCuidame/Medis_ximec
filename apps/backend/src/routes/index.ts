@@ -9,6 +9,7 @@ import membershipsRoutes from './memberships.routes.js';
 import userMembershipsRoutes from './user-memberships.routes.js';
 import discountsRoutes from './discounts.routes.js';
 import inventoryRoutes from './inventory.routes.js';
+import externalQuotesRoutes from './external-quotes.routes.js';
 
 const router: Router = Router();
 
@@ -23,5 +24,6 @@ router.use('/memberships', membershipsRoutes);
 router.use('/user-memberships', userMembershipsRoutes);
 router.use('/discounts', discountsRoutes);
 router.use('/inventory', inventoryRoutes);
+router.use('/external-quotes', externalQuotesRoutes);
 
 export default router;

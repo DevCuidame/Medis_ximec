@@ -16,6 +16,7 @@ interface Env {
   EMAIL_PASSWORD: string;
   EMAIL_FROM: string;
   ADMIN_EMAIL: string;
+  XIMENA_INTERNAL_API_KEY: string;
 }
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
@@ -40,4 +41,5 @@ export const env: Env = {
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD || '',
   EMAIL_FROM: process.env.EMAIL_USER || '',
   ADMIN_EMAIL: process.env.ADMIN_EMAIL || process.env.EMAIL_USER || '',
+  XIMENA_INTERNAL_API_KEY: process.env.XIMENA_INTERNAL_API_KEY || '',
 };
