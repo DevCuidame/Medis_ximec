@@ -391,7 +391,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                       padding: '0.9rem 2rem', borderRadius: 10, border: 'none',
                       background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`,
                       color: C.white, fontFamily: FONT, fontSize: '0.9rem', fontWeight: 700,
-                      cursor: 'pointer', boxShadow: '0 6px 20px rgba(29,78,216,0.28)',
+                      cursor: 'pointer', boxShadow: '0 6px 20px rgba(92,58,40,0.28)',
                     }}
                   >
                     Seleccionar fecha →
@@ -413,7 +413,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                         border: `2px solid ${selectedServiceId === svc.prof_service_id ? C.primary : C.border}`,
                         padding: '1.25rem 1.5rem', textAlign: 'left',
                         cursor: 'pointer', fontFamily: FONT,
-                        boxShadow: '0 2px 12px rgba(29,78,216,0.06)',
+                        boxShadow: '0 2px 12px rgba(92,58,40,0.06)',
                         transition: 'all 0.18s',
                         display: 'flex', flexDirection: 'column', gap: '0.5rem',
                       }}
@@ -473,7 +473,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
 
               <div style={{
                 background: C.white, borderRadius: 20, border: `1px solid ${C.border}`,
-                padding: '1.75rem', boxShadow: '0 4px 24px rgba(29,78,216,0.07)',
+                padding: '1.75rem', boxShadow: '0 4px 24px rgba(92,58,40,0.07)',
               }}>
                 {/* Month navigation */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -835,7 +835,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                       background: submitting ? C.border : `linear-gradient(135deg, ${C.primary}, ${C.accent})`,
                       color: submitting ? C.textMuted : C.white,
                       fontFamily: FONT, fontSize: '0.88rem', fontWeight: 700, cursor: submitting ? 'wait' : 'pointer',
-                      boxShadow: submitting ? 'none' : '0 6px 20px rgba(29,78,216,0.28)',
+                      boxShadow: submitting ? 'none' : '0 6px 20px rgba(92,58,40,0.28)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                     }}
                   >
@@ -899,7 +899,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                     padding: '0.9rem', borderRadius: 10, border: 'none',
                     background: `linear-gradient(135deg, ${C.primary}, ${C.accent})`,
                     color: C.white, fontFamily: FONT, fontSize: '0.88rem', fontWeight: 700,
-                    cursor: 'pointer', boxShadow: '0 6px 20px rgba(29,78,216,0.28)',
+                    cursor: 'pointer', boxShadow: '0 6px 20px rgba(92,58,40,0.28)',
                   }}
                 >
                   Agendar otra cita
