@@ -85,8 +85,14 @@ export async function upsertOperatingHours(req: Request, res: Response): Promise
 
 // ─── ROOMS ───────────────────────────────────────────────────
 
-export async function getAllRooms(_req: Request, res: Response): Promise<void> {
+export async function getAllRooms(req: Request, res: Response): Promise<void> {
   try {
+    const { locationId } = req.query;
+    if (typeof locationId === 'string' && locationId) {
+      const rooms = await RoomRepository.findByLocation(locationId);
+      res.json({ success: true, data: { rooms } });
+      return;
+    }
     const { rows } = await RoomRepository.findAll();
     res.json({ success: true, data: { rooms: rows } });
   } catch (err: unknown) {
