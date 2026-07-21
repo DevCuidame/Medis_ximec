@@ -24,6 +24,7 @@ import { InscripcionesDashboard } from './components/admin/InscripcionesDashboar
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserLayout } from './components/user/UserLayout'
 import { ProfessionalDashboard } from './components/professional/ProfessionalDashboard'
+import XimenaBookingCalendar from './components/XimenaBookingCalendar'
 
 // ── Scroll to top on every route change ──────────────────────────────────────
 function ScrollToTop() {
@@ -90,6 +91,12 @@ function LoginPage() {
       }}
     />
   )
+}
+
+// ── Agenda Page ──────────────────────────────────────────────────────────────
+function AgendaPage() {
+  const navigate = useNavigate()
+  return <XimenaBookingCalendar onBackToHome={() => navigate('/')} />
 }
 
 // ── Session expired notification ─────────────────────────────────────────────
@@ -170,6 +177,7 @@ export default function App() {
       <Routes>
         <Route path="/"      element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/agenda" element={<AgendaPage />} />
 
         {/* /admin → redirect to default admin page */}
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

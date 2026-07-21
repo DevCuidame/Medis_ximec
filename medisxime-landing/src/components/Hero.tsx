@@ -205,7 +205,7 @@ export default function Hero() {
           >
             {/* Primary */}
             <motion.button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/agenda')}
               whileHover={{ scale: 1.05, boxShadow: '0 16px 48px rgba(92,58,40,0.50)' }}
               whileTap={{ scale: 0.97 }}
               className="brand-gradient"

@@ -132,7 +132,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
 
         {/* CTA Button */}
         <motion.button
-          onClick={() => navigate('/login')}
+          onClick={() => navigate('/agenda')}
           whileHover={{ scale: 1.04, boxShadow: '0 8px 30px rgba(92,58,40,0.35)' }}
           whileTap={{ scale: 0.97 }}
           className="brand-gradient desktop-cta"
@@ -249,7 +249,7 @@ export default function Navbar({ onLoginClick }: NavbarProps) {
               </button>
             )}
             <button
-              onClick={() => { setMenuOpen(false); navigate('/login') }}
+              onClick={() => { setMenuOpen(false); navigate('/agenda') }}
               className="brand-gradient"
               style={{
                 padding: '0.75rem',

@@ -124,7 +124,7 @@ export default function FinalCTA() {
           style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}
         >
           <motion.button
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/agenda')}
             whileHover={{ scale: 1.05, boxShadow: '0 20px 60px rgba(92,58,40,0.55)' }}
             whileTap={{ scale: 0.97 }}
             className="brand-gradient"
