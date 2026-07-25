@@ -15,6 +15,7 @@ import { UsuariosDashboard } from './components/admin/UsuariosDashboard'
 import { MainDashboard } from './components/admin/MainDashboard'
 import { AdminClasses } from './components/admin/AdminClasses'
 import { CreateService } from './components/admin/CreateService'
+import { CupsCatalogDashboard } from './components/admin/CupsCatalogDashboard'
 import { SedesDashboard } from './components/admin/SedesDashboard'
 import { EspaciosDashboard } from './components/admin/EspaciosDashboard'
 import { FinanzasDashboard } from './components/admin/FinanzasDashboard'
@@ -231,6 +232,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <EspaciosDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/services/cups"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <CupsCatalogDashboard />
             </ProtectedRoute>
           }
         />

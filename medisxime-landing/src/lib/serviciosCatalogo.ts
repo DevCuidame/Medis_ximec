@@ -9,7 +9,13 @@ export const GRUPOS: { code: string; name: string }[] = [
   { code: '03', name: 'Internación' },
   { code: '04', name: 'Quirurjico' },
   { code: '05', name: 'Atención inmediata' },
+  { code: '06', name: 'Otros servicios' },
 ];
+
+// Grupos cuya Categoría/Subcategoría se cargan dinámicamente desde el backend
+// (demasiadas opciones para vivir en CATALOGO, ej. Grupo 04 Quirúrgico tiene
+// ~9.000 procedimientos). Ver apps/backend/src/scripts/generate-surgical-classification.ts.
+export const GRUPOS_DINAMICOS = ['02', '03', '04', '05'];
 
 export const MODALIDADES: { code: string; name: string }[] = [
   { code: '01', name: 'Intramural' },
@@ -37,6 +43,10 @@ export const CATALOGO: Record<string, CatalogoNivel[]> = {
         { code: '01020101', name: 'Primera vez' }, { code: '01020102', name: 'Control' }, { code: '01020199', name: 'Otras' } ] },
       { code: '010202', name: 'Medicina laboral', children: [
         { code: '01020201', name: 'Valoración médica' }, { code: '01020202', name: 'Certificación' }, { code: '01020299', name: 'Otras' } ] },
+      { code: '010203', name: 'Ginecología', children: [
+        { code: '01020301', name: 'Primera vez' }, { code: '01020302', name: 'Control' }, { code: '01020399', name: 'Otras' } ] },
+      { code: '010204', name: 'Medicina familiar', children: [
+        { code: '01020401', name: 'Primera vez' }, { code: '01020402', name: 'Control' }, { code: '01020499', name: 'Otras' } ] },
       { code: '010299', name: 'Otras especialidades', children: [ { code: '01029999', name: 'Otras' } ] },
     ]},
     { code: '0103', name: 'Salud ocupacional', children: [
@@ -49,15 +59,22 @@ export const CATALOGO: Record<string, CatalogoNivel[]> = {
       { code: '010401', name: 'Psicología', children: [ { code: '01040199', name: 'Otras' } ] },
       { code: '010499', name: 'Otras terapias', children: [ { code: '01049999', name: 'Otras' } ] },
     ]},
+    { code: '0105', name: 'Nutrición y dietética', children: [
+      { code: '010501', name: 'Consulta de nutrición', children: [
+        { code: '01050101', name: 'Primera vez' }, { code: '01050102', name: 'Control' }, { code: '01050199', name: 'Otras' } ] },
+    ]},
     { code: '0199', name: 'Otros', children: [ { code: '019999', name: 'Otros', children: [ { code: '01999999', name: 'Otros' } ] } ] },
   ],
+  // Subgrupos sin "children": su Categoría/Subcategoría se cargan dinámicamente
+  // desde el backend (ver GRUPOS_DINAMICOS y apps/backend/src/scripts/generate-*-classification.ts).
+  // "Otros"/"0x99" queda estático como bolsa residual — no se generó nada ahí.
   '02': [
-    { code: '0201', name: 'Laboratorio clínico', children: [ { code: '020101', name: 'Toma de muestras', children: [ { code: '02010199', name: 'Otras' } ] }, { code: '020199', name: 'Otros', children: [ { code: '02019999', name: 'Otros' } ] } ] },
-    { code: '0202', name: 'Imágenes diagnósticas', children: [ { code: '020299', name: 'Otras', children: [ { code: '02029999', name: 'Otras' } ] } ] },
-    { code: '0203', name: 'Terapias de complementación', children: [ { code: '020399', name: 'Otras', children: [ { code: '02039999', name: 'Otras' } ] } ] },
-    { code: '0299', name: 'Otros apoyos', children: [ { code: '029999', name: 'Otros', children: [ { code: '02999999', name: 'Otros' } ] } ] },
+    { code: '0201', name: 'Laboratorio clínico' },
+    { code: '0202', name: 'Imágenes diagnósticas' },
+    { code: '0203', name: 'Terapias de complementación' },
+    { code: '0299', name: 'Otros apoyos' },
   ],
-  '03': [ { code: '0301', name: 'Hospitalización general', children: [ { code: '030199', name: 'Otras', children: [ { code: '03019999', name: 'Otras' } ] } ] }, { code: '0399', name: 'Otros', children: [ { code: '039999', name: 'Otros', children: [ { code: '03999999', name: 'Otros' } ] } ] } ],
-  '04': [ { code: '0401', name: 'Cirugía ambulatoria', children: [ { code: '040199', name: 'Otras', children: [ { code: '04019999', name: 'Otras' } ] } ] }, { code: '0499', name: 'Otros', children: [ { code: '049999', name: 'Otros', children: [ { code: '04999999', name: 'Otros' } ] } ] } ],
-  '05': [ { code: '0501', name: 'Urgencias', children: [ { code: '050199', name: 'Otras', children: [ { code: '05019999', name: 'Otras' } ] } ] }, { code: '0599', name: 'Otros', children: [ { code: '059999', name: 'Otros', children: [ { code: '05999999', name: 'Otros' } ] } ] } ],
+  '03': [ { code: '0301', name: 'Hospitalización general' }, { code: '0399', name: 'Otros', children: [ { code: '039999', name: 'Otros', children: [ { code: '03999999', name: 'Otros' } ] } ] } ],
+  '04': [ { code: '0401', name: 'Cirugía ambulatoria' }, { code: '0499', name: 'Otros', children: [ { code: '049999', name: 'Otros', children: [ { code: '04999999', name: 'Otros' } ] } ] } ],
+  '05': [ { code: '0501', name: 'Urgencias' }, { code: '0599', name: 'Otros', children: [ { code: '059999', name: 'Otros', children: [ { code: '05999999', name: 'Otros' } ] } ] } ],
 };

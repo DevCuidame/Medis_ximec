@@ -9,7 +9,9 @@
     "lint": "eslint src --ext ts --report-unused-disable-directives --max-warnings 0",
     "format": "prettier --write \"src/**/*.ts\"",
     "test": "tsx --test 'src/**/*.test.ts'",
-    "migrate": "tsx src/scripts/run-migration.ts"
+    "migrate": "tsx src/scripts/run-migration.ts",
+    "import:cups": "tsx src/scripts/import-cups-catalog.ts",
+    "generate:cups-surgical": "tsx src/scripts/generate-surgical-classification.ts"
   },
   "dependencies": {
     "@medisxime/shared-types": "workspace:*",
@@ -28,6 +30,7 @@
     "eslint": "^8.56.0",
     "prettier": "^3.1.1",
     "tsx": "^4.7.0",
-    "typescript": "^5.4.0"
+    "typescript": "^5.4.0",
+    "xlsx": "^0.18.5"
   }
 }

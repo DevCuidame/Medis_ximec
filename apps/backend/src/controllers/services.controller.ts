@@ -24,7 +24,7 @@ import type {
   ResolveBookingRequestPayload,
 } from '@medisxime/shared-types';
 
-const SERVICE_GROUP_CODES = ['01', '02', '03', '04', '05'];
+const SERVICE_GROUP_CODES = ['01', '02', '03', '04', '05', '06'];
 const MODALITY_CODES = ['01', '02', '03', '04', '05', '06', '08', '09'];
 const CUPS_RE = /^[A-Za-z0-9]{6}$/;
 
@@ -202,7 +202,9 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
       return;
     }
     validateOfferPayload(req.body, false);
-    if (req.body.capacity === undefined) req.body.capacity = 999;
+    // Los servicios del catálogo médico son individuales; se usa 1 como default
+    // para que el trigger de BD no rechace la inserción por superar la cap. del espacio.
+    if (req.body.capacity === undefined || req.body.capacity === null) req.body.capacity = 1;
     if (req.body.scheduledAt === undefined) req.body.scheduledAt = null;
     const payload = req.body as CreateServiceOfferPayload;
     const offer = await ServiceOfferRepository.create(payload, adminId);

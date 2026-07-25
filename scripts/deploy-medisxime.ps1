@@ -8,8 +8,9 @@
 # ============================================================
 
 param(
-    [string]$DbPass    = "AcariPole2024Secure!",
+    [string]$DbPass    = "medisXime2024Secure!",
     [string]$JwtSecret = "",
+    [string]$CertbotEmail = "admin@medisxime.com",
     [switch]$SkipUpload
 )
 $DbPassword = $DbPass   # alias interno para compatibilidad con placeholders
@@ -21,11 +22,14 @@ $VM_NAME     = "cuidame-app"
 $ZONE        = "us-central1-a"
 $PROJECT_ID  = "esmart-health"
 $VM_IP       = "35.239.162.75"
-$APP_PORT    = "3007"
-$DB_NAME     = "acaripole_prod"
-$DB_USER     = "acaripole_user"
-$APP_DIR     = "/var/www/acaripole"
-$PROJ_ROOT   = $PSScriptRoot
+$WEB_PORT    = "80"
+$HTTPS_PORT  = "443"
+$APP_PORT    = "3010"
+$SITE_HOST   = "docxime.cuidame.tech"
+$DB_NAME     = "medisXime_prod"
+$DB_USER     = "medisXime_user"
+$APP_DIR     = "/var/www/medisXime"
+$PROJ_ROOT   = Split-Path $PSScriptRoot -Parent
 
 if (-not $JwtSecret) {
     $JwtSecret = "medisxime-jwt-$(Get-Random -Maximum 999999)-$(Get-Random -Maximum 9999)-prod"
@@ -89,9 +93,7 @@ function Invoke-RemoteBash {
             Write-Host "." -NoNewline
 
             $done = ((gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
-                --command="test -f $remoteRc && echo 1 || echo 0" `
-                --quiet 2>$null) -join "").Trim()
-
+                --command="test -f $remoteRc && echo 1 || echo 0" --quiet 2>$null) -join "").Trim()
             if ($elapsed -ge $timeout) { throw "Timeout en $Label (${timeout}s)" }
         } until ($done -eq "1")
         Write-Host " ($elapsed s)"
@@ -125,18 +127,18 @@ gcloud config set project $PROJECT_ID 2>&1 | Out-Null
 Write-OK "Proyecto activo: $PROJECT_ID"
 
 # ── PASO 2: Firewall ──────────────────────────────────────────
-Write-Step "PASO 2/11  Configurando firewall GCP (puerto 80)"
+Write-Step "PASO 2/11  Configurando firewall GCP (puertos 80 y 443)"
 
 $rule = gcloud compute firewall-rules list `
-    --filter="name=acari-allow-http" --format="value(name)" 2>$null
+    --filter="name=medisxime-allow-web" --format="value(name)" 2>$null
 if (-not $rule) {
-    gcloud compute firewall-rules create acari-allow-http `
+    gcloud compute firewall-rules create medisxime-allow-web `
         --project=$PROJECT_ID --direction=INGRESS --priority=1000 `
-        --network=default --action=ALLOW --rules=tcp:80 `
-        --source-ranges=0.0.0.0/0 --description="AcariPole HTTP" 2>&1 | Out-Null
-    Write-OK "Regla TCP:80 creada"
+        --network=default --action=ALLOW --rules=tcp:80,tcp:443 `
+        --source-ranges=0.0.0.0/0 --description="medisXime HTTP/HTTPS" 2>&1 | Out-Null
+    Write-OK "Regla TCP:80 y TCP:443 creada"
 } else {
-    Write-OK "Regla TCP:80 ya existe"
+    Write-OK "Regla TCP:80/443 ya existe"
 }
 
 # ── PASO 3: Empaquetar proyecto ───────────────────────────────
@@ -213,15 +215,21 @@ fi
 echo "Postgres: $(psql --version)"
 
 # nginx
-if ! command -v nginx &>/dev/null; then
+if ! command -v nginx &>/dev/null && [ ! -x /usr/sbin/nginx ]; then
     echo "--- Instalando nginx ---"
     sudo apt-get install -y nginx 2>/dev/null
     sudo systemctl enable nginx
     sudo systemctl start nginx
 fi
-echo "nginx: $(nginx -v 2>&1)"
+if command -v nginx &>/dev/null; then
+    echo "nginx: $(nginx -v 2>&1)"
+elif [ -x /usr/sbin/nginx ]; then
+    echo "nginx: $(/usr/sbin/nginx -v 2>&1)"
+else
+    echo "nginx: not found"
+fi
 
-sudo apt-get install -y unzip curl git 2>/dev/null
+sudo apt-get install -y unzip curl git certbot python3-certbot-nginx 2>/dev/null
 
 echo ""
 echo "=== Dependencias OK ==="
@@ -296,6 +304,8 @@ DB_NAME="__DB_NAME__"
 DB_USER="__DB_USER__"
 DB_PASS="__DB_PASS__"
 APP_PORT="__APP_PORT__"
+WEB_PORT="__WEB_PORT__"
+SITE_HOST="__SITE_HOST__"
 JWT_SECRET="__JWT_SECRET__"
 VM_IP="__VM_IP__"
 EMAIL_PASS="***REMOVED-EMAIL-APP-PASSWORD***"
@@ -322,7 +332,7 @@ DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:5432/${DB_NAME}
 NODE_ENV=production
 PORT=${APP_PORT}
 JWT_SECRET=${JWT_SECRET}
-CORS_ORIGIN=http://${VM_IP}
+CORS_ORIGIN=http://${SITE_HOST}:${WEB_PORT}
 EMAIL_PASSWORD=${EMAIL_PASS}
 EMAIL_USER=contacto@esmart-tek.com
 EMAIL_SECURE=true
@@ -347,6 +357,8 @@ ls -la "${APP_DIR}"
     -replace '__DB_USER__',    $DB_USER `
     -replace '__DB_PASS__',    $DbPassword `
     -replace '__APP_PORT__',   $APP_PORT `
+    -replace '__WEB_PORT__',   $WEB_PORT `
+    -replace '__SITE_HOST__',  $SITE_HOST `
     -replace '__JWT_SECRET__', $JwtSecret `
     -replace '__VM_IP__',      $VM_IP
 
@@ -361,7 +373,7 @@ $s08 = (@'
 set -euo pipefail
 APP_DIR="__APP_DIR__"
 echo "--- Build frontend ---"
-cd "${APP_DIR}/acaripole-landing"
+cd "${APP_DIR}/medisxime-landing"
 # NODE_OPTIONS para dar suficiente memoria al proceso de Node/Vite
 export NODE_OPTIONS="--max-old-space-size=2048"
 NODE_OPTIONS="--max-old-space-size=2048" pnpm exec vite build 2>&1
@@ -372,7 +384,7 @@ ls -lh dist/
 '@) -replace '__APP_DIR__', $APP_DIR
 
 Invoke-RemoteBash -Label "build-frontend" -Script $s08
-Write-OK "Frontend compilado en $APP_DIR/acaripole-landing/dist"
+Write-OK "Frontend compilado en $APP_DIR/medisxime-landing/dist"
 
 # ── PASO 9: Migraciones SQL ───────────────────────────────────
 Write-Step "PASO 9/11  Ejecutando migraciones de base de datos (13 archivos)"
@@ -401,9 +413,9 @@ ADMIN_PW="***REMOVED-ADMIN-PASSWORD***"
 export ADMIN_PW
 ADMIN_HASH=$(node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');const h=c.pbkdf2Sync(process.env.ADMIN_PW,s,310000,32,'sha256').toString('hex');process.stdout.write(s+':'+h)")
 
-printf "INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, is_verified)\nVALUES ('admin@acaripole.com', '%s', 'Acaripole', 'Admin', 'ADMIN', TRUE, TRUE)\nON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_active = TRUE, is_verified = TRUE;\n" "${ADMIN_HASH}" | \
+printf "INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, is_verified)\nVALUES ('admin@medisxime.com', '%s', 'medisXime', 'Admin', 'ADMIN', TRUE, TRUE)\nON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_active = TRUE, is_verified = TRUE;\n" "${ADMIN_HASH}" | \
   PGPASSWORD="${DB_PASS}" psql -h 127.0.0.1 -U "${DB_USER}" -d "${DB_NAME}"
-echo "Admin listo: admin@acaripole.com / ${ADMIN_PW}"
+echo "Admin listo: admin@medisxime.com / ${ADMIN_PW}"
 
 echo ""
 echo "=== Tablas en la base de datos ==="
@@ -427,14 +439,14 @@ $s10 = (@'
 set -euo pipefail
 
 echo "--- Escribiendo config nginx ---"
-sudo tee /etc/nginx/sites-available/acaripole > /dev/null <<'NGINX_CONF'
+sudo tee /etc/nginx/sites-available/medisXime > /dev/null <<'NGINX_CONF'
 server {
-    listen 80;
-    server_name __VM_IP__ _;
+    listen __WEB_PORT__;
+    server_name __SITE_HOST__;
     server_tokens off;
 
     # Frontend React SPA
-    root __APP_DIR__/acaripole-landing/dist;
+    root __APP_DIR__/medisxime-landing/dist;
     index index.html;
 
     location / {
@@ -484,7 +496,7 @@ server {
 }
 NGINX_CONF
 
-sudo ln -sf /etc/nginx/sites-available/acaripole /etc/nginx/sites-enabled/acaripole
+sudo ln -sf /etc/nginx/sites-available/medisXime /etc/nginx/sites-enabled/medisXime
 sudo rm -f /etc/nginx/sites-enabled/default
 
 echo "--- Verificando config ---"
@@ -496,6 +508,8 @@ sudo systemctl reload nginx
 echo "=== nginx OK ==="
 sudo systemctl status nginx --no-pager | head -5
 '@) `
+    -replace '__WEB_PORT__', $WEB_PORT `
+    -replace '__SITE_HOST__', $SITE_HOST `
     -replace '__VM_IP__',   $VM_IP `
     -replace '__APP_DIR__', $APP_DIR `
     -replace '__APP_PORT__', $APP_PORT
@@ -503,8 +517,33 @@ sudo systemctl status nginx --no-pager | head -5
 Invoke-RemoteBash -Label "setup-nginx" -Script $s10
 Write-OK "nginx configurado: SPA + proxy /api"
 
-# ── PASO 11: Iniciar backend con PM2 + tsx ────────────────────
-Write-Step "PASO 11/11  Iniciando backend con PM2"
+# ── PASO 11: Emitir certificado SSL ──────────────────────────
+Write-Step "PASO 11/12  Solicitando certificado SSL con Certbot"
+
+$s11Cert = (@'
+#!/bin/bash
+set -euo pipefail
+SITE_HOST="__SITE_HOST__"
+CERTBOT_EMAIL="__CERTBOT_EMAIL__"
+
+echo "--- Solicitando certificado SSL ---"
+if sudo certbot --nginx -d "${SITE_HOST}" --non-interactive --agree-tos -m "${CERTBOT_EMAIL}" --redirect; then
+    echo "=== Certbot OK ==="
+    sudo nginx -t
+    sudo systemctl reload nginx
+else
+    echo "[!] Certbot fallo. Verifica que el DNS apunte a la VM y que el puerto 80 sea accesible."
+    exit 0
+fi
+'@) `
+    -replace '__SITE_HOST__', $SITE_HOST `
+    -replace '__CERTBOT_EMAIL__', $CertbotEmail
+
+Invoke-RemoteBash -Label "certbot" -Script $s11Cert
+Write-OK "Certificado SSL solicitado"
+
+# ── PASO 12: Iniciar backend con PM2 + tsx ────────────────────
+Write-Step "PASO 12/12  Iniciando backend con PM2"
 
 # tsx resuelve los path-aliases TypeScript (@config/*, @utils/*, etc.)
 # sin necesidad de compilar con tsc (evita problemas de aliases en node)
@@ -517,7 +556,7 @@ echo "--- Creando ecosystem.config.cjs ---"
 cat > "${APP_DIR}/ecosystem.config.cjs" <<'PM2_CONF'
 module.exports = {
   apps: [{
-    name: 'acaripole-backend',
+    name: 'medisXime-backend',
     script: 'node_modules/.bin/tsx',
     args: 'src/index.ts',
     cwd: '__APP_DIR__/apps/backend',
@@ -533,8 +572,8 @@ module.exports = {
 PM2_CONF
 
 echo "--- Reiniciando servicio ---"
-pm2 stop acaripole-backend   2>/dev/null || true
-pm2 delete acaripole-backend 2>/dev/null || true
+pm2 stop medisXime-backend   2>/dev/null || true
+pm2 delete medisXime-backend 2>/dev/null || true
 
 cd "${APP_DIR}"
 pm2 start ecosystem.config.cjs
@@ -576,12 +615,12 @@ HTTP_API=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:__APP_PORT__/
 echo "Backend /health: HTTP $HTTP_API"
 echo ""
 echo "=== Test nginx ==="
-HTTP_WEB=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80 2>/dev/null || echo "000")
-echo "nginx  puerto 80: HTTP $HTTP_WEB"
+HTTP_WEB=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:__WEB_PORT__ 2>/dev/null || echo "000")
+echo "nginx  puerto __WEB_PORT__: HTTP $HTTP_WEB"
 echo ""
 echo "=== Ultimos logs backend ==="
-pm2 logs acaripole-backend --lines 10 --nostream 2>/dev/null || true
-'@ -replace '__APP_PORT__', $APP_PORT)
+pm2 logs medisXime-backend --lines 10 --nostream 2>/dev/null || true
+'@ -replace '__APP_PORT__', $APP_PORT -replace '__WEB_PORT__', $WEB_PORT)
 
 # ── RESUMEN ───────────────────────────────────────────────────
 Write-Host ""
@@ -589,9 +628,9 @@ Write-Host ("=" * 62) -ForegroundColor Green
 Write-Host "  DESPLIEGUE COMPLETADO" -ForegroundColor Green
 Write-Host ("=" * 62) -ForegroundColor Green
 Write-Host ""
-Write-Host "  App:         http://$VM_IP" -ForegroundColor White
-Write-Host "  API:         http://$VM_IP/api" -ForegroundColor White
-Write-Host "  Health:      http://$VM_IP/health" -ForegroundColor White
+Write-Host "  App:         https://$SITE_HOST" -ForegroundColor White
+Write-Host "  API:         https://$SITE_HOST/api" -ForegroundColor White
+Write-Host "  Health:      https://$SITE_HOST/health" -ForegroundColor White
 Write-Host ""
 Write-Host "  Base de datos" -ForegroundColor Yellow
 Write-Host "    Nombre:    $DB_NAME" -ForegroundColor Gray
@@ -600,7 +639,7 @@ Write-Host "    Password:  $DbPassword" -ForegroundColor Gray
 Write-Host ""
 Write-Host "  Comandos utiles en la VM:" -ForegroundColor Yellow
 Write-Host "    pm2 status" -ForegroundColor Gray
-Write-Host "    pm2 logs acaripole-backend" -ForegroundColor Gray
-Write-Host "    pm2 restart acaripole-backend" -ForegroundColor Gray
+Write-Host "    pm2 logs medisXime-backend" -ForegroundColor Gray
+Write-Host "    pm2 restart medisXime-backend" -ForegroundColor Gray
 Write-Host "    sudo systemctl status nginx" -ForegroundColor Gray
 Write-Host ("=" * 62) -ForegroundColor Green

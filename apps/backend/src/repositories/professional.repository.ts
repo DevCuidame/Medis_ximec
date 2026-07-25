@@ -137,6 +137,7 @@ export const ProfessionalRepository = {
     if (dto.professionalLicense !== undefined) { fields.push(`professional_license = $${idx++}`); values.push(dto.professionalLicense?.trim() || null) }
     if (dto.sisproUser          !== undefined) { fields.push(`sispro_user          = $${idx++}`); values.push(dto.sisproUser?.trim() || null) }
     if (dto.sisproPasswordEnc   !== undefined) { fields.push(`sispro_password_enc  = $${idx++}`); values.push(dto.sisproPasswordEnc) }
+    if (dto.professionalType    !== undefined) { fields.push(`professional_type    = $${idx++}`); values.push(dto.professionalType) }
 
     if (fields.length === 0) return this.findById(id)
 

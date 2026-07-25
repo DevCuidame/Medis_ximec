@@ -25,6 +25,7 @@ const FONT_BODONI = '"Cormorant Garamond", Georgia, serif';
 
 const STEPS = [
   { label: 'Básico', desc: 'Nombre y descripción' },
+  { label: 'Servicios', desc: 'Servicios incluidos' },
   { label: 'Precio', desc: 'Tipo y valor' },
   { label: 'Confirmar', desc: 'Revisar y crear' },
 ];
@@ -50,6 +51,7 @@ interface Membership {
   currency: string;
   durationDays: number | null;
   isActive: boolean;
+  services?: { serviceId: string; quantity: number }[];
 }
 
 const TYPE_LABELS: Record<MembershipType, string> = {
@@ -78,6 +80,7 @@ const EMPTY_FORM = {
   price: '',
   duration_days: '',
   is_active: true,
+  services: [] as { serviceId: string; quantity: number }[],
 };
 
 function slugify(str: string) {
@@ -96,6 +99,7 @@ export const MembresiasDashboard: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  const [catalog, setCatalog] = useState<{id: string, title: string, category: string}[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -118,10 +122,21 @@ export const MembresiasDashboard: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/memberships', { headers: authHeaders() });
-      const data = await res.json();
+      const [resMemberships, resCatalog] = await Promise.all([
+        fetch('/api/memberships', { headers: authHeaders() }),
+        fetch('/api/services/offers', { headers: authHeaders() })
+      ]);
+      const data = await resMemberships.json();
+      const catalogData = await resCatalog.json();
       if (!data.success) throw new Error(data.error ?? 'Error al cargar planes');
       setMemberships(data.data.memberships);
+      if (catalogData.success) {
+        setCatalog(catalogData.data.offers.map((o: any) => ({
+          id: o.id,
+          title: o.title,
+          category: o.specialty_name || o.title.split(' — ')[0] || 'Servicio'
+        })));
+      }
     } catch (e: unknown) {
       setError((e as Error).message);
     } finally {
@@ -150,6 +165,7 @@ export const MembresiasDashboard: React.FC = () => {
       price: String(m.price),
       duration_days: m.durationDays != null ? String(m.durationDays) : '',
       is_active: m.isActive,
+      services: m.services ?? [],
     });
     setFormErrors({});
     setCurrentStep(0);
@@ -162,7 +178,7 @@ export const MembresiasDashboard: React.FC = () => {
       if (!form.name.trim()) e.name = 'Requerido';
       if (!form.code.trim()) e.code = 'Requerido';
     }
-    if (step === 1) {
+    if (step === 2) {
       if (!form.price || isNaN(Number(form.price)) || Number(form.price) < 0) e.price = 'Precio inválido';
       if ((form.type === 'monthly' || form.type === 'annual') && !form.duration_days)
         e.duration_days = 'Requerido para este tipo';
@@ -203,6 +219,7 @@ export const MembresiasDashboard: React.FC = () => {
       currency: 'COP',
       durationDays: form.duration_days ? Number(form.duration_days) : null,
       isActive: form.is_active,
+      services: form.services,
     };
 
     try {
@@ -576,9 +593,69 @@ export const MembresiasDashboard: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* ── Step 1: Precio ── */}
+                    {/* ── Step 1: Servicios ── */}
                     {currentStep === 1 && (
                       <motion.div key="s1" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                        <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
+                          Añade los servicios que incluye este plan y la cantidad de cada uno.
+                        </p>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                          {form.services.map((svc, i) => (
+                            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                              <select
+                                value={svc.serviceId}
+                                onChange={e => {
+                                  const newServices = [...form.services];
+                                  newServices[i].serviceId = e.target.value;
+                                  setForm({ ...form, services: newServices });
+                                }}
+                                style={{ flex: 1, ...inputStyle(false), padding: '8px 12px' }}
+                              >
+                                <option value="" disabled>Selecciona un servicio</option>
+                                {catalog.map(c => (
+                                  <option key={c.id} value={c.id}>{c.title}</option>
+                                ))}
+                              </select>
+                              <input
+                                type="number"
+                                min="1"
+                                value={svc.quantity}
+                                onChange={e => {
+                                  const newServices = [...form.services];
+                                  newServices[i].quantity = Number(e.target.value);
+                                  setForm({ ...form, services: newServices });
+                                }}
+                                style={{ width: 80, ...inputStyle(false), padding: '8px 12px' }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newServices = [...form.services];
+                                  newServices.splice(i, 1);
+                                  setForm({ ...form, services: newServices });
+                                }}
+                                style={{ width: 34, height: 34, borderRadius: 8, background: 'rgba(239,68,68,0.1)', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#DC2626', cursor: 'pointer' }}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => setForm({ ...form, services: [...form.services, { serviceId: '', quantity: 1 }] })}
+                          style={{ padding: '8px 12px', borderRadius: 8, border: `1px dashed ${C.gold}`, background: 'transparent', color: C.gold, fontSize: 12, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, alignSelf: 'flex-start' }}
+                        >
+                          <Plus size={14} /> Añadir Servicio
+                        </button>
+                      </motion.div>
+                    )}
+
+                    {/* ── Step 2: Precio ── */}
+                    {currentStep === 2 && (
+                      <motion.div key="s2" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <Field label="Tipo de plan *">
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
                             {(Object.keys(TYPE_LABELS) as MembershipType[]).map(t => {
@@ -630,9 +707,9 @@ export const MembresiasDashboard: React.FC = () => {
                       </motion.div>
                     )}
 
-                    {/* ── Step 2: Confirmar ── */}
-                    {currentStep === 2 && (
-                      <motion.div key="s2" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* ── Step 3: Confirmar ── */}
+                    {currentStep === 3 && (
+                      <motion.div key="s3" initial={{ opacity: 0, x: 24 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ duration: 0.2 }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         <p style={{ fontSize: 13, color: C.textMuted, margin: 0 }}>
                           Así quedará el plan. Confirma antes de {editTarget ? 'guardar' : 'crear'}.
                         </p>
@@ -656,6 +733,21 @@ export const MembresiasDashboard: React.FC = () => {
                             <p style={{ fontSize: 12, color: C.textMuted, margin: '0 0 8px', display: 'flex', alignItems: 'center', gap: 4 }}>
                               <Clock size={12} style={{ flexShrink: 0 }} /> {form.duration_days} días de vigencia
                             </p>
+                          )}
+                          {form.services.length > 0 && (
+                            <div style={{ marginTop: 12, borderTop: `1px solid ${C.borderLight}`, paddingTop: 10 }}>
+                              <p style={{ fontSize: 11, fontWeight: 700, color: C.textBrown, margin: '0 0 6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Incluye</p>
+                              <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 4 }}>
+                                {form.services.map((svc, i) => {
+                                  const c = catalog.find(x => x.id === svc.serviceId);
+                                  return (
+                                    <li key={i} style={{ fontSize: 12, color: C.textMedium, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                      <span style={{ fontWeight: 600, color: C.text }}>{svc.quantity}x</span> {c ? c.title : 'Servicio'}
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
                           )}
                         </div>
 

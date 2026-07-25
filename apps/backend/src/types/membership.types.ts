@@ -1,5 +1,10 @@
 export type MembershipType = 'monthly' | 'per_class' | 'private' | 'annual' | 'pack';
 
+export interface MembershipService {
+  serviceId: string;
+  quantity: number;
+}
+
 export interface MembershipRecord {
   id: string;
   code: string;
@@ -26,6 +31,7 @@ export interface MembershipPublic {
   durationDays: number | null;
   maxClasses: number | null;
   isActive: boolean;
+  services?: MembershipService[];
 }
 
 export interface CreateMembershipDto {
@@ -37,6 +43,7 @@ export interface CreateMembershipDto {
   currency?: string;
   durationDays?: number | null;
   isActive?: boolean;
+  services?: MembershipService[];
 }
 
 export type UpdateMembershipDto = Partial<CreateMembershipDto>;

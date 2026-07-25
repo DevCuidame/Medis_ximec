@@ -1,7 +1,7 @@
-    import React, { useRef, useState } from 'react'
+    import React, { useEffect, useRef, useState } from 'react'
 import {
   X, Edit2, Check, Phone, Mail, AtSign, Star,
-  Calendar, ShieldCheck, AlertCircle, Trash2, Save, XCircle, Clock, Plus
+  Calendar, ShieldCheck, AlertCircle, Trash2, Save, XCircle, Clock, Plus, Eye, EyeOff
 } from 'lucide-react'
 
 const C = {
@@ -50,7 +50,9 @@ export interface Professional {
   id: string
   email: string
   firstName: string
+  secondName?: string | null
   lastName: string
+  secondLastName?: string | null
   phone?: string
   bio?: string
   specialties: string[]
@@ -65,6 +67,7 @@ export interface Professional {
   role?: 'USER' | 'PROFESSIONAL' | 'COMPANY' | 'ADMIN'
   idType?: string
   idNumber?: string
+  professionalLicense?: string | null
   professionalType?: 'dependiente' | 'independiente'
   schedule?: { dayOfWeek: number; startTime: string; endTime: string }[]
 }
@@ -72,12 +75,15 @@ export interface Professional {
 interface EditForm {
   firstName: string
   lastName: string
+  secondName: string
+  secondLastName: string
   companyName: string
   legalRepresentative: string
   idType: string
   idNumber: string
   email: string
   phone: string
+  address: string
   bio: string
   specialties: string[]
   instagramUrl: string
@@ -89,6 +95,9 @@ interface EditForm {
   confirmPassword: string
   professionalType: 'dependiente' | 'independiente'
   schedule: { dayOfWeek: number; startTime: string; endTime: string }[]
+  professionalLicense: string
+  sisproUser: string
+  sisproPassword: string
 }
 
 interface Props {
@@ -165,12 +174,15 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
   const [form, setForm] = useState<EditForm>({
     firstName:   pro.firstName || '',
     lastName:    pro.lastName || '',
+    secondName:  isCompany ? '' : pro.secondName ?? '',
+    secondLastName: isCompany ? '' : pro.secondLastName ?? '',
     companyName: isCompany ? pro.firstName || '' : '',
     legalRepresentative: isCompany ? pro.lastName || '' : '',
     idType:      pro.idType || ID_TYPES[0],
     idNumber:    pro.idNumber || '',
     email:       pro.email,
     phone:       pro.phone ?? '',
+    address:     '',
     bio:         pro.bio ?? '',
     specialties: [...specialties],
     instagramUrl: pro.instagramUrl ?? '',
@@ -182,7 +194,50 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
     confirmPassword: '',
     professionalType: pro.professionalType ?? 'dependiente',
     schedule:    pro.schedule ? [...pro.schedule] : [],
+    professionalLicense: pro.professionalLicense ?? '',
+    sisproUser:  '',
+    sisproPassword: '',
   })
+
+  const [showSisproPassword, setShowSisproPassword] = useState(false)
+  const canHaveAdminDetails = pro.role === 'PROFESSIONAL' || pro.role === 'ADMIN'
+
+  useEffect(() => {
+    if (!canHaveAdminDetails) return
+    let cancelled = false
+    fetch(`/api/professionals/${pro.id}/admin-details`, { headers: authHeaders() })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        const details = data.data?.details
+        if (!details) return
+        setForm(f => ({
+          ...f,
+          address:        details.address ?? '',
+          sisproUser:     details.sisproUser ?? '',
+          sisproPassword: details.sisproPassword ?? '',
+        }))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pro.id])
+
+  useEffect(() => {
+    if (!isProfessional) return
+    let cancelled = false
+    fetch(`/api/professionals/${pro.id}/schedule`, { headers: authHeaders() })
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return
+        const slots = data.data?.slots
+        if (!Array.isArray(slots)) return
+        setForm(f => ({ ...f, schedule: slots }))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pro.id])
 
   const [customIdType, setCustomIdType] = useState(() => {
     if (pro.idType && !ID_TYPES.includes(pro.idType)) return pro.idType
@@ -245,14 +300,17 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
     setLoading(true)
     setError(null)
     try {
-      const { password, confirmPassword, companyName, legalRepresentative, ...restForm } = form
+      const { password, confirmPassword, companyName, legalRepresentative, address, sisproUser, sisproPassword, ...restForm } = form
       const basePayload = {
         email:        restForm.email.toLowerCase().trim(),
         firstName:    isCompany ? companyName.trim() : restForm.firstName.trim(),
         lastName:     isCompany ? legalRepresentative.trim() : restForm.lastName.trim(),
+        secondName:      isCompany ? undefined : restForm.secondName.trim()     || undefined,
+        secondLastName:  isCompany ? undefined : restForm.secondLastName.trim() || undefined,
         idType:       restForm.idType === 'Otro' ? customIdType.trim() : restForm.idType,
         idNumber:     restForm.idNumber.trim(),
         phone:        restForm.phone.trim()        || undefined,
+        address:      address.trim()               || undefined,
         bio:          restForm.bio.trim()          || undefined,
         instagramUrl: restForm.instagramUrl.trim() || undefined,
         avatarUrl:    restForm.avatarUrl.trim() === '' ? '' : restForm.avatarUrl.trim(),
@@ -268,7 +326,9 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
           ...basePayload,
           specialties: form.specialties.length ? form.specialties : undefined,
           professionalType: form.professionalType,
-          schedule: form.professionalType === 'independiente' ? form.schedule : [],
+          professionalLicense: restForm.professionalLicense.trim() || undefined,
+          sisproUser:          sisproUser.trim()     || undefined,
+          sisproPassword:      sisproPassword.trim() || undefined,
         } : basePayload),
       })
       const data = await res.json()
@@ -286,11 +346,26 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
         }
       }
 
+      if (isProfessional) {
+        const scheduleSlots = form.professionalType === 'independiente' ? form.schedule : []
+        const scheduleRes = await fetch(`/api/professionals/${pro.id}/schedule`, {
+          method: 'PUT',
+          headers: authHeaders(),
+          body: JSON.stringify({ slots: scheduleSlots }),
+        })
+        if (!scheduleRes.ok) {
+          const sd = await scheduleRes.json()
+          throw new Error(sd.error ?? 'Error al actualizar el horario')
+        }
+      }
+
       const updated: Professional = {
         ...pro,
         ...restForm,
         firstName:    isCompany ? companyName.trim() : restForm.firstName.trim(),
         lastName:     isCompany ? legalRepresentative.trim() : restForm.lastName.trim(),
+        secondName:      isCompany ? pro.secondName : (restForm.secondName.trim() || undefined),
+        secondLastName:  isCompany ? pro.secondLastName : (restForm.secondLastName.trim() || undefined),
         idType:       restForm.idType === 'Otro' ? customIdType.trim() : restForm.idType,
         idNumber:     restForm.idNumber.trim(),
         phone:        restForm.phone.trim()        || undefined,
@@ -299,6 +374,7 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
         avatarUrl:    restForm.avatarUrl.trim()    || undefined,
         professionalType: form.professionalType,
         schedule:     form.professionalType === 'independiente' ? form.schedule : [],
+        professionalLicense: restForm.professionalLicense.trim() || undefined,
       }
       onUpdated(updated)
       setMode('view')
@@ -595,6 +671,32 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                     )}
                   </div>
 
+                  {/* Second Names Grid */}
+                  {!isCompany && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                      <div>
+                        <label style={LABEL}>Segundo Nombre</label>
+                        <input
+                          type="text" value={form.secondName} placeholder="Opcional"
+                          onChange={e => set('secondName', e.target.value)}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = C.border)}
+                          style={INPUT()}
+                        />
+                      </div>
+                      <div>
+                        <label style={LABEL}>Segundo Apellido</label>
+                        <input
+                          type="text" value={form.secondLastName} placeholder="Opcional"
+                          onChange={e => set('secondLastName', e.target.value)}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = C.border)}
+                          style={INPUT()}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {/* Identity Grid */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
                     <div>
@@ -714,6 +816,20 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                       </div>
                     </div>
                   </div>
+
+                  {/* Dirección */}
+                  {!isCompany && (
+                    <div>
+                      <label style={LABEL}>Dirección Personal</label>
+                      <input
+                        type="text" value={form.address} placeholder="Ej. Cra 15 # 82-30, Bogotá"
+                        onChange={e => set('address', e.target.value)}
+                        onFocus={e => (e.target.style.borderColor = C.gold)}
+                        onBlur={e => (e.target.style.borderColor = C.border)}
+                        style={INPUT()}
+                      />
+                    </div>
+                  )}
 
                   {/* Bio */}
                   <div>
@@ -840,6 +956,52 @@ export function ProfessionalProfileModal({ pro, onClose, onUpdated, onDeleted, i
                         })}
                       </div>
                     </div>
+                  )}
+
+                  {/* Registro Médico + SISPRO */}
+                  {isProfessional && (
+                    <>
+                      <div>
+                        <label style={LABEL}>Registro Médico</label>
+                        <input
+                          type="text" value={form.professionalLicense} placeholder="Ej. RM-123456"
+                          onChange={e => set('professionalLicense', e.target.value)}
+                          onFocus={e => (e.target.style.borderColor = C.gold)}
+                          onBlur={e => (e.target.style.borderColor = C.border)}
+                          style={INPUT()}
+                        />
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                        <div>
+                          <label style={LABEL}>Usuario SISPRO</label>
+                          <input
+                            type="text" value={form.sisproUser} placeholder="Usuario del portal"
+                            onChange={e => set('sisproUser', e.target.value)}
+                            onFocus={e => (e.target.style.borderColor = C.gold)}
+                            onBlur={e => (e.target.style.borderColor = C.border)}
+                            style={INPUT()}
+                            autoComplete="off"
+                          />
+                        </div>
+                        <div>
+                          <label style={LABEL}>Contraseña SISPRO</label>
+                          <div style={{ position: 'relative' }}>
+                            <input
+                              type={showSisproPassword ? 'text' : 'password'} value={form.sisproPassword} placeholder="Clave del portal"
+                              onChange={e => set('sisproPassword', e.target.value)}
+                              onFocus={e => (e.target.style.borderColor = C.gold)}
+                              onBlur={e => (e.target.style.borderColor = C.border)}
+                              style={{ ...INPUT(), paddingRight: 42 }}
+                              autoComplete="new-password"
+                            />
+                            <button type="button" onClick={() => setShowSisproPassword(v => !v)}
+                              style={{ position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: C.textMuted, padding: 0 }}>
+                              {showSisproPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </>
                   )}
 
                   {/* Instagram */}
