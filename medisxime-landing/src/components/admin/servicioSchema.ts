@@ -44,6 +44,7 @@ export const servicioSchema = z.object({
   isActive: z.boolean(),
   durationMinutes: z.string().refine(v => Number.isInteger(Number(v)) && Number(v) > 0, 'Duración en minutos, mayor a 0'),
   price: z.string().refine(v => v !== '' && Number(v) >= 0, 'Precio requerido (0 o más)'),
+  controlPrice: z.string().optional(),
   imageUrl: z.string().optional(),
   instructions: z.string().optional(),
   restrictions: z.string().optional(),

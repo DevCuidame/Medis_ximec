@@ -89,6 +89,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
     isActive: initialData?.isActive ?? true,
     durationMinutes: initialData?.durationMinutes ?? '',
     price: initialData?.price ?? '',
+    controlPrice: initialData?.controlPrice ?? '',
     imageUrl: initialData?.imageUrl ?? '',
     instructions: initialData?.instructions ?? '',
     restrictions: initialData?.restrictions ?? '',
@@ -292,6 +293,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
         contraindications: optionalOrNull(data.contraindications),
         durationMinutes: Number(data.durationMinutes),
         price: Number(data.price),
+        controlPrice: data.controlPrice ? Number(data.controlPrice) : undefined,
         status: data.isActive ? 'published' : 'draft',
       };
       await onSuccess(payload);
@@ -615,6 +617,12 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
               <InputField label="Precio por sesión (COP)" icon={DollarSign} error={errors.price} required>
                 <input type="number" min={0} {...register('price')} style={activeInputStyle(!!errors.price)} placeholder="0 para gratuito" />
               </InputField>
+              <InputField label="Precio de control (2do en adelante)" icon={DollarSign} error={errors.controlPrice}>
+                <input type="number" min={0} {...register('controlPrice')} style={activeInputStyle(!!errors.controlPrice)} placeholder="Déjalo vacío si no aplica" />
+              </InputField>
+              <p style={{ gridColumn: '1 / -1', margin: '-8px 0 8px', fontSize: 12, color: C.textBrown }}>
+                Si lo defines, el 1er control de este servicio siempre es gratis y desde el 2do se cobra este precio. Déjalo vacío para que el servicio no tenga niveles (comportamiento actual).
+              </p>
             </div>
 
             <div style={{ marginBottom: 20 }}>

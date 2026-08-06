@@ -259,6 +259,10 @@ export const ServiciosDashboard: React.FC = () => {
       isActive: s.status !== 'draft',
       durationMinutes: s.durationMinutes != null ? String(s.durationMinutes) : '',
       price: s.price != null ? String(s.price) : '',
+      // A diferencia de `price` (columna propia de service_offers, nunca movida por la
+      // migración 029), `controlPrice` sólo existe en service_catalog: se lee de
+      // `s.catalog.controlPrice`, no de un inexistente `s.controlPrice` top-level.
+      controlPrice: s.catalog?.controlPrice != null ? String(s.catalog.controlPrice) : '',
       imageUrl: s.imageUrl || '',
       instructions: s.instructions || '',
       restrictions: s.restrictions || '',
