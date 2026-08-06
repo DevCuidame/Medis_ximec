@@ -10,6 +10,7 @@ import { pool } from '@config/database.js';
 import {
   OperatingHoursRepository,
   RoomRepository,
+  ServiceCatalogRepository,
   ServiceOfferRepository,
   BookingRequestRepository,
 } from '@repositories/services.repository.js';
@@ -17,6 +18,7 @@ import { resolveDiscount } from '@services/discount.service.js';
 import { DiscountRepository } from '@repositories/discount.repository.js';
 import type { AppliedDiscount } from '../types/discount.types.js';
 import { sendServicePaymentConfirmation } from '@utils/email.util.js';
+import { ensureDocSync } from '@services/docServiceSync.service.js';
 import type {
   CreateServiceOfferPayload,
   UpdateServiceOfferPayload,
@@ -53,6 +55,45 @@ function validateOfferPayload(body: Record<string, unknown>, partial: boolean): 
   if (body.price !== undefined && body.price !== null && (typeof body.price !== 'number' || body.price < 0)) {
     err('El precio no puede ser negativo.');
   }
+}
+
+/** Build parameters for ensureDocSync call from offer data */
+function buildDocSyncParams(
+  offer: { catalogId: string | null; durationMinutes: number; price: number | null; title: string; catalog?: { serviceName: string; serviceGroup: string | null; description: string | null; basePrice: number | null; isActive: boolean } | null },
+  active: boolean,
+) {
+  return {
+    catalogId: offer.catalogId!,
+    active,
+    serviceName: offer.catalog?.serviceName ?? offer.title,
+    durationMinutes: offer.durationMinutes,
+    serviceGroup: offer.catalog?.serviceGroup ?? '01 Consulta externa',
+    description: offer.catalog?.description ?? null,
+    price: Number(offer.catalog?.basePrice ?? offer.price ?? 0),
+  };
+}
+
+const CATALOG_PAYLOAD_KEYS = [
+  'serviceName', 'description', 'specialty', 'serviceGroup', 'serviceSubgroup',
+  'serviceCategory', 'serviceSubcategory', 'cups', 'modalities', 'isActive',
+  'basePrice', 'controlPrice', 'imageUrl', 'instructions', 'restrictions',
+  'risks', 'contraindications',
+];
+
+/** Campos del catálogo que le importan a CuidameDoc — sólo un cambio en alguno de estos justifica un delete+create. */
+const DOC_SYNC_RELEVANT_FIELDS = ['isActive', 'serviceName', 'serviceGroup', 'description', 'basePrice'] as const;
+
+type DocSyncRelevantCatalog = {
+  isActive: boolean;
+  serviceName: string;
+  serviceGroup: string | null;
+  description: string | null;
+  basePrice: number | null;
+} | null | undefined;
+
+function docSyncRelevantFieldsChanged(before: DocSyncRelevantCatalog, after: DocSyncRelevantCatalog): boolean {
+  if (!before || !after) return true;
+  return DOC_SYNC_RELEVANT_FIELDS.some((f) => before[f] !== after[f]);
 }
 
 // ─── OPERATING HOURS ─────────────────────────────────────────
@@ -206,9 +247,16 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
     // para que el trigger de BD no rechace la inserción por superar la cap. del espacio.
     if (req.body.capacity === undefined || req.body.capacity === null) req.body.capacity = 1;
     if (req.body.scheduledAt === undefined) req.body.scheduledAt = null;
-    const payload = req.body as CreateServiceOfferPayload;
-    const offer = await ServiceOfferRepository.create(payload, adminId);
-    res.status(201).json({ success: true, data: { offer } });
+    const payload = req.body as any;
+
+    const catalogEntry = await ServiceCatalogRepository.create(payload);
+    payload.catalogId = catalogEntry.id;
+
+    const offer = await ServiceOfferRepository.create(payload as CreateServiceOfferPayload, adminId);
+
+    const docSync = await ensureDocSync(buildDocSyncParams(offer, offer.catalog?.isActive !== false));
+
+    res.status(201).json({ success: true, data: { offer }, docSync });
   } catch (err: unknown) {
     const msg = (err as Error).message;
     const status = (err as { statusCode?: number }).statusCode ?? (msg.includes('supera la del salón') ? 400 : 500);
@@ -220,10 +268,33 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
 export async function updateOffer(req: Request, res: Response): Promise<void> {
   try {
     validateOfferPayload(req.body, true);
-    const payload = req.body as UpdateServiceOfferPayload;
-    const offer = await ServiceOfferRepository.update(req.params['id']!, payload);
+    const payload = req.body as any;
+    const offerId = req.params['id']!;
+
+    const existingOffer = await ServiceOfferRepository.findById(offerId);
+    if (!existingOffer) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
+
+    let catalogId = existingOffer.catalogId;
+    const catalogTouched = CATALOG_PAYLOAD_KEYS.some((k) => payload[k] !== undefined);
+    const catalogBefore = existingOffer.catalog;
+
+    if (catalogId) {
+      if (catalogTouched) await ServiceCatalogRepository.update(catalogId, payload);
+    } else if (payload.serviceName) {
+      const newCatalog = await ServiceCatalogRepository.create(payload);
+      catalogId = newCatalog.id;
+      await ServiceOfferRepository.update(offerId, { catalogId } as UpdateServiceOfferPayload);
+    }
+
+    const offer = await ServiceOfferRepository.update(offerId, { ...payload, catalogId: catalogId ?? undefined } as UpdateServiceOfferPayload);
     if (!offer) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
-    res.json({ success: true, data: { offer } });
+
+    let docSync: { ok: boolean; error?: string } | undefined;
+    if (offer.catalogId && ((catalogTouched && docSyncRelevantFieldsChanged(catalogBefore, offer.catalog)) || offer.durationMinutes !== existingOffer.durationMinutes)) {
+      docSync = await ensureDocSync(buildDocSyncParams(offer, offer.catalog?.isActive !== false));
+    }
+
+    res.json({ success: true, data: { offer }, ...(docSync ? { docSync } : {}) });
   } catch (err: unknown) {
     const msg = (err as Error).message;
     const status = (err as { statusCode?: number }).statusCode ?? (msg.includes('supera la del salón') ? 400 : 500);
@@ -234,9 +305,19 @@ export async function updateOffer(req: Request, res: Response): Promise<void> {
 /** ADMIN ONLY */
 export async function deleteOffer(req: Request, res: Response): Promise<void> {
   try {
-    const deleted = await ServiceOfferRepository.delete(req.params['id']!);
+    const id = req.params['id']!;
+    const existing = await ServiceOfferRepository.findById(id);
+    if (!existing) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
+
+    const { deleted, remaining } = await ServiceOfferRepository.deleteAndCountRemaining(id, existing.catalogId);
     if (!deleted) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
-    res.json({ success: true, data: null });
+
+    let docSync: { ok: boolean; error?: string } | undefined;
+    if (existing.catalogId && remaining === 0) {
+      docSync = await ensureDocSync(buildDocSyncParams(existing, false));
+    }
+
+    res.json({ success: true, data: null, ...(docSync ? { docSync } : {}) });
   } catch (err: unknown) {
     res.status(500).json({ success: false, error: (err as Error).message });
   }

@@ -1,11 +1,11 @@
-import { test, beforeEach } from 'node:test'
+import { test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert'
 
 process.env.DATABASE_URL ||= 'postgres://test:test@localhost:5432/test'
 process.env.JWT_SECRET ||= 'clave-de-prueba'
 
 const { createOffer } = await import('./services.controller.js')
-const { ServiceOfferRepository } = await import('../repositories/services.repository.js')
+const { ServiceCatalogRepository, ServiceOfferRepository } = await import('../repositories/services.repository.js')
 
 function fakeRes() {
   const res: any = { statusCode: 200, body: null }
@@ -14,10 +14,20 @@ function fakeRes() {
   return res
 }
 
+// createOffer ahora también crea la fila de catálogo y llama a ensureDocSync
+// (que hace fetch a CuidameDoc); se mockean ambos para que este archivo siga
+// probando sólo la validación/normalización del payload, sin red ni BD real.
+const originalFetch = globalThis.fetch
 let captured: any
 beforeEach(() => {
   captured = null
-  ;(ServiceOfferRepository as any).create = async (payload: any) => { captured = payload; return { id: 'o1', ...payload } }
+  ;(ServiceCatalogRepository as any).create = async () => ({ id: 'cat-1' })
+  ;(ServiceOfferRepository as any).create = async (payload: any) => { captured = payload; return { id: 'o1', catalogId: payload.catalogId ?? null, catalog: null, ...payload } }
+  ;(globalThis as any).fetch = async () => new Response(JSON.stringify({ success: false, message: 'not mocked' }), { status: 500 })
+})
+
+afterEach(() => {
+  globalThis.fetch = originalFetch
 })
 
 function req(body: Record<string, unknown>) {
