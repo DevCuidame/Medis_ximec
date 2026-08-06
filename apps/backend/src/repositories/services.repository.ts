@@ -138,11 +138,61 @@ export const RoomRepository = {
   },
 };
 
+// ─── SERVICE CATALOG ──────────────────────────────────────────
+
+export const ServiceCatalogRepository = {
+  async create(data: any): Promise<{ id: string }> {
+    const { rows } = await pool.query(
+      `INSERT INTO service_catalog
+         (service_name, description, specialty, service_group, service_subgroup, service_category,
+          service_subcategory, cups, modalities, is_active, base_price, control_price, image_url,
+          instructions, restrictions, risks, contraindications)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+       RETURNING id`,
+      [
+        data.serviceName, data.description ?? null, data.specialty ?? null, data.serviceGroup ?? null,
+        data.serviceSubgroup ?? null, data.serviceCategory ?? null, data.serviceSubcategory ?? null,
+        data.cups ?? null, data.modalities ?? null, data.isActive ?? true, data.basePrice ?? 0,
+        data.controlPrice ?? null, data.imageUrl ?? null, data.instructions ?? null,
+        data.restrictions ?? null, data.risks ?? null, data.contraindications ?? null,
+      ]
+    );
+    return rows[0];
+  },
+
+  async update(id: string, data: any): Promise<void> {
+    const map: Record<string, string> = {
+      serviceName: 'service_name', description: 'description', specialty: 'specialty',
+      serviceGroup: 'service_group', serviceSubgroup: 'service_subgroup',
+      serviceCategory: 'service_category', serviceSubcategory: 'service_subcategory',
+      cups: 'cups', modalities: 'modalities', isActive: 'is_active',
+      basePrice: 'base_price', controlPrice: 'control_price', imageUrl: 'image_url',
+      instructions: 'instructions', restrictions: 'restrictions', risks: 'risks',
+      contraindications: 'contraindications',
+    };
+    const sets: string[] = [];
+    const values: unknown[] = [];
+    let i = 1;
+
+    for (const [key, col] of Object.entries(map)) {
+      if (data[key] !== undefined) {
+        sets.push(`${col} = $${i++}`);
+        values.push(data[key]);
+      }
+    }
+    if (sets.length === 0) return;
+    sets.push(`updated_at = NOW()`);
+    values.push(id);
+    await pool.query(`UPDATE service_catalog SET ${sets.join(', ')} WHERE id = $${i}`, values);
+  },
+};
+
 // ─── SERVICE OFFERS ──────────────────────────────────────────
 
 function rowToOffer(row: Record<string, unknown>): ServiceOfferPublic {
   return {
     id:              row['id'] as string,
+    catalogId:       (row['catalog_id'] as string) ?? null,
     title:           row['title'] as string,
     description:     (row['description'] as string) ?? null,
     offerType:       row['offer_type'] as ServiceOfferPublic['offerType'],
@@ -153,19 +203,7 @@ function rowToOffer(row: Record<string, unknown>): ServiceOfferPublic {
     enrolledCount:   row['enrolled_count'] as number,
     price:           (row['price'] as number) ?? null,
     currency:        row['currency'] as string,
-    consecutive:        (row['consecutive'] as number) ?? null,
-    specialty:          (row['specialty'] as string) ?? null,
-    serviceGroup:       (row['service_group'] as string) ?? null,
-    serviceSubgroup:    (row['service_subgroup'] as string) ?? null,
-    serviceCategory:    (row['service_category'] as string) ?? null,
-    serviceSubcategory: (row['service_subcategory'] as string) ?? null,
-    cups:               (row['cups'] as string) ?? null,
-    modalities:         (row['modalities'] as string[]) ?? null,
-    imageUrl:           (row['image_url'] as string) ?? null,
-    instructions:       (row['instructions'] as string) ?? null,
-    restrictions:       (row['restrictions'] as string) ?? null,
-    risks:              (row['risks'] as string) ?? null,
-    contraindications:  (row['contraindications'] as string) ?? null,
+    consecutive:     (row['consecutive'] as number) ?? null,
     location: {
       id:   row['location_id'] as string,
       name: row['location_name'] as string,
@@ -186,27 +224,53 @@ function rowToOffer(row: Record<string, unknown>): ServiceOfferPublic {
       name:  row['discipline_name'] as string,
       level: row['discipline_level'] as string,
     } : null,
+    catalog: row['catalog_id'] ? {
+      serviceName:        row['c_service_name'] as string,
+      description:        (row['c_description'] as string) ?? null,
+      specialty:          (row['c_specialty'] as string) ?? null,
+      serviceGroup:       (row['c_service_group'] as string) ?? null,
+      serviceSubgroup:    (row['c_service_subgroup'] as string) ?? null,
+      serviceCategory:    (row['c_service_category'] as string) ?? null,
+      serviceSubcategory: (row['c_service_subcategory'] as string) ?? null,
+      cups:               (row['c_cups'] as string) ?? null,
+      modalities:         (row['c_modalities'] as string[]) ?? null,
+      isActive:           row['c_is_active'] as boolean,
+      basePrice:          (row['c_base_price'] as number) ?? null,
+      controlPrice:       (row['c_control_price'] as number) ?? null,
+      imageUrl:           (row['c_image_url'] as string) ?? null,
+      instructions:       (row['c_instructions'] as string) ?? null,
+      restrictions:       (row['c_restrictions'] as string) ?? null,
+      risks:              (row['c_risks'] as string) ?? null,
+      contraindications:  (row['c_contraindications'] as string) ?? null,
+    } : null,
   };
 }
 
 const OFFER_SELECT = `
   SELECT
-    so.id, so.title, so.description, so.offer_type, so.status,
+    so.id, so.catalog_id, so.title, so.description, so.offer_type, so.status,
     so.scheduled_at, so.duration_minutes, so.capacity, so.enrolled_count,
-    so.price, so.currency,
-    so.consecutive, so.specialty, so.service_group, so.service_subgroup,
-    so.service_category, so.service_subcategory, so.cups, so.modalities,
-    so.image_url, so.instructions, so.restrictions, so.risks, so.contraindications,
+    so.price, so.currency, so.consecutive,
     l.id AS location_id, l.name AS location_name,
     r.id AS room_id, r.name AS room_name, r.capacity AS room_capacity,
     u.id AS professional_id, u.first_name AS professional_first,
     u.last_name AS professional_last, u.avatar_url AS professional_avatar,
-    d.id AS discipline_id, d.name AS discipline_name, d.level AS discipline_level
+    d.id AS discipline_id, d.name AS discipline_name, d.level AS discipline_level,
+    c.service_name AS c_service_name, c.description AS c_description,
+    c.specialty AS c_specialty, c.service_group AS c_service_group,
+    c.service_subgroup AS c_service_subgroup, c.service_category AS c_service_category,
+    c.service_subcategory AS c_service_subcategory, c.cups AS c_cups,
+    c.modalities AS c_modalities, c.is_active AS c_is_active,
+    c.base_price AS c_base_price, c.control_price AS c_control_price,
+    c.image_url AS c_image_url, c.instructions AS c_instructions,
+    c.restrictions AS c_restrictions, c.risks AS c_risks,
+    c.contraindications AS c_contraindications
   FROM service_offers so
   JOIN locations l ON l.id = so.location_id
   LEFT JOIN rooms r ON r.id = so.room_id
   LEFT JOIN users u ON u.id = so.professional_id
   LEFT JOIN specialties d ON d.id = so.specialty_id
+  LEFT JOIN service_catalog c ON c.id = so.catalog_id
 `;
 
 export const ServiceOfferRepository = {
@@ -250,23 +314,17 @@ export const ServiceOfferRepository = {
   async create(data: CreateServiceOfferPayload, createdBy: string): Promise<ServiceOfferPublic> {
     const { rows } = await pool.query(
       `INSERT INTO service_offers
-         (location_id, room_id, offer_type, title, description,
+         (catalog_id, location_id, room_id, offer_type, title, description,
           professional_id, specialty_id, capacity, duration_minutes,
-          scheduled_at, price, currency, created_by,
-          specialty, service_group, service_subgroup, service_category, service_subcategory,
-          cups, modalities, image_url, instructions, restrictions, risks, contraindications, status)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26)
+          scheduled_at, price, currency, created_by, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
        RETURNING id`,
       [
-        data.locationId, data.roomId ?? null, data.offerType, data.title,
+        data.catalogId ?? null, data.locationId, data.roomId ?? null, data.offerType, data.title,
         data.description ?? null, data.professionalId ?? null,
         data.disciplineId ?? null, data.capacity ?? 1, data.durationMinutes,
         data.scheduledAt ?? null, data.price ?? null, data.currency ?? 'COP', createdBy,
-        data.specialty ?? null, data.serviceGroup ?? null, data.serviceSubgroup ?? null,
-        data.serviceCategory ?? null, data.serviceSubcategory ?? null,
-        data.cups ?? null, data.modalities ?? null, data.imageUrl ?? null,
-        data.instructions ?? null, data.restrictions ?? null, data.risks ?? null,
-        data.contraindications ?? null, data.status ?? 'draft',
+        data.status ?? 'draft',
       ]
     );
     return (await this.findById(rows[0].id))!;
@@ -278,13 +336,7 @@ export const ServiceOfferRepository = {
       professionalId: 'professional_id', disciplineId: 'specialty_id',
       capacity: 'capacity', durationMinutes: 'duration_minutes',
       scheduledAt: 'scheduled_at', price: 'price', currency: 'currency',
-      status: 'status',
-      specialty: 'specialty', serviceGroup: 'service_group',
-      serviceSubgroup: 'service_subgroup', serviceCategory: 'service_category',
-      serviceSubcategory: 'service_subcategory', cups: 'cups',
-      modalities: 'modalities', imageUrl: 'image_url',
-      instructions: 'instructions', restrictions: 'restrictions',
-      risks: 'risks', contraindications: 'contraindications',
+      status: 'status', catalogId: 'catalog_id',
     };
     const sets: string[] = [];
     const values: unknown[] = [];
@@ -304,11 +356,33 @@ export const ServiceOfferRepository = {
     return this.findById(id);
   },
 
-  async delete(id: string): Promise<boolean> {
-    const { rowCount } = await pool.query(
-      `DELETE FROM service_offers WHERE id = $1`, [id]
-    );
-    return (rowCount ?? 0) > 0;
+  async deleteAndCountRemaining(
+    id: string,
+    catalogId: string | null
+  ): Promise<{ deleted: boolean; remaining: number }> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      if (catalogId) {
+        await client.query('SELECT id FROM service_catalog WHERE id = $1 FOR UPDATE', [catalogId]);
+      }
+      const { rowCount } = await client.query('DELETE FROM service_offers WHERE id = $1', [id]);
+      let remaining = 0;
+      if (catalogId) {
+        const { rows } = await client.query(
+          'SELECT COUNT(*)::int AS count FROM service_offers WHERE catalog_id = $1',
+          [catalogId]
+        );
+        remaining = rows[0].count;
+      }
+      await client.query('COMMIT');
+      return { deleted: (rowCount ?? 0) > 0, remaining };
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   },
 };
 

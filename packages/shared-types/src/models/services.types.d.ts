@@ -50,6 +50,7 @@ export interface UpdateRoomPayload {
 }
 export interface ServiceOfferPublic {
     id: string;
+    catalogId: string | null;
     title: string;
     description: string | null;
     offerType: OfferType;
@@ -61,18 +62,6 @@ export interface ServiceOfferPublic {
     price: number | null;
     currency: string;
     consecutive: number | null;
-    specialty: string | null;
-    serviceGroup: string | null;
-    serviceSubgroup: string | null;
-    serviceCategory: string | null;
-    serviceSubcategory: string | null;
-    cups: string | null;
-    modalities: string[] | null;
-    imageUrl: string | null;
-    instructions: string | null;
-    restrictions: string | null;
-    risks: string | null;
-    contraindications: string | null;
     location: {
         id: string;
         name: string;
@@ -93,6 +82,25 @@ export interface ServiceOfferPublic {
         name: string;
         level: string;
     } | null;
+    catalog: {
+        serviceName: string;
+        description: string | null;
+        specialty: string | null;
+        serviceGroup: string | null;
+        serviceSubgroup: string | null;
+        serviceCategory: string | null;
+        serviceSubcategory: string | null;
+        cups: string | null;
+        modalities: string[] | null;
+        isActive: boolean;
+        basePrice: number | null;
+        controlPrice: number | null;
+        imageUrl: string | null;
+        instructions: string | null;
+        restrictions: string | null;
+        risks: string | null;
+        contraindications: string | null;
+    } | null;
 }
 export interface CreateServiceOfferPayload {
     locationId: string;
@@ -108,18 +116,7 @@ export interface CreateServiceOfferPayload {
     scheduledAt?: string | null;
     price?: number;
     currency?: string;
-    specialty?: string;
-    serviceGroup?: string;
-    serviceSubgroup?: string;
-    serviceCategory?: string;
-    serviceSubcategory?: string;
-    cups?: string;
-    modalities?: string[];
-    imageUrl?: string;
-    instructions?: string;
-    restrictions?: string;
-    risks?: string;
-    contraindications?: string;
+    catalogId?: string;
 }
 export interface UpdateServiceOfferPayload {
     title?: string;
@@ -133,18 +130,7 @@ export interface UpdateServiceOfferPayload {
     price?: number;
     currency?: string;
     status?: OfferStatus;
-    specialty?: string;
-    serviceGroup?: string;
-    serviceSubgroup?: string | null;
-    serviceCategory?: string | null;
-    serviceSubcategory?: string | null;
-    cups?: string;
-    modalities?: string[];
-    imageUrl?: string | null;
-    instructions?: string | null;
-    restrictions?: string | null;
-    risks?: string | null;
-    contraindications?: string | null;
+    catalogId?: string;
 }
 export interface ServiceOffersFilter {
     locationId?: string;
