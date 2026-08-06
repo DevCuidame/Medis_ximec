@@ -20,11 +20,17 @@ const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
 const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 const OFFER_TYPE_LABEL: Record<string, string> = {
-  class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller',
+  class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller', appointment: 'Cita Individual',
 }
 const OFFER_COLORS = ['#5C3A28', '#9C4A2E', '#7A6452', '#C97B5A', '#D4B896', '#3D2418']
 const TYPE_COLORS: Record<string, string> = {
-  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#7A6452',
+  class: '#5C3A28', open_pole: '#9C4A2E', event: '#C97B5A', workshop: '#7A6452', appointment: '#2563EB',
+}
+const STATUS_APPT_LABEL: Record<string, string> = {
+  scheduled:  'Programada',
+  completed:  'Completada',
+  cancelled:  'Cancelada',
+  pending:    'Pendiente',
 }
 const DAY_SHORT = ['LUN', 'MAR', 'MIÉ', 'JUE', 'VIE', 'SÁB', 'DOM']
 const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
@@ -97,12 +103,65 @@ export const AdminClasses: React.FC = () => {
   const [search, setSearch]                 = useState('')
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  const authH = (): Record<string, string> => {
+    const token = localStorage.getItem('accessToken');
+    return { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) };
+  };
+
   const loadOffers = async () => {
     setLoading(true)
     try {
-      const res  = await fetch('/api/services/offers')
-      const json = await res.json()
-      if (json.success) setOffers(json.data.offers || [])
+      // Servicios/clases creadas manualmente en Medis (service_offers)
+      const offersPromise = fetch('/api/services/offers').then(r => r.json()).catch(() => null)
+
+      // Citas clínicas reales de Ximena en CuidameDoc (rango amplio: 2 meses
+      // atrás → 3 meses adelante desde hoy, igual que en el calendario de Diana)
+      const from = new Date(); from.setMonth(from.getMonth() - 2); from.setDate(1);
+      const to   = new Date(); to.setMonth(to.getMonth() + 3);   to.setDate(0);
+      const fmt  = (d: Date) => d.toISOString().slice(0, 10);
+      const apptUrl = `/api/appointments/ximena?start_date=${fmt(from)}&end_date=${fmt(to)}`;
+      const apptsPromise = fetch(apptUrl, { headers: authH() }).then(r => r.json()).catch(() => null)
+
+      const [offersJson, apptsJson] = await Promise.all([offersPromise, apptsPromise])
+
+      const serviceOffers = offersJson?.success ? (offersJson.data.offers || []) : []
+
+      // Mapear cada cita clínica a la misma forma "offer" que espera el
+      // calendario (ver AdminClasses.tsx de Diana como referencia)
+      const appointmentOffers = apptsJson?.success
+        ? (apptsJson.data as any[]).map((appt: any) => ({
+            id:              appt.appointment_id,
+            // appt.appointment_time llega como "HH:MM:SS" (columna `time` de
+            // TypeORM en CuidameDoc), NO como "HH:MM". Si se le agrega ':00'
+            // directamente se obtiene un datetime inválido tipo
+            // "...T08:30:00:00" (new Date(...) => Invalid Date), lo que hace
+            // que las citas cuenten bien en el total pero desaparezcan de
+            // cualquier vista filtrada por fecha (grilla semanal/mensual,
+            // "Esta Semana"). Por eso se trunca a "HH:MM" con substring(0,5)
+            // ANTES de agregar los segundos.
+            scheduledAt:     `${(appt.appointment_date as string).substring(0, 10)}T${(appt.appointment_time ?? '08:00').substring(0, 5)}:00`,
+            title:           appt.patient
+                               ? `${appt.patient.first_name} ${appt.patient.last_name}`
+                               : (appt.appointment_type ?? 'Cita'),
+            durationMinutes: appt.duration_minutes ?? 30,
+            professional:    { id: '2', firstName: 'Ximena', lastName: '' },
+            status:          appt.status === 'cancelled' ? 'draft' : 'published',
+            offerType:       'appointment',
+            capacity:        1,
+            enrolledCount:   1,
+            price:           null,
+            currency:        'COP',
+            location:        null,
+            room:            null,
+            specialty:       null,
+            // Extra fields for tooltip / display
+            appointmentType: appt.appointment_type,
+            reason:          appt.reason ?? null,
+            rawStatus:       appt.status,
+          }))
+        : []
+
+      setOffers([...serviceOffers, ...appointmentOffers])
     } catch { /* ignore */ } finally { setLoading(false) }
   }
 
@@ -475,7 +534,7 @@ export const AdminClasses: React.FC = () => {
                                 </div>
                               </div>
                               <span style={{ fontSize: 9, fontWeight: 700, color: o.status === 'published' ? '#16a34a' : C.textMuted, background: o.status === 'published' ? 'rgba(34,197,94,0.08)' : C.bgPanel, padding: '3px 8px', borderRadius: 6, whiteSpace: 'nowrap', flexShrink: 0 }}>
-                                {o.status === 'published' ? 'Activo' : 'Inactivo'}
+                                {o.rawStatus ? (STATUS_APPT_LABEL[o.rawStatus] ?? o.rawStatus) : (o.status === 'published' ? 'Activo' : 'Inactivo')}
                               </span>
                             </div>
                           )
