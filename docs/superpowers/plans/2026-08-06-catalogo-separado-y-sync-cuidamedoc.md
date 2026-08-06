@@ -1358,3 +1358,41 @@ CuidameDoc with a treatment plan that has priced items, then confirm the
 resulting cotización appears in BOTH `FinanzasDashboard.tsx` → "Cotizaciones
 CuidameDoc" AND `MembresiasDashboard.tsx` → "Cotizaciones de pacientes",
 and that confirming it in one clears it from the other after a refresh.
+
+## Despliegue a producción (2026-08-06, tarde)
+
+Desplegado a `docxime.cuidame.tech` (VM `cuidame-app`) vía copia recursiva de
+`apps/backend/src`, `apps/backend/migrations`, `packages/shared-types/src` y
+`medisxime-landing/src` (no vía `deploy-rapido.ps1`/`deploy-medisxime.ps1` —
+ninguno de los dos era seguro, ver hallazgo de la investigación anterior).
+Migración 029 ya estaba aplicada, confirmada por consulta directa antes de
+tocar nada.
+
+**Incidente preexistente encontrado y resuelto de paso** (no causado por este
+trabajo): `medisXime-backend` llevaba desde ~14:15 UTC corriendo un proceso
+huérfano con el código VIEJO (de antes de la migración 029), fallando con
+`"column so.specialty does not exist"` en cada request a
+`/api/services/offers` — exactamente el síntoma que el usuario reportó
+("0 sesiones programadas"). PM2 mismo estaba en un loop de reinicio confuso
+(marca "errored"/pid 0 pese a que el proceso real respondía) — mismo patrón
+preexistente que tiene `medisdiana-backend` (no tocado, sigue funcionando).//
+Resuelto matando el proceso huérfano y dejando que PM2 relanzara limpio con
+el código nuevo ya copiado.
+
+**`.env` de producción**: le faltaban `DOC_API_URL`, `DOC_XIMENA_EMAIL`,
+`DOC_XIMENA_PASSWORD` y `XIMENA_INTERNAL_API_KEY` — el hallazgo anterior de
+que "ya estaban verificados en producción" resultó ser sobre una verificación
+puntual (curl de prueba), no sobre haberlos persistido en el `.env` real.
+Agregados ahora; login contra `doc-api.cuidame.tech` reverificado en vivo
+(200 OK) antes y después de escribirlos.
+
+**Smoke test post-deploy**: `/api/services/offers` → 200 con el JOIN nuevo
+(ya no falla), `/api/inventory` → 401 (ruta existe, protegida), 
+`/api/appointments/ximena` → 401 (ruta existe, protegida), frontend servido
+por nginx confirmado con el bundle recién compilado.
+
+**Pendiente real, ahora sí solo Task 8**: probar el flujo completo con datos
+reales (crear/editar un servicio y confirmar que sincroniza a CuidameDoc,
+confirmar que una cita real de CuidameDoc aparece en el calendario de Medis)
+— verificación funcional de extremo a extremo, no solo de que las rutas
+respondan.
