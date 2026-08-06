@@ -23,6 +23,11 @@ beforeEach(() => {
   captured = null
   ;(ServiceCatalogRepository as any).create = async () => ({ id: 'cat-1' })
   ;(ServiceOfferRepository as any).create = async (payload: any) => { captured = payload; return { id: 'o1', catalogId: payload.catalogId ?? null, catalog: null, ...payload } }
+  // createOffer llama a createWithCatalog (no .create directo) para envolver catálogo+oferta
+  // en una sola transacción (ver I5) — abre un pool.connect() real que estos mocks no
+  // interceptan si no se mockea el método compuesto también. Se captura el payload ya
+  // normalizado (capacity default, scheduledAt null, cups en mayúsculas) igual que antes.
+  ;(ServiceOfferRepository as any).createWithCatalog = async (payload: any) => { captured = payload; return { id: 'o1', catalogId: 'cat-1', catalog: null, ...payload } }
   ;(globalThis as any).fetch = async () => new Response(JSON.stringify({ success: false, message: 'not mocked' }), { status: 500 })
 })
 

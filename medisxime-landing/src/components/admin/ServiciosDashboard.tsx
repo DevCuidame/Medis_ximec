@@ -203,12 +203,21 @@ export const ServiciosDashboard: React.FC = () => {
     const newIsActive = newStatus === 'published';
     const headers = authH();
     try {
-      await Promise.all(group.ids.map(id =>
-        fetch(`/api/services/offers/${id}`, {
+      // Secuencial, NO Promise.all: todos los ids del grupo comparten un mismo
+      // catalog_id, y cada PATCH dispara ensureDocSync si detecta el cambio de
+      // isActive (ver hallazgo N2). En paralelo, las N peticiones leen
+      // doc_prof_service_id = null simultáneamente (ninguna ha escrito aún) y
+      // cada una crea su propio servicio remoto en CuidameDoc — sólo la última
+      // escritura persiste el id, huérfando las otras N-1. Al serializar, la
+      // primera petición deja el catálogo ya convergido al estado destino, así
+      // que docSyncRelevantFieldsChanged() ve "sin cambios" en las siguientes y
+      // ensureDocSync no vuelve a dispararse para el resto del grupo.
+      for (const id of group.ids) {
+        await fetch(`/api/services/offers/${id}`, {
           method: 'PATCH', headers,
           body: JSON.stringify({ status: newStatus, isActive: newIsActive }),
-        })
-      ));
+        });
+      }
       // Optimistic update
       setServicios(prev => prev.map(s =>
         group.ids.includes(s.id) ? { ...s, status: newStatus } : s
