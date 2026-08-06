@@ -260,6 +260,7 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
     const offer = await ServiceOfferRepository.createWithCatalog(payload, adminId);
 
     const docSync = await ensureDocSync(buildDocSyncParams(offer, offer.catalog?.isActive !== false));
+    if (!docSync.ok) console.error(`[ensureDocSync] createOffer catalogId=${offer.catalogId} falló: ${docSync.error}`);
 
     res.status(201).json({ success: true, data: { offer }, docSync });
   } catch (err: unknown) {
@@ -302,6 +303,7 @@ export async function updateOffer(req: Request, res: Response): Promise<void> {
     let docSync: { ok: boolean; error?: string } | undefined;
     if (offer.catalogId && ((catalogTouched && docSyncRelevantFieldsChanged(catalogBefore, offer.catalog)) || offer.durationMinutes !== existingOffer.durationMinutes)) {
       docSync = await ensureDocSync(buildDocSyncParams(offer, offer.catalog?.isActive !== false));
+      if (!docSync.ok) console.error(`[ensureDocSync] updateOffer catalogId=${offer.catalogId} falló: ${docSync.error}`);
     }
 
     res.json({ success: true, data: { offer }, ...(docSync ? { docSync } : {}) });
@@ -325,6 +327,7 @@ export async function deleteOffer(req: Request, res: Response): Promise<void> {
     let docSync: { ok: boolean; error?: string } | undefined;
     if (existing.catalogId && remaining === 0) {
       docSync = await ensureDocSync(buildDocSyncParams(existing, false));
+      if (!docSync.ok) console.error(`[ensureDocSync] deleteOffer catalogId=${existing.catalogId} falló: ${docSync.error}`);
     }
 
     res.json({ success: true, data: null, ...(docSync ? { docSync } : {}) });
