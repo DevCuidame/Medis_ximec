@@ -40,7 +40,7 @@ than trusting the fixer's classification of it). Adjudicated below per
 breaker rules — park what's non-blocking, stop on what's load-bearing —
 rather than triggering a third fix wave:
 
-1. **PARKED — test coverage regression (Important, confirmed real via
+1. **FIXED (commit `aab72ab`, merged `733289d`) — was: test coverage regression (Important, confirmed real via
    bisection, not a production defect):** `services.catalog.test.ts` went
    from 6/6 passing at `0d15dc0` to 5/6 at `ae395be` because the new
    `createWithCatalog` opens a real `pool.connect()` the test's existing
@@ -53,8 +53,8 @@ rather than triggering a third fix wave:
    `ServiceOfferRepository.createWithCatalog` in that test's `beforeEach`,
    alongside the existing `ServiceCatalogRepository.create`/`fetch` mocks.
 
-2. **STOPPED — NOT parked. Must be fixed before this backend deploys to
-   production (Important → treated as a deploy blocker on re-adjudication):**
+2. **FIXED (commit `aab72ab`, merged `733289d`).** ~~STOPPED — NOT parked. Must be fixed before this backend deploys to
+   production (Important → treated as a deploy blocker on re-adjudication):~~
    the `isActive` fix (I1) makes `ServiciosDashboard.tsx`'s `handleToggleGroup`
    — the PATCH handler wired to the toggle button on every service card,
    used to pause/resume a service — PATCH all of a group's offer ids in
@@ -71,12 +71,23 @@ rather than triggering a third fix wave:
    framing conflated "not deployed yet" with "safe." It has zero blast radius
    *only* because the backend deploy (see below) hasn't happened; the first
    time a professional toggles a recurring service after deploy, this
-   triggers. **This needs the fix — serialize `handleToggleGroup`'s PATCHes,
-   or add the same `SELECT ... FOR UPDATE` lock `deleteAndCountRemaining`
-   already uses to `ensureDocSync` — before Task 4/backend deploy, not
-   after.** Left unfixed pending an explicit call from the human operator on
-   when to schedule that fix, since it means writing new code to `main`
-   outside a fresh SDD round.
+   would have triggered it.
+
+   **Resolution:** serialized `handleToggleGroup`'s PATCHes (sequential
+   `for...of` instead of `Promise.all`) rather than adding a DB-level lock —
+   since every offer in a group shares one `catalog_id` and
+   `ServiceCatalogRepository.update` writes that shared row unconditionally,
+   the first PATCH in the sequence converges the catalog to the target
+   `isActive` state, so every subsequent PATCH in the same group sees
+   `docSyncRelevantFieldsChanged() === false` and `ensureDocSync` doesn't
+   fire again — the race is eliminated, not just narrowed, with a 2-file
+   diff. A `SELECT ... FOR UPDATE` lock was considered and rejected: it
+   would hold a Postgres row lock across two live HTTP calls to CuidameDoc
+   (delete + create, each with its own timeout) for no benefit over the
+   simpler fix, given the race has a single trigger point (one button).
+   Verified: build clean, backend suite 50/56 (6 remaining fails are the
+   same pre-existing DB-dependent integration tests noted throughout this
+   doc — no live Postgres in the sandbox; no new failures).
 
 3. **PARKED — redundant derivation, comment-only (Minor):**
    `mapGroupToFormValues` still derives the form's read-back `isActive` from
@@ -85,13 +96,28 @@ rather than triggering a third fix wave:
    code comment so a future edit doesn't "simplify" this redundancy away and
    silently reintroduce the deactivation bug (I1) this session just fixed.
 
+**Also landed in the same session, outside this plan's original scope**
+(dispatched in parallel once the above was merge-ready):
+- Inventario admin dashboard for Ximena (`InventarioDashboard.tsx`) — the
+  backend for this (`inventory_items`, migration 021) existed since an
+  earlier session but had no UI until now.
+- Calendar↔CuidameDoc appointments link (`/api/appointments/ximena` +
+  `AdminClasses.tsx` merge) — ported from Diana's `/api/appointments/diana`
+  pattern, preserving the `substring(0,5)+':00'` date-construction fix from
+  the Invalid-Date bug fixed on Diana's side earlier the same day.
+
 **Still pending, outside this plan's automation (manual operator actions):**
-- Fix N2 above (concurrent-toggle race) — recommended before, not after, the
-  backend deploy below, since it's reachable via the ordinary toggle-a-service
-  workflow the moment real multi-offer catalogs exist in production.
-- Deploy `apps/backend` (Tasks 1-4, migration 029 already live) and
-  `medisxime-landing` (Tasks 5-7) to production — **neither has been deployed
-  as of this writing, only the migration itself is live.**
+- Deploy `apps/backend` and `medisxime-landing` to production — **neither has
+  been deployed as of this writing, only migration 029 is live.** N2 is no
+  longer a blocker (fixed above), but deploy itself is now blocked on a
+  different, unrelated problem: the only two existing deploy scripts
+  (`scripts/deploy-rapido.ps1`, `scripts/deploy-medisxime.ps1`) are both
+  unsafe to run as-is — one has a stale hardcoded file list that predates
+  this session's new files, the other does `rm -rf` on the remote app
+  directory and rewrites `.env` from a heredoc that omits the
+  `XIMENA_INTERNAL_API_KEY`/`DOC_API_URL`/`DOC_XIMENA_EMAIL`/`DOC_XIMENA_PASSWORD`
+  vars this whole feature depends on. A human needs to update one of these
+  scripts (or write a new one) before any deploy is attempted.
 - Task 8 (end-to-end production verification) — blocked on the deploy above.
 
 ## Global Constraints
