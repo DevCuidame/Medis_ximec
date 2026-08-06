@@ -67,7 +67,7 @@ function buildDocSyncParams(
     active,
     serviceName: offer.catalog?.serviceName ?? offer.title,
     durationMinutes: offer.durationMinutes,
-    serviceGroup: offer.catalog?.serviceGroup ?? '01 Consulta externa',
+    serviceGroup: offer.catalog?.serviceGroup ?? '01',
     description: offer.catalog?.description ?? null,
     price: Number(offer.catalog?.basePrice ?? offer.price ?? 0),
   };

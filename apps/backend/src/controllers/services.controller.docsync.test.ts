@@ -2,9 +2,28 @@ import { test, after, type TestContext } from 'node:test';
 import assert from 'node:assert/strict';
 import { pool } from '@config/database.js';
 import { createOffer, updateOffer, deleteOffer } from './services.controller.js';
+import { mapServiceGroupToDocCategory } from '@services/docServiceSync.service.js';
 
 after(async () => {
   await pool.end();
+});
+
+// Prueba pura (sin BD, sin fetch): confirma que los códigos de dos dígitos
+// que este repo realmente usa para serviceGroup (SERVICE_GROUP_CODES en
+// services.controller.ts, '01'..'06') resuelven a la categoría correcta de
+// CuidameDoc. CATEGORY_MAP usaba antes strings descriptivos completos
+// ('01 Consulta externa', etc.) que nunca hacían match con estos códigos,
+// por lo que todo servicio caía silenciosamente al default 'consultation'
+// sin importar su grupo real.
+test('mapServiceGroupToDocCategory: resuelve los códigos de 2 dígitos reales del catálogo', () => {
+  assert.equal(mapServiceGroupToDocCategory('01'), 'consultation');
+  assert.equal(mapServiceGroupToDocCategory('02'), 'diagnostic');
+  assert.equal(mapServiceGroupToDocCategory('03'), 'procedure');
+  assert.equal(mapServiceGroupToDocCategory('04'), 'procedure');
+  assert.equal(mapServiceGroupToDocCategory('05'), 'consultation');
+  // '06' (Otros servicios) y cualquier código no reconocido caen al default.
+  assert.equal(mapServiceGroupToDocCategory('06'), 'consultation');
+  assert.equal(mapServiceGroupToDocCategory('no-existe'), 'consultation');
 });
 
 function makeRes() {

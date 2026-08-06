@@ -28,11 +28,11 @@ export interface EnsureDocSyncResult {
 }
 
 const CATEGORY_MAP: Record<string, string> = {
-  '01 Consulta externa': 'consultation',
-  '02 Apoyo diagnóstico y complementación terapéutica': 'diagnostic',
-  '03 Internación': 'procedure',
-  '04 Quirúrgico': 'procedure',
-  '05 Atención inmediata': 'consultation',
+  '01': 'consultation',    // Consulta externa
+  '02': 'diagnostic',      // Apoyo diagnóstico y complementación terapéutica
+  '03': 'procedure',       // Internación
+  '04': 'procedure',       // Quirúrgico
+  '05': 'consultation',    // Atención inmediata
 };
 
 export function mapServiceGroupToDocCategory(serviceGroup: string): string {
