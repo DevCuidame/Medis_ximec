@@ -15,53 +15,83 @@ found 3 Critical + 5 Important + 4 Minor issues from the frontend↔backend
 catalog contract never being fully reconciled across Tasks 2/3/5 (e.g.
 `serviceName`/`basePrice`/`isActive` never sent by the form, `cups.repository.ts`
 still querying columns migration 029 moved). One fix wave (commit `ae395be`)
-addressed all 9 Critical/Important findings plus one cheap Minor; a scoped
-re-review confirmed all 9 genuinely fixed, verifying in particular that the
-`serviceName`/`basePrice` normalization runs BEFORE `catalogTouched` is
-computed in `updateOffer` (an easy way to reintroduce the same bug), and that
-the new `createWithCatalog` transaction actually uses one shared client for
-both inserts (not two disguised non-transactional calls).
+addressed all 9 Critical/Important findings plus one cheap Minor.
 
-**3 issues found in the fix wave itself, parked rather than triggering a
-second fix wave** (both real, neither blocking merge — see the SDD ledger's
-final entries for full detail before it was deleted):
+A **second, independent scoped re-review** (run to completion, not just the
+fixer's self-report) confirmed all 9 genuinely ADDRESSED — including
+re-deriving that `serviceName`/`basePrice` normalization runs BEFORE
+`catalogTouched` is computed in `updateOffer` (an easy way to reintroduce the
+same bug), checking the inverse hazard (normalization can't null out
+`service_name` when `title`/`price` are absent from a PATCH), and confirming
+`createWithCatalog` uses one shared client for both inserts under a real
+BEGIN/COMMIT/ROLLBACK, not two disguised non-transactional calls.
 
-1. **Test coverage regression (Important, real, not a production defect):**
-   `services.catalog.test.ts` went from 6/6 to 5/6 passing because the new
+**Branch `feat/cups-catalog-recovered` has since been merged into `main`**
+(commit `188da0b`), reconciled against 62 commits `main` had independently
+gained (including its own CUPS catalog work) — one add/add conflict in
+`cups.repository.ts` resolved in favor of this branch's JOIN to
+`service_catalog` (main's side still queried the columns migration 029
+already dropped from production). `ae395be`, and everything below, is now
+on `main`.
+
+**3 issues found in the fix wave itself.** The scoped re-review independently
+re-derived and confirmed all three (including empirically bisecting N1 rather
+than trusting the fixer's classification of it). Adjudicated below per
+breaker rules — park what's non-blocking, stop on what's load-bearing —
+rather than triggering a third fix wave:
+
+1. **PARKED — test coverage regression (Important, confirmed real via
+   bisection, not a production defect):** `services.catalog.test.ts` went
+   from 6/6 passing at `0d15dc0` to 5/6 at `ae395be` because the new
    `createWithCatalog` opens a real `pool.connect()` the test's existing
    mocks don't intercept — losing hermetic coverage of create-path payload
    normalization (capacity default, `scheduledAt` null, CUPS uppercase),
-   exactly the area this wave touched. **Follow-up:** mock
-   `ServiceOfferRepository.createWithCatalog` (or its final name) in that
-   test's `beforeEach`, alongside the existing `ServiceCatalogRepository.create`/`fetch` mocks.
+   exactly the area this wave touched. The re-review corrected the record:
+   this is a genuine regression introduced by this diff, not pre-existing —
+   but it's test-only (the production code it used to guard is independently
+   confirmed correct above), so it doesn't block deploy. **Follow-up:** mock
+   `ServiceOfferRepository.createWithCatalog` in that test's `beforeEach`,
+   alongside the existing `ServiceCatalogRepository.create`/`fetch` mocks.
 
-2. **Concurrent-toggle race for multi-offer groups (Important, real, zero
-   blast radius today):** the `isActive` fix (I1) makes `ServiciosDashboard.tsx`'s
-   `handleToggleGroup` — which PATCHes all of a group's offer ids in parallel
-   via `Promise.all` — trigger `ensureDocSync` per offer where before the fix
-   none of them did. Reactivating a multi-offer group that shares one
-   `catalog_id` (a recurring class series, not the single-offer shape the
-   create form produces today) can race: N concurrent reads of
-   `doc_prof_service_id = null` → N concurrent CuidameDoc creates → only the
-   last DB write wins, orphaning N-1 remote services with no stored id to
-   ever delete them by. Deactivate is safe (repeat deletes are idempotent
-   404→ok). `service_offers` has 0 rows in production as of this writing, so
-   there is no current blast radius. **Follow-up:** either serialize
-   `handleToggleGroup`'s PATCHes (sequential instead of `Promise.all`), or add
-   the same `SELECT ... FOR UPDATE` lock `deleteAndCountRemaining` already
-   uses to `ensureDocSync` itself.
+2. **STOPPED — NOT parked. Must be fixed before this backend deploys to
+   production (Important → treated as a deploy blocker on re-adjudication):**
+   the `isActive` fix (I1) makes `ServiciosDashboard.tsx`'s `handleToggleGroup`
+   — the PATCH handler wired to the toggle button on every service card,
+   used to pause/resume a service — PATCH all of a group's offer ids in
+   parallel via `Promise.all`, each now triggering `ensureDocSync` where
+   before the fix none of them did. Any group with more than one offer
+   sharing a `catalog_id` (i.e. any recurring/multi-session service — the
+   normal shape for a weekly class, not an edge case) races on reactivate: N
+   concurrent reads of `doc_prof_service_id = null` → N concurrent CuidameDoc
+   creates → only the last DB write wins, silently orphaning N-1 remote
+   services in CuidameDoc's booking catalog with no stored id to ever delete
+   them by. Deactivate is safe (repeat deletes are idempotent 404→ok).
+   The original adjudication called this "zero blast radius today" because
+   `service_offers` had 0 production rows at the time — true, but that
+   framing conflated "not deployed yet" with "safe." It has zero blast radius
+   *only* because the backend deploy (see below) hasn't happened; the first
+   time a professional toggles a recurring service after deploy, this
+   triggers. **This needs the fix — serialize `handleToggleGroup`'s PATCHes,
+   or add the same `SELECT ... FOR UPDATE` lock `deleteAndCountRemaining`
+   already uses to `ensureDocSync` — before Task 4/backend deploy, not
+   after.** Left unfixed pending an explicit call from the human operator on
+   when to schedule that fix, since it means writing new code to `main`
+   outside a fresh SDD round.
 
-3. **Redundant derivation, comment-only (Minor):** `mapGroupToFormValues`
-   still derives the form's read-back `isActive` from `status !== 'draft'`
-   rather than reading `catalog.isActive` directly. Currently self-healing
-   (both are kept in sync on every write), but worth a code comment so a
-   future edit doesn't "simplify" this redundancy away and silently
-   reintroduce the deactivation bug (I1) this session just fixed.
+3. **PARKED — redundant derivation, comment-only (Minor):**
+   `mapGroupToFormValues` still derives the form's read-back `isActive` from
+   `status !== 'draft'` rather than reading `catalog.isActive` directly.
+   Currently self-healing (both are kept in sync on every write), but worth a
+   code comment so a future edit doesn't "simplify" this redundancy away and
+   silently reintroduce the deactivation bug (I1) this session just fixed.
 
 **Still pending, outside this plan's automation (manual operator actions):**
+- Fix N2 above (concurrent-toggle race) — recommended before, not after, the
+  backend deploy below, since it's reachable via the ordinary toggle-a-service
+  workflow the moment real multi-offer catalogs exist in production.
 - Deploy `apps/backend` (Tasks 1-4, migration 029 already live) and
-  `medisxime-landing` (Tasks 5-7) to production — neither has been deployed
-  as of this writing, only the migration itself.
+  `medisxime-landing` (Tasks 5-7) to production — **neither has been deployed
+  as of this writing, only the migration itself is live.**
 - Task 8 (end-to-end production verification) — blocked on the deploy above.
 
 ## Global Constraints
