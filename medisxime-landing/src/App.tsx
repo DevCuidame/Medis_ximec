@@ -21,6 +21,7 @@ import { EspaciosDashboard } from './components/admin/EspaciosDashboard'
 import { FinanzasDashboard } from './components/admin/FinanzasDashboard'
 import { DescuentosDashboard } from './components/admin/DescuentosDashboard'
 import { MembresiasDashboard } from './components/admin/MembresiasDashboard'
+import { InventarioDashboard } from './components/admin/InventarioDashboard'
 import { InscripcionesDashboard } from './components/admin/InscripcionesDashboard'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { UserLayout } from './components/user/UserLayout'
@@ -264,6 +265,14 @@ export default function App() {
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
               <MembresiasDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/inventory"
+          element={
+            <ProtectedRoute allowedRoles={['ADMIN']}>
+              <InventarioDashboard />
             </ProtectedRoute>
           }
         />
