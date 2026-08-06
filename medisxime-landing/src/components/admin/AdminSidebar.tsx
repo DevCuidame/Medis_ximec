@@ -17,7 +17,7 @@ const FONT_INTER  = '"Inter", Inter, system-ui, sans-serif'
 
 export type AdminNavKey =
   | 'dashboard' | 'usuarios' | 'calendario'
-  | 'infraestructura' | 'servicios' | 'descuentos' | 'finanzas' | 'planes'
+  | 'infraestructura' | 'servicios' | 'cupsCatalogo' | 'descuentos' | 'finanzas' | 'planes'
 
 interface NavEntry {
   key: AdminNavKey

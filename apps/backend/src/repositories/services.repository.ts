@@ -260,7 +260,7 @@ export const ServiceOfferRepository = {
       [
         data.locationId, data.roomId ?? null, data.offerType, data.title,
         data.description ?? null, data.professionalId ?? null,
-        data.disciplineId ?? null, data.capacity ?? 999, data.durationMinutes,
+        data.disciplineId ?? null, data.capacity ?? 1, data.durationMinutes,
         data.scheduledAt ?? null, data.price ?? null, data.currency ?? 'COP', createdBy,
         data.specialty ?? null, data.serviceGroup ?? null, data.serviceSubgroup ?? null,
         data.serviceCategory ?? null, data.serviceSubcategory ?? null,

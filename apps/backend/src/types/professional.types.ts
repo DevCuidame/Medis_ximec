@@ -97,6 +97,7 @@ export interface UpdateProfessionalDTO {
   professionalLicense?: string
   sisproUser?:         string
   sisproPassword?:     string
+  professionalType?: 'dependiente' | 'independiente'
 }
 
 export interface ProfessionalAdminDetails {

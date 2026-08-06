@@ -8,9 +8,12 @@ function toPublic(u: UserRecord): UserPublic {
     id:          u.id,
     email:       u.email,
     firstName:   u.first_name,
+    secondName:  u.second_name,
     lastName:    u.last_name,
+    secondLastName: u.second_last_name,
     idType:      u.id_type,
     idNumber:    u.id_number,
+    professionalLicense: u.professional_license,
     phone:       u.phone,
     role:        u.role,
     bio:         u.bio,
@@ -19,6 +22,8 @@ function toPublic(u: UserRecord): UserPublic {
     avatarUrl:   u.avatar_url,
     isActive:    u.is_active,
     isVerified:  u.is_verified,
+    professionalType: u.professional_type,
+    status:      u.status,
     createdAt:   u.created_at.toISOString(),
   };
 }
@@ -98,9 +103,12 @@ export const UserRepository = {
     if (dto.email        !== undefined) { fields.push(`email         = $${idx++}`); values.push(dto.email.toLowerCase().trim()) }
     if (dto.firstName    !== undefined) { fields.push(`first_name    = $${idx++}`); values.push(dto.firstName.trim()) }
     if (dto.lastName     !== undefined) { fields.push(`last_name     = $${idx++}`); values.push(dto.lastName.trim()) }
+    if (dto.secondName     !== undefined) { fields.push(`second_name      = $${idx++}`); values.push(dto.secondName?.trim() || null) }
+    if (dto.secondLastName !== undefined) { fields.push(`second_last_name = $${idx++}`); values.push(dto.secondLastName?.trim() || null) }
     if (dto.idType       !== undefined) { fields.push(`id_type       = $${idx++}`); values.push(dto.idType?.trim() ?? null) }
     if (dto.idNumber     !== undefined) { fields.push(`id_number     = $${idx++}`); values.push(dto.idNumber?.trim() ?? null) }
     if (dto.phone        !== undefined) { fields.push(`phone         = $${idx++}`); values.push(dto.phone?.trim() ?? null) }
+    if (dto.address      !== undefined) { fields.push(`address       = $${idx++}`); values.push(dto.address?.trim() || null) }
     if (dto.bio          !== undefined) { fields.push(`bio           = $${idx++}`); values.push(dto.bio?.trim() ?? null) }
     if (dto.instagramUrl !== undefined) { fields.push(`instagram_url = $${idx++}`); values.push(dto.instagramUrl?.trim() ?? null) }
     if (dto.avatarUrl    !== undefined) { fields.push(`avatar_url    = $${idx++}`); values.push(dto.avatarUrl?.trim() ?? null) }
@@ -173,7 +181,7 @@ export const UserRepository = {
     await pool.query(`DELETE FROM booking_requests  WHERE user_id = $1`, [id]);
     await pool.query(`DELETE FROM user_memberships  WHERE user_id = $1`, [id]);
     await pool.query(`DELETE FROM refresh_tokens    WHERE user_id = $1`, [id]);
-    await pool.query(`DELETE FROM classes            WHERE professional_id = $1`, [id]);
+
 
     const { rowCount } = await pool.query(`DELETE FROM users WHERE id = $1`, [id]);
     return (rowCount ?? 0) > 0;

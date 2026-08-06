@@ -13,7 +13,30 @@ function toPublic(r: MembershipRecord): MembershipPublic {
     durationDays: r.duration_days,
     maxClasses: r.max_classes ?? null,
     isActive: r.is_active,
+    services: [], // Will be populated by attachServices
   };
+}
+
+async function attachServices(memberships: MembershipPublic[]): Promise<MembershipPublic[]> {
+  if (memberships.length === 0) return memberships;
+  
+  const ids = memberships.map(m => m.id);
+  const { rows } = await pool.query(
+    `SELECT membership_id, service_id, quantity FROM membership_services WHERE membership_id = ANY($1)`,
+    [ids]
+  );
+  
+  const map = new Map<string, { serviceId: string, quantity: number }[]>();
+  for (const row of rows) {
+    if (!map.has(row.membership_id)) map.set(row.membership_id, []);
+    map.get(row.membership_id)!.push({ serviceId: row.service_id, quantity: row.quantity });
+  }
+  
+  for (const m of memberships) {
+    m.services = map.get(m.id) ?? [];
+  }
+  
+  return memberships;
 }
 
 export const MembershipRepository = {
@@ -21,14 +44,14 @@ export const MembershipRepository = {
     const { rows } = await pool.query<MembershipRecord>(
       `SELECT * FROM memberships ORDER BY price ASC`
     );
-    return rows.map(toPublic);
+    return attachServices(rows.map(toPublic));
   },
 
   async listActive(): Promise<MembershipPublic[]> {
     const { rows } = await pool.query<MembershipRecord>(
       `SELECT * FROM memberships WHERE is_active = TRUE ORDER BY price ASC`
     );
-    return rows.map(toPublic);
+    return attachServices(rows.map(toPublic));
   },
 
   async findById(id: string): Promise<MembershipPublic | null> {
@@ -36,7 +59,9 @@ export const MembershipRepository = {
       `SELECT * FROM memberships WHERE id = $1 LIMIT 1`,
       [id]
     );
-    return rows[0] ? toPublic(rows[0]) : null;
+    if (!rows[0]) return null;
+    const memberships = await attachServices([toPublic(rows[0])]);
+    return memberships[0] ?? null;
   },
 
   async create(dto: CreateMembershipDto): Promise<MembershipPublic> {
@@ -55,7 +80,18 @@ export const MembershipRepository = {
         dto.isActive ?? true,
       ]
     );
-    return toPublic(rows[0]);
+    
+    const membership = toPublic(rows[0]);
+    
+    if (dto.services && dto.services.length > 0) {
+      const values = dto.services.map(s => `('${membership.id}', '${s.serviceId}', ${s.quantity})`).join(', ');
+      await pool.query(
+        `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${values}`
+      );
+    }
+    
+    const withServices = await attachServices([membership]);
+    return withServices[0]!;
   },
 
   async update(id: string, dto: UpdateMembershipDto): Promise<MembershipPublic | null> {
@@ -72,16 +108,27 @@ export const MembershipRepository = {
     if (dto.durationDays !== undefined){ fields.push(`duration_days = $${idx++}`); values.push(dto.durationDays); }
     if (dto.isActive !== undefined)    { fields.push(`is_active = $${idx++}`);     values.push(dto.isActive); }
 
-    if (fields.length === 0) return this.findById(id);
+    if (fields.length > 0) {
+      fields.push(`updated_at = NOW()`);
+      values.push(id);
 
-    fields.push(`updated_at = NOW()`);
-    values.push(id);
+      await pool.query(
+        `UPDATE memberships SET ${fields.join(', ')} WHERE id = $${idx}`,
+        values
+      );
+    }
+    
+    if (dto.services !== undefined) {
+      await pool.query(`DELETE FROM membership_services WHERE membership_id = $1`, [id]);
+      if (dto.services.length > 0) {
+        const insertValues = dto.services.map(s => `('${id}', '${s.serviceId}', ${s.quantity})`).join(', ');
+        await pool.query(
+          `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${insertValues}`
+        );
+      }
+    }
 
-    const { rows } = await pool.query<MembershipRecord>(
-      `UPDATE memberships SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-    return rows[0] ? toPublic(rows[0]) : null;
+    return this.findById(id);
   },
 
   async delete(id: string): Promise<boolean> {

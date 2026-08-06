@@ -29,11 +29,11 @@ const base = {
   durationMinutes: 45, price: 120000,
 }
 
-test('catálogo válido → 201 con defaults (capacity 999, scheduledAt null) y cups en MAYÚSCULAS', async () => {
+test('catálogo válido → 201 con defaults (capacity 1, scheduledAt null) y cups en MAYÚSCULAS', async () => {
   const res = fakeRes()
   await createOffer(req({ ...base, serviceGroup: '01', cups: 'ab12cd', modalities: ['01', '04'], specialty: 'Medicina Laboral' }), res)
   assert.strictEqual(res.statusCode, 201)
-  assert.strictEqual(captured.capacity, 999)
+  assert.strictEqual(captured.capacity, 1)
   assert.strictEqual(captured.scheduledAt ?? null, null)
   assert.strictEqual(captured.cups, 'AB12CD')
 })

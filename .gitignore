@@ -13,6 +13,8 @@ coverage/
 **/.nyc_output/
 .turbo/
 **/.turbo/
+graphify-out/
+**/graphify-out/
 .cache/
 **/.cache/
 .vite/
@@ -96,15 +98,9 @@ Thumbs.db
 *.pfx
 *.cer
 
-# Deploy/fix scripts with hardcoded production credentials
-/deploy-acari.ps1
-/diagnostico-vm.ps1
-/fix-definitivo.ps1
-/fix-trigger.ps1
-/fix-vm-admin.ps1
-/fix-vm-completo.ps1
-/deploy-rapido.ps1
-/replace-colors.ps1
+# Deploy scripts with hardcoded production credentials
+/scripts/diagnostico-vm.ps1
+/scripts/deploy-rapido.ps1
 
 # Temporary / dev tools files
 tmp/

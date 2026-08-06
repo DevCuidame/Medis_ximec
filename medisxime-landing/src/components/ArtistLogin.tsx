@@ -268,23 +268,7 @@ export default function ArtistLogin({
               </motion.button>
             </form>
 
-            {/* Register Link */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5, delay: 0.65, ease: EASE }}
-              style={{ marginTop: 48 }}
-            >
-              <p style={{ fontSize: 15, color: C.textMedium, fontWeight: 400, textAlign: 'center', margin: 0, lineHeight: 1.5 }}>
-                ¿No tienes una cuenta?{' '}
-                <button
-                  onClick={onRegisterClick}
-                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: C.brand, fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.09em', padding: 0, verticalAlign: 'middle' }}
-                >
-                  Regístrate Aquí
-                </button>
-              </p>
-            </motion.div>
+
           </div>
 
           {/* ── Right: Brand Panel ────────────────────────────────── */}

@@ -6,21 +6,40 @@ export const categoriaEnum = z.enum([
   'Medicina Laboral',
   'Consultoría en SG-SST',
   'Salud en el Trabajo',
+  'Ginecología',
+  'Medicina Familiar',
+  'Psicología',
+  'Nutrición',
   'Otros'
 ]);
+
+// Opciones visibles en el select "Categoría principal" del Catálogo de Servicios
+// (más una opción "Otra" para texto libre). No determina el Código CUPS: el CUPS
+// se calcula solo con Grupo/Subgrupo/Categoría/Subcategoría.
+export const CATEGORIAS_PRINCIPALES = [
+  'Medicina Bioreguladora',
+  'Exámenes Médico Ocupacionales',
+  'Medicina Laboral',
+  'Consultoría en SG-SST',
+  'Salud en el Trabajo',
+] as const;
+
+// Grupo '06' — Otros servicios: no tiene subgrupo/categoría/subcategoría ni
+// código CUPS asociado, por lo que esos campos no se exigen en ese caso.
+export const GRUPO_OTROS_SERVICIOS = '06';
 
 export const servicioSchema = z.object({
   locationId: z.string().min(1, 'Selecciona una sede'),
   roomId: z.string().optional(),
   nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
   descripcion: z.string().optional(),
-  categoria: categoriaEnum,                 // Categoría Principal (especialidad → specialty)
+  categoria: z.string().min(1, 'Selecciona o escribe la categoría principal'), // Categoría Principal (especialidad → specialty); admite "Otra" en texto libre
   professionalId: z.string().optional(),
   serviceGroup: z.string().min(1, 'Selecciona el grupo de servicio'),
   serviceSubgroup: z.string().optional(),
   serviceCategory: z.string().optional(),
   serviceSubcategory: z.string().optional(),
-  cups: z.string().regex(/^[A-Za-z0-9]{6}$/, 'El CUPS debe tener 6 caracteres alfanuméricos'),
+  cups: z.string().optional(),
   modalities: z.array(z.string()).min(1, 'Selecciona al menos una modalidad'),
   isActive: z.boolean(),
   durationMinutes: z.string().refine(v => Number.isInteger(Number(v)) && Number(v) > 0, 'Duración en minutos, mayor a 0'),
@@ -30,6 +49,11 @@ export const servicioSchema = z.object({
   restrictions: z.string().optional(),
   risks: z.string().optional(),
   contraindications: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.serviceGroup === GRUPO_OTROS_SERVICIOS) return;
+  if (!/^[A-Za-z0-9]{6}$/.test(data.cups ?? '')) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cups'], message: 'El CUPS debe tener 6 caracteres alfanuméricos' });
+  }
 });
 
 export type ServicioFormValues = z.infer<typeof servicioSchema>;
