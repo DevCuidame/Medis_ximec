@@ -294,7 +294,12 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
         durationMinutes: Number(data.durationMinutes),
         price: Number(data.price),
         controlPrice: data.controlPrice ? Number(data.controlPrice) : undefined,
+        // `status` (estado local de agenda de la oferta) e `isActive` (visibilidad del
+        // catálogo en CuidameDoc) son conceptos distintos y ambos deben enviarse: sin
+        // `isActive`, service_catalog.is_active nunca sale de su DEFAULT TRUE y
+        // desactivar un servicio no lo despublica de CuidameDoc (ver hallazgo I1).
         status: data.isActive ? 'published' : 'draft',
+        isActive: data.isActive,
       };
       await onSuccess(payload);
     } catch (e) { console.error(e); }

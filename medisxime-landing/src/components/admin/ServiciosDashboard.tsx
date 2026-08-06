@@ -93,8 +93,10 @@ function groupOffers(offers: any[]): ServiceGroup[] {
         days: [], sessionCount: 0,
         ids: [], representative: o,
         consecutive: o.consecutive ?? null,
-        cups: o.cups ?? null,
-        serviceGroup: o.serviceGroup ?? null,
+        // `cups`/`serviceGroup` viven en service_catalog desde la migración 029 (ya no son
+        // top-level en la oferta) — ver hallazgo I2 de la revisión de rama.
+        cups: o.catalog?.cups ?? null,
+        serviceGroup: o.catalog?.serviceGroup ?? null,
       });
     }
 
@@ -195,12 +197,16 @@ export const ServiciosDashboard: React.FC = () => {
   const handleToggleGroup = async (group: ServiceGroup) => {
     setTogglingKey(group.key);
     const newStatus = group.status === 'published' ? 'draft' : 'published';
+    // El toggle de la tarjeta también debe propagar isActive al catálogo — de lo contrario
+    // service_catalog.is_active nunca cambia y ensureDocSync no despublica/republica en
+    // CuidameDoc al desactivar/reactivar desde la lista (ver hallazgo I1).
+    const newIsActive = newStatus === 'published';
     const headers = authH();
     try {
       await Promise.all(group.ids.map(id =>
         fetch(`/api/services/offers/${id}`, {
           method: 'PATCH', headers,
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({ status: newStatus, isActive: newIsActive }),
         })
       ));
       // Optimistic update

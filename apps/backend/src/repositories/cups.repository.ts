@@ -223,14 +223,20 @@ export const CupsRepository = {
     return (rowCount ?? 0) > 0;
   },
 
-  /** Cuenta cuántos service_offers ya guardados usan exactamente esta especialidad+clasificación+CUPS. */
+  /**
+   * Cuenta cuántos service_offers ya guardados usan exactamente esta especialidad+clasificación+CUPS.
+   * Estas 6 columnas viven ahora en `service_catalog` desde la migración 029_service_catalog_split.sql
+   * (ya vigente en producción) — el join reemplaza las columnas top-level que se eliminaron de
+   * `service_offers` (ver hallazgo C2 de la revisión de rama).
+   */
   async countServicesUsingMapping(mapping: {
     specialty: string; serviceGroup: string; serviceSubgroup: string; serviceCategory: string; serviceSubcategory: string; cupsCode: string;
   }): Promise<number> {
     const { rows } = await pool.query(
-      `SELECT COUNT(*) FROM service_offers
-        WHERE specialty = $1 AND service_group = $2 AND service_subgroup = $3
-          AND service_category = $4 AND service_subcategory = $5 AND cups = $6`,
+      `SELECT COUNT(*) FROM service_offers so
+         JOIN service_catalog c ON c.id = so.catalog_id
+        WHERE c.specialty = $1 AND c.service_group = $2 AND c.service_subgroup = $3
+          AND c.service_category = $4 AND c.service_subcategory = $5 AND c.cups = $6`,
       [mapping.specialty, mapping.serviceGroup, mapping.serviceSubgroup, mapping.serviceCategory, mapping.serviceSubcategory, mapping.cupsCode]
     );
     return parseInt(rows[0].count, 10);

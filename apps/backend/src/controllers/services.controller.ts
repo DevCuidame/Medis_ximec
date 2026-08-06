@@ -20,7 +20,6 @@ import type { AppliedDiscount } from '../types/discount.types.js';
 import { sendServicePaymentConfirmation } from '@utils/email.util.js';
 import { ensureDocSync } from '@services/docServiceSync.service.js';
 import type {
-  CreateServiceOfferPayload,
   UpdateServiceOfferPayload,
   ServiceOffersFilter,
   ResolveBookingRequestPayload,
@@ -248,11 +247,17 @@ export async function createOffer(req: Request, res: Response): Promise<void> {
     if (req.body.capacity === undefined || req.body.capacity === null) req.body.capacity = 1;
     if (req.body.scheduledAt === undefined) req.body.scheduledAt = null;
     const payload = req.body as any;
+    // El formulario envía `title`/`price` (contrato de service_offers), pero el catálogo
+    // espera `serviceName`/`basePrice`. Sin esto, service_catalog.service_name llega NULL
+    // (columna NOT NULL → 500 en cada creación) y base_price siempre cae en su default 0
+    // (ver hallazgos C1/C3 de la revisión de rama).
+    if (payload.serviceName === undefined) payload.serviceName = payload.title;
+    if (payload.basePrice === undefined) payload.basePrice = payload.price;
 
-    const catalogEntry = await ServiceCatalogRepository.create(payload);
-    payload.catalogId = catalogEntry.id;
-
-    const offer = await ServiceOfferRepository.create(payload as CreateServiceOfferPayload, adminId);
+    // Catálogo + oferta se crean en una sola transacción (ver I5): si el INSERT de la
+    // oferta falla (p. ej. trigger de capacidad del salón, roomId/locationId inválido),
+    // el catálogo recién creado se revierte en vez de quedar huérfano.
+    const offer = await ServiceOfferRepository.createWithCatalog(payload, adminId);
 
     const docSync = await ensureDocSync(buildDocSyncParams(offer, offer.catalog?.isActive !== false));
 
@@ -269,6 +274,11 @@ export async function updateOffer(req: Request, res: Response): Promise<void> {
   try {
     validateOfferPayload(req.body, true);
     const payload = req.body as any;
+    // Mismo puente de contrato que en createOffer (ver C1/C3): si el payload trae `title`/`price`
+    // pero no `serviceName`/`basePrice`, se normaliza ANTES de calcular `catalogTouched` para que
+    // un PATCH que sólo envía `title` siga marcando el catálogo como tocado.
+    if (payload.serviceName === undefined) payload.serviceName = payload.title;
+    if (payload.basePrice === undefined) payload.basePrice = payload.price;
     const offerId = req.params['id']!;
 
     const existingOffer = await ServiceOfferRepository.findById(offerId);
@@ -390,7 +400,7 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
     const titleCategory = typeof lead.title === 'string' && lead.title.trim()
       ? lead.title.split(' — ')[0].trim()
       : null;
-    const offerSpecialty = (lead as { specialty?: string | null }).specialty ?? titleCategory ?? lead.discipline?.name ?? null;
+    const offerSpecialty = lead.catalog?.specialty ?? titleCategory ?? lead.discipline?.name ?? null;
 
     let applied: AppliedDiscount | null = null;
     try {

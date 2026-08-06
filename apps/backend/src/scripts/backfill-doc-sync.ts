@@ -46,7 +46,7 @@ async function run() {
       active: true,
       serviceName: row.service_name,
       durationMinutes: row.duration_minutes,
-      serviceGroup: row.service_group ?? '01 Consulta externa',
+      serviceGroup: row.service_group ?? '01',
       description: row.description,
       price: row.base_price ? Number(row.base_price) : 0,
     });

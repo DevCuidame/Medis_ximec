@@ -4,6 +4,7 @@
 // ============================================================
 
 import { pool } from '@config/database.js';
+import type { PoolClient } from 'pg';
 import type {
   ServiceOfferPublic,
   BookingRequestPublic,
@@ -141,8 +142,10 @@ export const RoomRepository = {
 // ─── SERVICE CATALOG ──────────────────────────────────────────
 
 export const ServiceCatalogRepository = {
-  async create(data: any): Promise<{ id: string }> {
-    const { rows } = await pool.query(
+  /** `client` opcional: cuando se pasa, la inserción corre en esa conexión/transacción (ver createWithCatalog). */
+  async create(data: any, client?: PoolClient): Promise<{ id: string }> {
+    const db = client ?? pool;
+    const { rows } = await db.query(
       `INSERT INTO service_catalog
          (service_name, description, specialty, service_group, service_subgroup, service_category,
           service_subcategory, cups, modalities, is_active, base_price, control_price, image_url,
@@ -304,15 +307,19 @@ export const ServiceOfferRepository = {
     return { data: rows.map(rowToOffer), total };
   },
 
-  async findById(id: string): Promise<ServiceOfferPublic | null> {
-    const { rows } = await pool.query(
+  /** `client` opcional: cuando se pasa, la lectura corre en esa conexión/transacción (ver createWithCatalog). */
+  async findById(id: string, client?: PoolClient): Promise<ServiceOfferPublic | null> {
+    const db = client ?? pool;
+    const { rows } = await db.query(
       `${OFFER_SELECT} WHERE so.id = $1`, [id]
     );
     return rows[0] ? rowToOffer(rows[0]) : null;
   },
 
-  async create(data: CreateServiceOfferPayload, createdBy: string): Promise<ServiceOfferPublic> {
-    const { rows } = await pool.query(
+  /** `client` opcional: cuando se pasa, la inserción (y el findById posterior) corren en esa conexión/transacción. */
+  async create(data: CreateServiceOfferPayload, createdBy: string, client?: PoolClient): Promise<ServiceOfferPublic> {
+    const db = client ?? pool;
+    const { rows } = await db.query(
       `INSERT INTO service_offers
          (catalog_id, location_id, room_id, offer_type, title, description,
           professional_id, specialty_id, capacity, duration_minutes,
@@ -327,7 +334,34 @@ export const ServiceOfferRepository = {
         data.status ?? 'draft',
       ]
     );
-    return (await this.findById(rows[0].id))!;
+    return (await this.findById(rows[0].id, client))!;
+  },
+
+  /**
+   * Crea el catálogo y la oferta en UNA transacción (mismo patrón que
+   * `deleteAndCountRemaining`: client.connect/BEGIN/try-COMMIT/catch-ROLLBACK/finally-release).
+   * Evita que un fallo en el INSERT de la oferta (p. ej. el trigger de capacidad del
+   * salón, o un locationId/roomId inválido) deje un `service_catalog` huérfano —
+   * ver hallazgo I5 de la revisión de rama.
+   */
+  async createWithCatalog(payload: any, createdBy: string): Promise<ServiceOfferPublic> {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      const catalogEntry = await ServiceCatalogRepository.create(payload, client);
+      const offer = await this.create(
+        { ...payload, catalogId: catalogEntry.id } as CreateServiceOfferPayload,
+        createdBy,
+        client
+      );
+      await client.query('COMMIT');
+      return offer;
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
   },
 
   async update(id: string, data: UpdateServiceOfferPayload): Promise<ServiceOfferPublic | null> {
