@@ -8,6 +8,62 @@
 
 **Tech Stack:** Node/Express + PostgreSQL (`apps/backend`, raw `pg`, no ORM — same as `diana/medis`), React + Vite (`medisxime-landing`).
 
+## Post-implementation status (2026-08-06)
+
+All 7 tasks implemented and reviewed clean. The final whole-branch review
+found 3 Critical + 5 Important + 4 Minor issues from the frontend↔backend
+catalog contract never being fully reconciled across Tasks 2/3/5 (e.g.
+`serviceName`/`basePrice`/`isActive` never sent by the form, `cups.repository.ts`
+still querying columns migration 029 moved). One fix wave (commit `ae395be`)
+addressed all 9 Critical/Important findings plus one cheap Minor; a scoped
+re-review confirmed all 9 genuinely fixed, verifying in particular that the
+`serviceName`/`basePrice` normalization runs BEFORE `catalogTouched` is
+computed in `updateOffer` (an easy way to reintroduce the same bug), and that
+the new `createWithCatalog` transaction actually uses one shared client for
+both inserts (not two disguised non-transactional calls).
+
+**3 issues found in the fix wave itself, parked rather than triggering a
+second fix wave** (both real, neither blocking merge — see the SDD ledger's
+final entries for full detail before it was deleted):
+
+1. **Test coverage regression (Important, real, not a production defect):**
+   `services.catalog.test.ts` went from 6/6 to 5/6 passing because the new
+   `createWithCatalog` opens a real `pool.connect()` the test's existing
+   mocks don't intercept — losing hermetic coverage of create-path payload
+   normalization (capacity default, `scheduledAt` null, CUPS uppercase),
+   exactly the area this wave touched. **Follow-up:** mock
+   `ServiceOfferRepository.createWithCatalog` (or its final name) in that
+   test's `beforeEach`, alongside the existing `ServiceCatalogRepository.create`/`fetch` mocks.
+
+2. **Concurrent-toggle race for multi-offer groups (Important, real, zero
+   blast radius today):** the `isActive` fix (I1) makes `ServiciosDashboard.tsx`'s
+   `handleToggleGroup` — which PATCHes all of a group's offer ids in parallel
+   via `Promise.all` — trigger `ensureDocSync` per offer where before the fix
+   none of them did. Reactivating a multi-offer group that shares one
+   `catalog_id` (a recurring class series, not the single-offer shape the
+   create form produces today) can race: N concurrent reads of
+   `doc_prof_service_id = null` → N concurrent CuidameDoc creates → only the
+   last DB write wins, orphaning N-1 remote services with no stored id to
+   ever delete them by. Deactivate is safe (repeat deletes are idempotent
+   404→ok). `service_offers` has 0 rows in production as of this writing, so
+   there is no current blast radius. **Follow-up:** either serialize
+   `handleToggleGroup`'s PATCHes (sequential instead of `Promise.all`), or add
+   the same `SELECT ... FOR UPDATE` lock `deleteAndCountRemaining` already
+   uses to `ensureDocSync` itself.
+
+3. **Redundant derivation, comment-only (Minor):** `mapGroupToFormValues`
+   still derives the form's read-back `isActive` from `status !== 'draft'`
+   rather than reading `catalog.isActive` directly. Currently self-healing
+   (both are kept in sync on every write), but worth a code comment so a
+   future edit doesn't "simplify" this redundancy away and silently
+   reintroduce the deactivation bug (I1) this session just fixed.
+
+**Still pending, outside this plan's automation (manual operator actions):**
+- Deploy `apps/backend` (Tasks 1-4, migration 029 already live) and
+  `medisxime-landing` (Tasks 5-7) to production — neither has been deployed
+  as of this writing, only the migration itself.
+- Task 8 (end-to-end production verification) — blocked on the deploy above.
+
 ## Global Constraints
 
 - `service_offers` has 0 rows in production — no data migration, no backfill script needed anywhere in this plan.
