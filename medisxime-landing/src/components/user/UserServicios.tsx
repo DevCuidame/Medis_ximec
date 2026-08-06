@@ -138,10 +138,13 @@ export const UserServicios: React.FC<Props> = () => {
     const s = g.representative ?? {}
     setConfirmBooking({
       ids: g.ids, key: g.key, title: parts[1] || parts[0], sessionCount: g.ids.length, price: g.price,
-      instructions: s.instructions ?? null,
-      restrictions: s.restrictions ?? null,
-      risks: s.risks ?? null,
-      contraindications: s.contraindications ?? null,
+      // Instrucciones/Restricciones/Riesgos/Contraindicaciones viven en service_catalog desde
+      // la migración 029 (ya no son top-level en la oferta) — ver hallazgo I3 de la revisión
+      // de rama. Es información clínica que ve el paciente antes de confirmar su cita.
+      instructions: s.catalog?.instructions ?? null,
+      restrictions: s.catalog?.restrictions ?? null,
+      risks: s.catalog?.risks ?? null,
+      contraindications: s.catalog?.contraindications ?? null,
     })
     setDiscountCode('')
     setBookingError(null)

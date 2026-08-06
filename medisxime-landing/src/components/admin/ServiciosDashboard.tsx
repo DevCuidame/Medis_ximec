@@ -93,8 +93,10 @@ function groupOffers(offers: any[]): ServiceGroup[] {
         days: [], sessionCount: 0,
         ids: [], representative: o,
         consecutive: o.consecutive ?? null,
-        cups: o.cups ?? null,
-        serviceGroup: o.serviceGroup ?? null,
+        // `cups`/`serviceGroup` viven en service_catalog desde la migración 029 (ya no son
+        // top-level en la oferta) — ver hallazgo I2 de la revisión de rama.
+        cups: o.catalog?.cups ?? null,
+        serviceGroup: o.catalog?.serviceGroup ?? null,
       });
     }
 
@@ -195,12 +197,16 @@ export const ServiciosDashboard: React.FC = () => {
   const handleToggleGroup = async (group: ServiceGroup) => {
     setTogglingKey(group.key);
     const newStatus = group.status === 'published' ? 'draft' : 'published';
+    // El toggle de la tarjeta también debe propagar isActive al catálogo — de lo contrario
+    // service_catalog.is_active nunca cambia y ensureDocSync no despublica/republica en
+    // CuidameDoc al desactivar/reactivar desde la lista (ver hallazgo I1).
+    const newIsActive = newStatus === 'published';
     const headers = authH();
     try {
       await Promise.all(group.ids.map(id =>
         fetch(`/api/services/offers/${id}`, {
           method: 'PATCH', headers,
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({ status: newStatus, isActive: newIsActive }),
         })
       ));
       // Optimistic update
@@ -248,22 +254,32 @@ export const ServiciosDashboard: React.FC = () => {
       roomId: s.roomId || '',
       nombre: s.title || '',
       descripcion: s.description || '',
-      categoria: s.specialty ?? 'Otros',
+      // `specialty`, `serviceGroup`, `serviceSubgroup`, `serviceCategory`, `serviceSubcategory`,
+      // `cups`, `modalities`, `imageUrl`, `instructions`, `restrictions`, `risks` y
+      // `contraindications` viven en `service_catalog` desde la migración 029 (Task 2): ya no
+      // son top-level en `service_offers`, por eso se leen todos de `s.catalog?.X` (mismo
+      // patrón que `controlPrice` más abajo). `price` sí sigue siendo top-level genuino
+      // (columna propia de service_offers, nunca movida por esa migración).
+      categoria: s.catalog?.specialty ?? 'Otros',
       professionalId: s.professionalId || '',
-      serviceGroup: s.serviceGroup || '',
-      serviceSubgroup: s.serviceSubgroup || '',
-      serviceCategory: s.serviceCategory || '',
-      serviceSubcategory: s.serviceSubcategory || '',
-      cups: s.cups || '',
-      modalities: s.modalities || [],
+      serviceGroup: s.catalog?.serviceGroup || '',
+      serviceSubgroup: s.catalog?.serviceSubgroup || '',
+      serviceCategory: s.catalog?.serviceCategory || '',
+      serviceSubcategory: s.catalog?.serviceSubcategory || '',
+      cups: s.catalog?.cups || '',
+      modalities: s.catalog?.modalities || [],
       isActive: s.status !== 'draft',
       durationMinutes: s.durationMinutes != null ? String(s.durationMinutes) : '',
       price: s.price != null ? String(s.price) : '',
-      imageUrl: s.imageUrl || '',
-      instructions: s.instructions || '',
-      restrictions: s.restrictions || '',
-      risks: s.risks || '',
-      contraindications: s.contraindications || '',
+      // A diferencia de `price` (columna propia de service_offers, nunca movida por la
+      // migración 029), `controlPrice` sólo existe en service_catalog: se lee de
+      // `s.catalog.controlPrice`, no de un inexistente `s.controlPrice` top-level.
+      controlPrice: s.catalog?.controlPrice != null ? String(s.catalog.controlPrice) : '',
+      imageUrl: s.catalog?.imageUrl || '',
+      instructions: s.catalog?.instructions || '',
+      restrictions: s.catalog?.restrictions || '',
+      risks: s.catalog?.risks || '',
+      contraindications: s.catalog?.contraindications || '',
       consecutive: s.consecutive ?? null,
     };
   };

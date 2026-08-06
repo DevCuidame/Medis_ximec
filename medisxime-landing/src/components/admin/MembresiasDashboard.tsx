@@ -7,6 +7,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { AdminSidebar } from './AdminSidebar';
+import { CotizacionesCuidameDocPanel } from './shared/CotizacionesCuidameDocPanel';
 import './MainDashboard.css';
 
 const C = {
@@ -366,6 +367,14 @@ export const MembresiasDashboard: React.FC = () => {
                 );
               })}
             </div>
+
+            <div style={{ marginBottom: '0.75rem' }}>
+              <h2 style={{ fontFamily: '"Cormorant Garamond", serif', fontSize: '1.1rem', color: C.text, margin: '0 0 4px' }}>Cotizaciones de pacientes</h2>
+              <p style={{ fontSize: 12, color: C.textMuted, margin: 0 }}>
+                Cotizaciones de un solo uso creadas al cerrar una historia clínica en CuidameDoc — no forman parte del catálogo de planes reutilizables de abajo.
+              </p>
+            </div>
+            <CotizacionesCuidameDocPanel showToast={showActionToast} />
 
             {loading && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1.25rem' }}>
