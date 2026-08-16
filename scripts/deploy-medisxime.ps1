@@ -145,8 +145,8 @@ if (-not $rule) {
 if (-not $SkipUpload) {
     Write-Step "PASO 3/11  Creando paquete de despliegue"
 
-    $staging = "$env:TEMP\acari-staging"
-    $zipPath = "$env:TEMP\acari-deploy.zip"
+    $staging = "$env:TEMP\xime-staging"
+    $zipPath = "$env:TEMP\xime-deploy.zip"
 
     if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
     New-Item -ItemType Directory -Path $staging | Out-Null
@@ -162,15 +162,15 @@ if (-not $SkipUpload) {
     if (Test-Path $zipPath) { Remove-Item $zipPath }
     Compress-Archive -Path "$staging\*" -DestinationPath $zipPath
     $mb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
-    Write-OK "Paquete: acari-deploy.zip ($mb MB)"
+    Write-OK "Paquete: xime-deploy.zip ($mb MB)"
     Remove-Item $staging -Recurse -Force
 
     # ── PASO 4: Subir archivo ─────────────────────────────────
     Write-Step "PASO 4/11  Subiendo paquete a la VM"
-    gcloud compute scp $zipPath "${VM_NAME}:/tmp/acari-deploy.zip" `
+    gcloud compute scp $zipPath "${VM_NAME}:/tmp/xime-deploy.zip" `
         --zone=$ZONE --project=$PROJECT_ID --quiet
     if ($LASTEXITCODE -ne 0) { throw "gcloud scp fallo" }
-    Write-OK "Paquete subido a /tmp/acari-deploy.zip"
+    Write-OK "Paquete subido a /tmp/xime-deploy.zip"
 } else {
     Write-Step "PASO 3-4/11  Upload omitido (-SkipUpload)"
 }
@@ -316,7 +316,7 @@ sudo rm -rf "${APP_DIR}"
 sudo mkdir -p "${APP_DIR}"
 sudo chown "$USER" "${APP_DIR}"
 set +e
-unzip -o /tmp/acari-deploy.zip -d "${APP_DIR}" > /dev/null
+unzip -o /tmp/xime-deploy.zip -d "${APP_DIR}" > /dev/null
 UNZIP_RC=$?
 set -e
 [ $UNZIP_RC -le 1 ] || { echo "ERROR: unzip fallo con codigo $UNZIP_RC"; exit $UNZIP_RC; }

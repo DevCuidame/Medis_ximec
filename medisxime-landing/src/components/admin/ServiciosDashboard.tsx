@@ -53,6 +53,7 @@ interface ServiceGroup {
   representative: any;
   consecutive: number | null;
   cups: string | null;
+  repsServiceCode: string | null;
   serviceGroup: string | null;
 }
 
@@ -96,6 +97,7 @@ function groupOffers(offers: any[]): ServiceGroup[] {
         // `cups`/`serviceGroup` viven en service_catalog desde la migración 029 (ya no son
         // top-level en la oferta) — ver hallazgo I2 de la revisión de rama.
         cups: o.catalog?.cups ?? null,
+        repsServiceCode: o.catalog?.repsServiceCode ?? null,
         serviceGroup: o.catalog?.serviceGroup ?? null,
       });
     }
@@ -276,6 +278,7 @@ export const ServiciosDashboard: React.FC = () => {
       serviceCategory: s.catalog?.serviceCategory || '',
       serviceSubcategory: s.catalog?.serviceSubcategory || '',
       cups: s.catalog?.cups || '',
+      repsServiceCode: s.catalog?.repsServiceCode || '',
       modalities: s.catalog?.modalities || [],
       isActive: s.status !== 'draft',
       durationMinutes: s.durationMinutes != null ? String(s.durationMinutes) : '',
@@ -580,17 +583,17 @@ export const ServiciosDashboard: React.FC = () => {
                             </span>
                           </button>
 
-                          {/* Consecutivo / CUPS / Grupo */}
-                          {(g.consecutive != null || g.cups || g.serviceGroup) && (
+                          {/* CUPS / Código REPS / Grupo */}
+                          {(g.cups || g.repsServiceCode || g.serviceGroup) && (
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 6 }}>
-                              {g.consecutive != null && (
-                                <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: '0.04em', color: C.gold, background: 'rgba(92,58,40,0.08)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
-                                  SRV-{String(g.consecutive).padStart(4, '0')}
-                                </span>
-                              )}
                               {g.cups && (
                                 <span style={{ fontSize: 10, fontWeight: 700, color: C.textBrown, background: 'rgba(92,58,40,0.06)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
                                   CUPS {g.cups}
+                                </span>
+                              )}
+                              {g.repsServiceCode && (
+                                <span style={{ fontSize: 10, fontWeight: 700, color: C.textBrown, background: 'rgba(92,58,40,0.06)', padding: '2px 8px', borderRadius: 6, fontFamily: FONT_INTER }}>
+                                  REPS {g.repsServiceCode}
                                 </span>
                               )}
                               {g.serviceGroup && (

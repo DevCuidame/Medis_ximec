@@ -148,14 +148,14 @@ export const ServiceCatalogRepository = {
     const { rows } = await db.query(
       `INSERT INTO service_catalog
          (service_name, description, specialty, service_group, service_subgroup, service_category,
-          service_subcategory, cups, modalities, is_active, base_price, control_price, image_url,
+          service_subcategory, cups, reps_service_code, modalities, is_active, base_price, control_price, image_url,
           instructions, restrictions, risks, contraindications)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
        RETURNING id`,
       [
         data.serviceName, data.description ?? null, data.specialty ?? null, data.serviceGroup ?? null,
         data.serviceSubgroup ?? null, data.serviceCategory ?? null, data.serviceSubcategory ?? null,
-        data.cups ?? null, data.modalities ?? null, data.isActive ?? true, data.basePrice ?? 0,
+        data.cups ?? null, data.repsServiceCode ?? null, data.modalities ?? null, data.isActive ?? true, data.basePrice ?? 0,
         data.controlPrice ?? null, data.imageUrl ?? null, data.instructions ?? null,
         data.restrictions ?? null, data.risks ?? null, data.contraindications ?? null,
       ]
@@ -168,7 +168,7 @@ export const ServiceCatalogRepository = {
       serviceName: 'service_name', description: 'description', specialty: 'specialty',
       serviceGroup: 'service_group', serviceSubgroup: 'service_subgroup',
       serviceCategory: 'service_category', serviceSubcategory: 'service_subcategory',
-      cups: 'cups', modalities: 'modalities', isActive: 'is_active',
+      cups: 'cups', repsServiceCode: 'reps_service_code', modalities: 'modalities', isActive: 'is_active',
       basePrice: 'base_price', controlPrice: 'control_price', imageUrl: 'image_url',
       instructions: 'instructions', restrictions: 'restrictions', risks: 'risks',
       contraindications: 'contraindications',
@@ -236,6 +236,7 @@ function rowToOffer(row: Record<string, unknown>): ServiceOfferPublic {
       serviceCategory:    (row['c_service_category'] as string) ?? null,
       serviceSubcategory: (row['c_service_subcategory'] as string) ?? null,
       cups:               (row['c_cups'] as string) ?? null,
+      repsServiceCode:    (row['c_reps_service_code'] as string) ?? null,
       modalities:         (row['c_modalities'] as string[]) ?? null,
       isActive:           row['c_is_active'] as boolean,
       basePrice:          (row['c_base_price'] as number) ?? null,
@@ -263,6 +264,7 @@ const OFFER_SELECT = `
     c.specialty AS c_specialty, c.service_group AS c_service_group,
     c.service_subgroup AS c_service_subgroup, c.service_category AS c_service_category,
     c.service_subcategory AS c_service_subcategory, c.cups AS c_cups,
+    c.reps_service_code AS c_reps_service_code,
     c.modalities AS c_modalities, c.is_active AS c_is_active,
     c.base_price AS c_base_price, c.control_price AS c_control_price,
     c.image_url AS c_image_url, c.instructions AS c_instructions,

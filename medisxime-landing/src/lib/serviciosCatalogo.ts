@@ -1,4 +1,4 @@
-// Listas de habilitación del catálogo de servicios.
+﻿// Listas de habilitación del catálogo de servicios.
 // EDITABLE: la clínica puede ajustar códigos y nombres aquí sin tocar el resto del código.
 
 export interface CatalogoNivel { code: string; name: string; children?: CatalogoNivel[] }
@@ -27,6 +27,10 @@ export const MODALIDADES: { code: string; name: string }[] = [
   { code: '08', name: 'Extramural centro de encuentro' },
   { code: '09', name: 'Extramural otros' },
 ];
+
+// Tabla de Referencia de Servicios REPS: se cargaba aquí como arreglo estático,
+// ahora se obtiene dinámicamente desde GET /api/services/reps-catalog (ver
+// FormularioServicio.tsx, estado `repsCatalog`).
 
 // Árbol: grupo → subgrupos → categorías → subcategorías
 export const CATALOGO: Record<string, CatalogoNivel[]> = {

@@ -20,6 +20,7 @@
 //  POST   /services/offers                      → ADMIN
 //  PATCH  /services/offers/:id                  → ADMIN
 //  DELETE /services/offers/:id                  → ADMIN
+//  GET    /services/reps-catalog                → ADMIN (catálogo Tabla REPS activo)
 //
 //  CUPS
 //  GET    /services/cups-lookup                 → ADMIN (busca CUPS por clasificación)
@@ -57,6 +58,7 @@ import {
   deleteRoom,
   listOffers,
   getOffer,
+  listRepsCatalog,
   createOffer,
   updateOffer,
   deleteOffer,
@@ -119,6 +121,7 @@ router.get(   '/services/offers/:id', getOffer);
 router.post(  '/services/offers',     authenticate, authorize('ADMIN'), createOffer);
 router.patch( '/services/offers/:id', authenticate, authorize('ADMIN'), updateOffer);
 router.delete('/services/offers/:id', authenticate, authorize('ADMIN'), deleteOffer);
+router.get(   '/services/reps-catalog', authenticate, authorize('ADMIN'), listRepsCatalog);
 
 // ─── CUPS ────────────────────────────────────────────────────
 router.get(   '/services/cups-lookup',          authenticate, authorize('ADMIN'), lookupCups);
