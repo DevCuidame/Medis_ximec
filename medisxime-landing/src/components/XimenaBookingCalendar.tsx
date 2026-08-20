@@ -3,7 +3,17 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 // ─── Config ────────────────────────────────────────────────────────────────
 const DOC_API = 'https://doc-api.cuidame.tech/api'
-const PROFESSIONAL_ID = 2
+const XIMENA_PROFESSIONAL_ID = 2
+const XIMENA_DISPLAY_NAME = 'Dra. Ximena Correa'
+
+// El servicio elegido puede pertenecer a Ximena o a cualquier médico de su
+// equipo (professionals.head_professional_id = XIMENA_PROFESSIONAL_ID) — la
+// cita debe agendarse y mostrarse a nombre de quien realmente atiende ese
+// servicio, no siempre de Ximena.
+function doctorLabel(professionalId: number, professionalName: string): string {
+  if (professionalId === XIMENA_PROFESSIONAL_ID) return XIMENA_DISPLAY_NAME
+  return professionalName || XIMENA_DISPLAY_NAME
+}
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 interface Slot {
@@ -19,6 +29,8 @@ interface ProfService {
   description?: string
   duration_minutes: number
   category: string
+  professional_id: number
+  professional_name: string
 }
 
 type BookingStep = 'service' | 'calendar' | 'slots' | 'form' | 'success'
@@ -103,6 +115,8 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
   const [loadingServices, setLoadingServices] = useState(true)
   const [selectedServiceId, setSelectedServiceId] = useState<number | null>(null)
   const [selectedServiceName, setSelectedServiceName] = useState<string>('')
+  const [selectedProfessionalId, setSelectedProfessionalId] = useState<number>(XIMENA_PROFESSIONAL_ID)
+  const [selectedProfessionalName, setSelectedProfessionalName] = useState<string>(XIMENA_DISPLAY_NAME)
   const [form, setForm] = useState<BookingForm>({
     identification_number: '', notes: '',
     isNewPatient: false,
@@ -116,7 +130,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
 
   // Load professional services once
   useEffect(() => {
-    fetch(`${DOC_API}/booking/professionals/${PROFESSIONAL_ID}/services`)
+    fetch(`${DOC_API}/booking/professionals/${XIMENA_PROFESSIONAL_ID}/services`)
       .then(r => r.json())
       .then(data => { setServices(Array.isArray(data?.data) ? data.data : []) })
       .catch(() => { setServices([]) })
@@ -142,7 +156,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
       if (availability[dateStr] !== undefined) continue
 
       promises.push(
-        fetch(`${DOC_API}/booking/professionals/${PROFESSIONAL_ID}/slots/${dateStr}`)
+        fetch(`${DOC_API}/booking/professionals/${selectedProfessionalId}/slots/${dateStr}`)
           .then(r => r.json())
           .then(data => {
             const s: Slot[] = Array.isArray(data?.data) ? data.data : []
@@ -153,18 +167,24 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
     }
 
     await Promise.all(promises)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedProfessionalId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     preloadMonth(viewYear, viewMonth)
   }, [viewYear, viewMonth, preloadMonth])
+
+  // Distintos médicos tienen distintos horarios — la disponibilidad cacheada
+  // por fecha ya no sirve si cambia el profesional del servicio elegido.
+  useEffect(() => {
+    setAvailability({})
+  }, [selectedProfessionalId])
 
   const loadSlots = async (dateStr: string) => {
     setLoadingSlots(true)
     setSlots([])
     setError(null)
     try {
-      const res = await fetch(`${DOC_API}/booking/professionals/${PROFESSIONAL_ID}/slots/${dateStr}`)
+      const res = await fetch(`${DOC_API}/booking/professionals/${selectedProfessionalId}/slots/${dateStr}`)
       const data = await res.json()
       setSlots(Array.isArray(data?.data) ? data.data : [])
     } catch {
@@ -212,7 +232,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
             identification_number: form.identification_number.trim(),
             email: form.email.trim() || undefined,
             phone: form.phone.trim() || undefined,
-            professional_id: PROFESSIONAL_ID,
+            professional_id: selectedProfessionalId,
             appointment_date: selectedDate,
             start_time: selectedSlot.start_time,
             end_time: selectedSlot.end_time,
@@ -226,7 +246,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             identification_number: form.identification_number.trim(),
-            professional_id: PROFESSIONAL_ID,
+            professional_id: selectedProfessionalId,
             appointment_date: selectedDate,
             start_time: selectedSlot.start_time,
             end_time: selectedSlot.end_time,
@@ -406,6 +426,8 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                       onClick={() => {
                         setSelectedServiceId(svc.prof_service_id)
                         setSelectedServiceName(svc.name)
+                        setSelectedProfessionalId(svc.professional_id)
+                        setSelectedProfessionalName(doctorLabel(svc.professional_id, svc.professional_name))
                         setStep('calendar')
                       }}
                       style={{
@@ -447,6 +469,16 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                         </span>
                         <span style={{ fontSize: '0.72rem', color: C.textFaint, fontWeight: 500, textTransform: 'capitalize' }}>
                           {svc.category === 'consultation' ? 'Consulta' : svc.category === 'therapy' ? 'Terapia' : svc.category}
+                        </span>
+                      </div>
+
+                      <div style={{ paddingLeft: 50, display: 'flex', alignItems: 'center', gap: 5 }}>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                          <path d="M12 12c2.5 0 4.5-2 4.5-4.5S14.5 3 12 3 7.5 5 7.5 7.5 9.5 12 12 12Z" stroke={C.textFaint} strokeWidth="1.8" />
+                          <path d="M4 21c0-3.9 3.6-7 8-7s8 3.1 8 7" stroke={C.textFaint} strokeWidth="1.8" strokeLinecap="round" />
+                        </svg>
+                        <span style={{ fontSize: '0.74rem', color: C.textMuted, fontWeight: 600 }}>
+                          {doctorLabel(svc.professional_id, svc.professional_name)}
                         </span>
                       </div>
                     </button>
@@ -693,9 +725,11 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                 <div style={{ flex: 2, minWidth: 180 }}>
                   <p style={{ margin: 0, fontSize: '0.72rem', fontWeight: 700, color: C.primary, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Médico</p>
                   <p style={{ margin: '2px 0 0', fontSize: '0.9rem', fontWeight: 600, color: C.text }}>
-                    Dra. Ximena Correa
+                    {selectedProfessionalName}
                   </p>
-                  <p style={{ margin: 0, fontSize: '0.78rem', color: C.textMuted }}>Especialista en Salud Ocupacional</p>
+                  {selectedProfessionalId === XIMENA_PROFESSIONAL_ID && (
+                    <p style={{ margin: 0, fontSize: '0.78rem', color: C.textMuted }}>Especialista en Salud Ocupacional</p>
+                  )}
                 </div>
                 {selectedServiceName && (
                   <>
@@ -874,7 +908,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                 ¡Cita solicitada!
               </h1>
               <p style={{ color: C.textMuted, fontSize: '0.95rem', maxWidth: 420, margin: '0 auto 2rem' }}>
-                Tu solicitud fue enviada a la Dra. Ximena Correa. Queda pendiente de confirmación.
+                Tu solicitud fue enviada a {selectedProfessionalName}. Queda pendiente de confirmación.
               </p>
 
               {bookedAppointment && selectedDate && selectedSlot && (
@@ -886,7 +920,7 @@ export default function XimenaBookingCalendar({ onBackToHome }: XimenaBookingCal
                     <Row label="Fecha" value={formatDateLong(selectedDate)} capitalize />
                     <Row label="Hora" value={`${formatTime(selectedSlot.start_time)} – ${formatTime(selectedSlot.end_time)}`} />
                     {selectedServiceName && <Row label="Servicio" value={selectedServiceName} />}
-                    <Row label="Médico" value="Dra. Ximena Correa" />
+                    <Row label="Médico" value={selectedProfessionalName} />
                     <Row label="Estado" value="Pendiente de confirmación" badge />
                   </div>
                 </div>
