@@ -138,7 +138,7 @@ Ejecutar en orden. Comando: `pnpm -F @medisxime/backend migrate` (detalle en [fl
 | [Footer.tsx](../medisxime-landing/src/components/Footer.tsx) | Footer oscuro (#3D2418), contacto real, servicios | ✅ Migrado |
 
 ### Autenticación (`/login`)
-- [ArtistLogin.tsx](../medisxime-landing/src/components/ArtistLogin.tsx) — Formulario de login, llama `POST /api/auth/login`, redirige según rol
+- [ArtistLogin.tsx](../medisxime-landing/src/components/ArtistLogin.tsx) — Formulario de login, llama `POST /api/auth/login`, redirige según rol. Para rol `PROFESSIONAL` hace además un handoff SSO a CuidameDoc (`doc.cuidame.tech`) — ver [decisiones.md](decisiones.md#sso-handoff-a-cuidamedoc-para-profesionales-medisxime-landingsrccomponentsartistlogintsx).
 
 ### Componentes compartidos
 - [ProtectedRoute.tsx](../medisxime-landing/src/components/ProtectedRoute.tsx) — Guarda de rutas por rol (decodifica JWT del localStorage)

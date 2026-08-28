@@ -26,6 +26,38 @@ Ver equivalencias de terminología en [glosario.md](glosario.md).
 - Middleware: `authenticate` (valida Bearer token) + `authorize('ADMIN')` (RBAC)
 - Frontend detecta 401 y emite evento `session:expired` para cerrar sesión
 
+### SSO handoff a CuidameDoc para profesionales (`medisxime-landing/src/components/ArtistLogin.tsx`)
+El portal profesional real (agenda, historias clínicas) vive en CuidameDoc
+(`doc.cuidame.tech`), no en el backend propio de MedisXime — mismo patrón que
+`diana/medis/medisdiana-landing` (ver `decisiones.md` de ese proyecto hermano).
+Al loguearse:
+1. Se intenta primero contra `/api/auth/login` (backend propio de MedisXime).
+2. Si el rol resuelto es `PROFESSIONAL`, se fuerza además un handoff SSO:
+   `redirectToCuidameDocSSO(email, password)` loguea contra
+   `https://doc-api.cuidame.tech/api/auth/login` con las mismas credenciales
+   y, si acepta, redirige el navegador a
+   `https://doc.cuidame.tech/#sso=<payload-urlencoded>` (`{u, t, r, p}` =
+   user/access_token/refresh_token/professional). CuidameDoc ya sabe leer
+   este fragmento (`App.tsx`, manejo `#sso=`) — nunca llega a ningún
+   servidor, se borra del historial tras leerlo una vez.
+3. Si el login propio de MedisXime falla (excepción), se intenta igual el
+   handoff a CuidameDoc como fallback, antes de mostrar el modal de error —
+   cubre el caso de un profesional que solo tiene cuenta real en CuidameDoc,
+   no en el backend propio de MedisXime (el caso de Ximena, `professional_id
+   = 2` en CuidameDoc).
+- `docxime.cuidame.tech` ya estaba en la lista blanca de CORS de
+  `cuidame_doc_backend` (`src/core/config/express.ts`) desde antes de esta
+  implementación.
+- Dev: proxy `/doc-api` → `https://doc-api.cuidame.tech` en `vite.config.ts`
+  (evita CORS contra `localhost`; en producción el navegador llama directo).
+- **Reseteo de contraseña de un profesional (admin):** no existe en el
+  backend propio de MedisXime. Como la cuenta real del profesional vive en
+  CuidameDoc, el reseteo se hace desde el admin de **CuidameDoc**
+  (`/home/admin/users` → menú del usuario → "Restablecer contraseña", que
+  llama `PUT /api/users/:id/reset-password`, admin-only) — ya existe ahí, no
+  hace falta construir nada nuevo. No confundir con `AdminProfessionalsPage`
+  de CuidameDoc, que no tiene esta acción.
+
 ### Campos de perfil por rol (migración 016)
 | Rol            | Campos extra                                                       |
 |----------------|--------------------------------------------------------------------|
