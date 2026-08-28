@@ -91,6 +91,7 @@ export interface ServiceOfferPublic {
         serviceCategory: string | null;
         serviceSubcategory: string | null;
         cups: string | null;
+        repsServiceCode: string | null;
         modalities: string[] | null;
         isActive: boolean;
         basePrice: number | null;

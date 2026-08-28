@@ -5,12 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Box, Hash, Tag, FileText, UserCheck, Layers, ListTree,
   ClipboardList, ToggleLeft, ToggleRight, DollarSign, Clock, Image,
-  ShieldAlert, AlertTriangle, CheckCircle, Stethoscope, Plus,
+  ShieldAlert, AlertTriangle, CheckCircle, Stethoscope,
 } from 'lucide-react';
 import type { ServicioFormValues } from './servicioSchema';
 import { servicioSchema, CATEGORIAS_PRINCIPALES, GRUPO_OTROS_SERVICIOS } from './servicioSchema';
 import { GRUPOS, MODALIDADES, CATALOGO, GRUPOS_DINAMICOS } from '../../lib/serviciosCatalogo';
-import { CupsMappingModal } from './CupsMappingModal';
 
 const C = {
   gold: '#5C3A28', goldLight: '#9C4A2E',
@@ -53,8 +52,6 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [cupsMessage, setCupsMessage] = useState<string | null>(null);
   const [cupsCandidates, setCupsCandidates] = useState<{ cupsCode: string; procedureName: string }[]>([]);
-  const [cupsNotFound, setCupsNotFound] = useState(false);
-  const [showMappingModal, setShowMappingModal] = useState(false);
   // "Otra" en Categoría principal: activo cuando el valor guardado/escrito no
   // está en la lista curada (p. ej. datos antiguos con otra especialidad).
   const [otraCategoria, setOtraCategoria] = useState(() => {
@@ -67,6 +64,9 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
   const [dynSubcategories, setDynSubcategories] = useState<{ code: string; name: string }[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(false);
   const [loadingSubcategories, setLoadingSubcategories] = useState(false);
+  // Tabla de Referencia de Servicios REPS: catálogo fijo, se carga una sola vez al montar.
+  const [repsCatalog, setRepsCatalog] = useState<{ code: string; name: string }[]>([]);
+  const [loadingRepsCatalog, setLoadingRepsCatalog] = useState(false);
   const lastAutoNombre = useRef('');
   const cupsLookupSeq = useRef(0);
   // En edición hay que saltar 2 renders: el mount y el que se dispara cuando
@@ -85,6 +85,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
     serviceCategory: initialData?.serviceCategory ?? '',
     serviceSubcategory: initialData?.serviceSubcategory ?? '',
     cups: initialData?.cups ?? '',
+    repsServiceCode: initialData?.repsServiceCode ?? '',
     modalities: initialData?.modalities ?? [],
     isActive: initialData?.isActive ?? true,
     durationMinutes: initialData?.durationMinutes ?? '',
@@ -124,6 +125,17 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
         setProfesionales(j.data.professionals.map((p: any) => ({ id: p.id, name: `${p.firstName} ${p.lastName}` })));
       }
     }).catch(() => {});
+
+    // Tabla de Referencia de Servicios REPS: catálogo fijo, no depende de nada más.
+    setLoadingRepsCatalog(true);
+    const token = localStorage.getItem('accessToken');
+    fetch('/api/services/reps-catalog', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(r => r.json())
+      .then(j => { if (j.success) setRepsCatalog(j.data.services); })
+      .catch(() => {})
+      .finally(() => setLoadingRepsCatalog(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,7 +162,6 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
     setValue('cups', '', { shouldValidate: true });
     setCupsCandidates([]);
     setCupsMessage(null);
-    setCupsNotFound(false);
 
     if (!serviceGroup || !serviceSubgroup || !serviceCategory || !serviceSubcategory) return;
 
@@ -164,8 +175,11 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
       .then(({ status, body }) => {
         if (cupsLookupSeq.current !== seq) return;
         if (!body.success) {
-          if (status === 404) setCupsNotFound(true);
-          setCupsMessage(body.error || 'No se registra código CUPS para esta combinación. Revisa las opciones seleccionadas.');
+          // 404 = esta clasificación no tiene una asociación CUPS configurada todavía
+          // (no es un error del sistema ni falta un código en el catálogo — ver
+          // CupsCatalogDashboard.tsx, /admin/services/cups, donde se configuran esas
+          // asociaciones). El campo simplemente queda vacío, sin mensaje de error.
+          if (status !== 404) setCupsMessage(body.error || 'No se pudo consultar el catálogo CUPS.');
           return;
         }
         if (body.data.match === 'unique') {
@@ -191,11 +205,6 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
     if (skipCupsLookup.current > 0) { skipCupsLookup.current -= 1; return; }
     runCupsLookup();
   }, [runCupsLookup]);
-
-  const handleMappingCreated = () => {
-    setShowMappingModal(false);
-    runCupsLookup();
-  };
 
   // ── Categoría/Subcategoría de grupos dinámicos (ver GRUPOS_DINAMICOS) ────
   useEffect(() => {
@@ -285,6 +294,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
         serviceCategory: optionalOrNull(data.serviceCategory),
         serviceSubcategory: optionalOrNull(data.serviceSubcategory),
         cups: data.cups ? data.cups.toUpperCase() : undefined,
+        repsServiceCode: data.repsServiceCode || undefined,
         modalities: data.modalities,
         imageUrl: optionalOrNull(data.imageUrl),
         instructions: optionalOrNull(data.instructions),
@@ -552,7 +562,7 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
                       {...registerCups}
                       readOnly
                       style={{ ...readOnlyStyle, maxWidth: 200 }}
-                      placeholder={classificationComplete ? 'Se calcula al elegir la clasificación' : 'Se calculará al completar la clasificación'}
+                      placeholder={classificationComplete ? 'Sin código asignado' : 'Se calculará al completar la clasificación'}
                     />
                   )}
                   {!classificationComplete && (
@@ -560,28 +570,24 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
                       El Código CUPS se calculará automáticamente al completar la clasificación.
                     </p>
                   )}
-                  {cupsNotFound && classificationComplete && (
-                    <button
-                      type="button"
-                      onClick={() => setShowMappingModal(true)}
-                      style={{ marginTop: 10, display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 10, border: `1.5px solid ${C.gold}`, background: 'rgba(92,58,40,0.06)', color: C.gold, fontWeight: 700, fontSize: 12, cursor: 'pointer', fontFamily: FONT_SANS }}
-                    >
-                      <Plus size={14} /> Crear mapeo
-                    </button>
+                  {classificationComplete && !cups && cupsCandidates.length <= 1 && !cupsMessage && (
+                    <p style={{ margin: '8px 0 0', fontSize: 12, color: C.textMuted }}>
+                      El CUPS se asigna según la clasificación seleccionada.
+                    </p>
                   )}
                 </InputField>
 
-                {showMappingModal && (
-                  <CupsMappingModal
-                    specialty={categoria}
-                    serviceGroup={serviceGroup}
-                    serviceSubgroup={serviceSubgroup}
-                    serviceCategory={serviceCategory}
-                    serviceSubcategory={serviceSubcategory}
-                    onClose={() => setShowMappingModal(false)}
-                    onCreated={handleMappingCreated}
-                  />
-                )}
+                <InputField
+                  label="Servicio habilitado (Tabla REPS)"
+                  icon={ClipboardList}
+                  required
+                  error={errors.repsServiceCode}
+                >
+                  <select {...register('repsServiceCode')} style={activeInputStyle(!!errors.repsServiceCode)} disabled={loadingRepsCatalog}>
+                    <option value="">{loadingRepsCatalog ? 'Cargando…' : 'Selecciona el servicio...'}</option>
+                    {repsCatalog.map(s => <option key={s.code} value={s.code}>{s.code} — {s.name}</option>)}
+                  </select>
+                </InputField>
               </>
             )}
 
@@ -622,12 +628,6 @@ export const FormularioServicio: React.FC<Props> = ({ initialData, onSuccess, on
               <InputField label="Precio por sesión (COP)" icon={DollarSign} error={errors.price} required>
                 <input type="number" min={0} {...register('price')} style={activeInputStyle(!!errors.price)} placeholder="0 para gratuito" />
               </InputField>
-              <InputField label="Precio de control (2do en adelante)" icon={DollarSign} error={errors.controlPrice}>
-                <input type="number" min={0} {...register('controlPrice')} style={activeInputStyle(!!errors.controlPrice)} placeholder="Déjalo vacío si no aplica" />
-              </InputField>
-              <p style={{ gridColumn: '1 / -1', margin: '-8px 0 8px', fontSize: 12, color: C.textBrown }}>
-                Si lo defines, el 1er control de este servicio siempre es gratis y desde el 2do se cobra este precio. Déjalo vacío para que el servicio no tenga niveles (comportamiento actual).
-              </p>
             </div>
 
             <div style={{ marginBottom: 20 }}>

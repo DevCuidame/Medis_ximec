@@ -14,6 +14,7 @@ import {
   ServiceOfferRepository,
   BookingRequestRepository,
 } from '@repositories/services.repository.js';
+import { RepsCatalogRepository } from '@repositories/repsCatalog.repository.js';
 import { resolveDiscount } from '@services/discount.service.js';
 import { DiscountRepository } from '@repositories/discount.repository.js';
 import type { AppliedDiscount } from '../types/discount.types.js';
@@ -28,6 +29,7 @@ import type {
 const SERVICE_GROUP_CODES = ['01', '02', '03', '04', '05', '06'];
 const MODALITY_CODES = ['01', '02', '03', '04', '05', '06', '08', '09'];
 const CUPS_RE = /^[A-Za-z0-9]{6}$/;
+const REPS_SERVICE_CODE_RE = /^\d{2,4}$/;
 
 /** Valida y normaliza el payload de catálogo. Lanza {statusCode:400} con mensaje. */
 function validateOfferPayload(body: Record<string, unknown>, partial: boolean): void {
@@ -42,6 +44,9 @@ function validateOfferPayload(body: Record<string, unknown>, partial: boolean): 
     if (!CUPS_RE.test(String(body.cups))) err('El código CUPS debe tener 6 caracteres alfanuméricos.');
     // Mutación intencional: normaliza el CUPS a mayúsculas en el propio body antes de persistirlo.
     body.cups = String(body.cups).toUpperCase();
+  }
+  if (body.repsServiceCode !== undefined && body.repsServiceCode !== null && body.repsServiceCode !== '') {
+    if (!REPS_SERVICE_CODE_RE.test(String(body.repsServiceCode))) err('Código de servicio (Tabla REPS) inválido.');
   }
   if (body.modalities !== undefined && body.modalities !== null) {
     if (!Array.isArray(body.modalities) || (body.modalities as unknown[]).some(m => !MODALITY_CODES.includes(String(m)))) {
@@ -74,7 +79,7 @@ function buildDocSyncParams(
 
 const CATALOG_PAYLOAD_KEYS = [
   'serviceName', 'description', 'specialty', 'serviceGroup', 'serviceSubgroup',
-  'serviceCategory', 'serviceSubcategory', 'cups', 'modalities', 'isActive',
+  'serviceCategory', 'serviceSubcategory', 'cups', 'repsServiceCode', 'modalities', 'isActive',
   'basePrice', 'controlPrice', 'imageUrl', 'instructions', 'restrictions',
   'risks', 'contraindications',
 ];
@@ -224,6 +229,16 @@ export async function getOffer(req: Request, res: Response): Promise<void> {
     const offer = await ServiceOfferRepository.findById(req.params['id']!);
     if (!offer) { res.status(404).json({ success: false, error: 'Oferta no encontrada' }); return; }
     res.json({ success: true, data: { offer } });
+  } catch (err: unknown) {
+    res.status(500).json({ success: false, error: (err as Error).message });
+  }
+}
+
+/** ADMIN ONLY — catálogo activo de la Tabla de Referencia de Servicios REPS (Resolución 3100 de 2019). */
+export async function listRepsCatalog(_req: Request, res: Response): Promise<void> {
+  try {
+    const services = await RepsCatalogRepository.listActive();
+    res.json({ success: true, data: { services } });
   } catch (err: unknown) {
     res.status(500).json({ success: false, error: (err as Error).message });
   }

@@ -40,6 +40,7 @@ export const servicioSchema = z.object({
   serviceCategory: z.string().optional(),
   serviceSubcategory: z.string().optional(),
   cups: z.string().optional(),
+  repsServiceCode: z.string().optional(),
   modalities: z.array(z.string()).min(1, 'Selecciona al menos una modalidad'),
   isActive: z.boolean(),
   durationMinutes: z.string().refine(v => Number.isInteger(Number(v)) && Number(v) > 0, 'Duración en minutos, mayor a 0'),
@@ -54,6 +55,9 @@ export const servicioSchema = z.object({
   if (data.serviceGroup === GRUPO_OTROS_SERVICIOS) return;
   if (!/^[A-Za-z0-9]{6}$/.test(data.cups ?? '')) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cups'], message: 'El CUPS debe tener 6 caracteres alfanuméricos' });
+  }
+  if (!data.repsServiceCode) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['repsServiceCode'], message: 'Selecciona el servicio habilitado (Tabla REPS)' });
   }
 });
 
