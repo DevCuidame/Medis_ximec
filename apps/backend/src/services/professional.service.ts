@@ -1,6 +1,7 @@
 import { ProfessionalRepository } from '@repositories/professional.repository.js'
 import { UserRepository } from '@repositories/user.repository.js'
 import { hashPassword, encryptSecret, decryptSecret } from '@utils/index.js'
+import { provisionDocProfessional } from './docProfessionalProvision.service.js'
 import type {
   ProfessionalPublic,
   CreateProfessionalDTO,
@@ -22,7 +23,10 @@ export const ProfessionalService = {
     return pro
   },
 
-  async create(dto: CreateProfessionalDTO): Promise<ProfessionalPublic> {
+  async create(dto: CreateProfessionalDTO): Promise<{
+    professional: ProfessionalPublic
+    docSync?: { ok: boolean; error?: string }
+  }> {
     const role = dto.role ?? 'PROFESSIONAL'
     if (role !== 'PROFESSIONAL' && role !== 'ADMIN') {
       throw Object.assign(
@@ -36,7 +40,45 @@ export const ProfessionalService = {
 
     const passwordHash = hashPassword(dto.password)
     const sisproPasswordEnc = dto.sisproPassword ? encryptSecret(dto.sisproPassword) : null
-    return ProfessionalRepository.create({ ...dto, role, passwordHash, sisproPasswordEnc })
+    const professional = await ProfessionalRepository.create({ ...dto, role, passwordHash, sisproPasswordEnc })
+
+    if (role !== 'PROFESSIONAL') return { professional }
+
+    // Aprovisiona la cuenta correspondiente en CuidameDoc — best-effort, nunca
+    // bloquea la creación local ya exitosa. El portal profesional real (agenda,
+    // historias clínicas) vive en CuidameDoc, no en MedisXime — mismo patrón
+    // que el proyecto hermano Diana
+    // (docs/superpowers/specs/2026-08-10-doctores-cuidamedoc-provision-design.md
+    // de ese repo). Una vez aprovisionado, el login con estas mismas
+    // credenciales hace el handoff SSO a CuidameDoc (ArtistLogin.tsx) en vez
+    // de quedarse en la pantalla profesional interna de MedisXime.
+    const docSync = await provisionDocProfessional({
+      email: dto.email,
+      password: dto.password,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      idType: dto.idType ?? '',
+      idNumber: dto.idNumber ?? '',
+      phone: dto.phone ?? '',
+      address: dto.address ?? '',
+      medicalRegistrationNumber: dto.professionalLicense ?? '',
+      specialties: dto.specialties,
+    })
+    let docSyncResult = { ok: docSync.ok, error: docSync.error }
+    if (docSync.ok && docSync.docProfessionalId) {
+      try {
+        await ProfessionalRepository.setDocProfessionalId(professional.id, docSync.docProfessionalId)
+      } catch (err: any) {
+        // El aprovisionado en CuidameDoc sí funcionó — no dejemos que un fallo
+        // al guardar el enlace local convierta una creación exitosa en un 500.
+        docSyncResult = {
+          ok: false,
+          error: `Profesional aprovisionado en CuidameDoc (id ${docSync.docProfessionalId}) pero no se pudo guardar el enlace local: ${err.message}`,
+        }
+      }
+    }
+
+    return { professional, docSync: docSyncResult }
   },
 
   async getAdminDetails(id: string): Promise<ProfessionalAdminDetails> {

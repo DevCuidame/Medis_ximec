@@ -58,6 +58,36 @@ Al loguearse:
   hace falta construir nada nuevo. No confundir con `AdminProfessionalsPage`
   de CuidameDoc, que no tiene esta acción.
 
+### Aprovisionamiento automático en CuidameDoc al crear un profesional (admin)
+Mismo patrón que el proyecto hermano Diana
+(`diana/medis/docs/superpowers/specs/2026-08-10-doctores-cuidamedoc-provision-design.md`):
+cuando el admin crea un usuario con rol `PROFESSIONAL` desde
+`UsuariosDashboard.tsx` (`/admin/users`, la ruta real — no
+`AdminProfessionals.tsx`, alternativa/legacy), `ProfessionalService.create`
+(`apps/backend/src/services/professional.service.ts`) además llama a
+`provisionDocProfessional` (`docProfessionalProvision.service.ts`), que:
+1. Autentica contra CuidameDoc como Ximena (`docAuth.ts`, `withDocAuth`).
+2. Llama `POST /professionals/team-members` con los mismos datos (email,
+   password, nombre, identificación, teléfono, dirección,
+   `professionalLicense` → `medical_license_number`, primera especialidad),
+   creando ahí un profesional con `head_professional_id = 2` (Ximena).
+3. Si CuidameDoc acepta, guarda el `professional_id` devuelto en
+   `users.doc_professional_id` (migración `030_professional_doc_link.sql`).
+- **Best-effort, nunca bloquea la creación local:** si CuidameDoc rechaza
+  (email duplicado, red caída, falta `professionalLicense`, etc.), la
+  cuenta en MedisXime queda creada igual; la respuesta incluye
+  `docSync: { ok: false, error }` y el admin ve un toast de advertencia
+  (`UsuariosDashboard.tsx`) en vez de un error bloqueante.
+- **Efecto en el login:** una vez aprovisionado, esas mismas credenciales
+  ya existen en CuidameDoc — el handoff SSO de `ArtistLogin.tsx` (ver
+  arriba) hace que el profesional entre a CuidameDoc en su primer login,
+  en vez de quedarse en la pantalla profesional interna de MedisXime.
+- **No cubierto en este pase:** la desactivación de un profesional en
+  MedisXime NO desactiva su cuenta en CuidameDoc — el botón "Eliminar" de
+  `UsuariosDashboard.tsx` llama a `DELETE /api/users/:id` (genérico), no a
+  `DELETE /api/professionals/:id` (que sí tiene, sin usar,
+  `ProfessionalService.deactivate`). Si se necesita, es un cambio aparte.
+
 ### Campos de perfil por rol (migración 016)
 | Rol            | Campos extra                                                       |
 |----------------|--------------------------------------------------------------------|

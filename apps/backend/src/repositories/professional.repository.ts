@@ -164,6 +164,17 @@ export const ProfessionalRepository = {
     return (rowCount ?? 0) > 0
   },
 
+  /** Enlaza la cuenta local con el professional_id que le asignó CuidameDoc al aprovisionarla */
+  async setDocProfessionalId(id: string, docProfessionalId: number): Promise<void> {
+    await pool.query(`UPDATE users SET doc_professional_id = $1 WHERE id = $2`, [docProfessionalId, id])
+  },
+
+  /** professional_id en CuidameDoc del profesional local (null si nunca se aprovisionó) */
+  async getDocProfessionalId(id: string): Promise<number | null> {
+    const { rows } = await pool.query(`SELECT doc_professional_id FROM users WHERE id = $1`, [id])
+    return rows[0]?.doc_professional_id ?? null
+  },
+
   /** Update online status (available / in_session / offline) */
   async updateStatus(id: string, status: ProfessionalStatus): Promise<boolean> {
     const { rowCount } = await pool.query(

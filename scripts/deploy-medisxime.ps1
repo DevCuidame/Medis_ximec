@@ -3,15 +3,24 @@
 #  VM: cuidame-app | IP: 35.239.162.75 | Proyecto: esmart-health
 #
 #  USO:
-#    .\deploy-medisxime.ps1
+#    .\deploy-medisxime.ps1                        (deploy completo)
+#    .\deploy-medisxime.ps1 -Target frontend        (solo subir el frontend compilado)
+#    .\deploy-medisxime.ps1 -Target backend         (solo backend: install+migraciones+PM2)
 #    .\deploy-medisxime.ps1 -DbPass "OtraPass!" -SkipUpload
+#
+#  -Target frontend / -Target backend asumen que la VM ya fue provisionada
+#  al menos una vez con -Target all (default) — se saltan apt-get/Postgres/
+#  nginx/Certbot, que solo hacen falta en el primer deploy o si cambia la
+#  infraestructura.
 # ============================================================
 
 param(
     [string]$DbPass    = "medisXime2024Secure!",
     [string]$JwtSecret = "",
     [string]$CertbotEmail = "admin@medisxime.com",
-    [switch]$SkipUpload
+    [switch]$SkipUpload,
+    [ValidateSet("all", "frontend", "backend")]
+    [string]$Target = "all"
 )
 $DbPassword = $DbPass   # alias interno para compatibilidad con placeholders
 
@@ -83,28 +92,39 @@ function Invoke-RemoteBash {
             --command="bash $launcher" --quiet 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0) { throw "Lanzador fallo en $Label" }
 
-        # Polling cada 15 s con conexiones SSH cortas hasta que aparezca el .rc
+        # Sondeo: primer chequeo inmediato (sin dormir antes), despues cada 2 s
+        # -- antes dormia 15 s fijos ANTES del primer chequeo en cada vuelta,
+        # asi que un paso que terminaba en 1-2 s (la mayoria, tras optimizar
+        # el resto del script) igual reportaba "15 s". El trabajo remoto
+        # sigue en background (inmune a que se caiga esta conexion SSH de
+        # sondeo), solo se achico la espera artificial entre chequeos.
         $timeout = 900
         $elapsed = 0
+        $pollInterval = 2
         Write-Host "  Ejecutando $Label " -NoNewline
-        do {
-            Start-Sleep -Seconds 15
-            $elapsed += 15
-            Write-Host "." -NoNewline
-
+        while ($true) {
             $done = ((gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
                 --command="test -f $remoteRc && echo 1 || echo 0" --quiet 2>$null) -join "").Trim()
+            if ($done -eq "1") { break }
+            Write-Host "." -NoNewline
+            Start-Sleep -Seconds $pollInterval
+            $elapsed += $pollInterval
             if ($elapsed -ge $timeout) { throw "Timeout en $Label (${timeout}s)" }
-        } until ($done -eq "1")
-        Write-Host " ($elapsed s)"
+        }
+        Write-Host " (~$elapsed s)"
 
-        # Mostrar output completo del script
-        gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
-            --command="cat $remoteLog"
-
-        # Verificar exit code
-        $rc = ((gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
-            --command="cat $remoteRc" --quiet 2>$null) -join "").Trim()
+        # Log completo + exit code en UNA sola conexion SSH (antes eran 2)
+        $output = (gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
+            --command="cat $remoteLog; echo __RC__:$(cat $remoteRc)" --quiet 2>$null) -join "`n"
+        $markerIndex = $output.LastIndexOf('__RC__:')
+        if ($markerIndex -ge 0) {
+            $logText = $output.Substring(0, $markerIndex).TrimEnd("`r", "`n")
+            $rc = $output.Substring($markerIndex + 7).Trim()
+        } else {
+            $logText = $output
+            $rc = "1"
+        }
+        if ($logText) { Write-Host $logText }
         if ($rc -ne "0") { throw "Script remoto fallo en $Label (rc=$rc)" }
 
     } finally {
@@ -115,7 +135,7 @@ function Invoke-RemoteBash {
 }
 
 # ── PASO 1: Verificar gcloud ──────────────────────────────────
-Write-Step "PASO 1/11  Verificando gcloud CLI"
+Write-Step "PASO 1/12  Verificando gcloud CLI"
 
 $v = gcloud version 2>$null | Select-String "Google Cloud SDK"
 if (-not $v) {
@@ -127,7 +147,7 @@ gcloud config set project $PROJECT_ID 2>&1 | Out-Null
 Write-OK "Proyecto activo: $PROJECT_ID"
 
 # ── PASO 2: Firewall ──────────────────────────────────────────
-Write-Step "PASO 2/11  Configurando firewall GCP (puertos 80 y 443)"
+Write-Step "PASO 2/12  Configurando firewall GCP (puertos 80 y 443)"
 
 $rule = gcloud compute firewall-rules list `
     --filter="name=medisxime-allow-web" --format="value(name)" 2>$null
@@ -141,12 +161,114 @@ if (-not $rule) {
     Write-OK "Regla TCP:80/443 ya existe"
 }
 
-# ── PASO 3: Empaquetar proyecto ───────────────────────────────
-if (-not $SkipUpload) {
-    Write-Step "PASO 3/11  Creando paquete de despliegue"
+# ── ATAJO: -Target frontend ────────────────────────────────────
+# Un cambio de solo-frontend no necesita tocar dependencias del sistema,
+# Postgres, migraciones, nginx, Certbot ni reiniciar el backend con PM2 —
+# solo reemplazar los archivos estaticos que nginx ya sirve desde
+# APP_DIR/medisxime-landing/dist. Se sube un paquete chico (solo el dist/
+# compilado, no todo el monorepo) y se reemplaza en el servidor con un swap
+# atomico (build a una carpeta nueva, luego mv sobre la vieja) para que
+# nginx nunca sirva un dist a medio escribir.
+if ($Target -eq "frontend") {
+    Write-Step "Deploy rapido: SOLO frontend"
 
-    $staging = "$env:TEMP\acari-staging"
-    $zipPath = "$env:TEMP\acari-deploy.zip"
+    $landingDir = Join-Path $PROJ_ROOT "medisxime-landing"
+    if (-not (Test-Path (Join-Path $landingDir "node_modules"))) {
+        Write-Host "  node_modules no encontrado, instalando dependencias del workspace..."
+        Push-Location $PROJ_ROOT
+        pnpm install
+        if ($LASTEXITCODE -ne 0) { Pop-Location; throw "pnpm install (local) fallo" }
+        Pop-Location
+    }
+    Push-Location $landingDir
+    pnpm run build
+    if ($LASTEXITCODE -ne 0) { Pop-Location; throw "Build local del frontend fallo" }
+    Pop-Location
+    Write-OK "Frontend compilado en medisxime-landing/dist"
+
+    $zipPath = "$env:TEMP\xime-frontend.zip"
+    if (Test-Path $zipPath) { Remove-Item $zipPath }
+    Compress-Archive -Path (Join-Path $landingDir "dist\*") -DestinationPath $zipPath
+    $mb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
+    Write-OK "Paquete: xime-frontend.zip ($mb MB)"
+
+    gcloud compute scp $zipPath "${VM_NAME}:/tmp/xime-frontend.zip" `
+        --zone=$ZONE --project=$PROJECT_ID --quiet
+    if ($LASTEXITCODE -ne 0) { throw "gcloud scp fallo" }
+    Write-OK "Paquete subido a /tmp/xime-frontend.zip"
+
+    $sFrontend = (@'
+#!/bin/bash
+set -euo pipefail
+APP_DIR="__APP_DIR__"
+
+echo "--- Extrayendo dist nuevo ---"
+rm -rf "${APP_DIR}/medisxime-landing/dist.new"
+mkdir -p "${APP_DIR}/medisxime-landing/dist.new"
+unzip -o /tmp/xime-frontend.zip -d "${APP_DIR}/medisxime-landing/dist.new" > /dev/null
+
+echo "--- Swap atomico (nginx nunca sirve un dist a medio escribir) ---"
+rm -rf "${APP_DIR}/medisxime-landing/dist.old"
+[ -d "${APP_DIR}/medisxime-landing/dist" ] && mv "${APP_DIR}/medisxime-landing/dist" "${APP_DIR}/medisxime-landing/dist.old"
+mv "${APP_DIR}/medisxime-landing/dist.new" "${APP_DIR}/medisxime-landing/dist"
+rm -rf "${APP_DIR}/medisxime-landing/dist.old"
+
+echo "=== Frontend actualizado en ${APP_DIR}/medisxime-landing/dist ==="
+find "${APP_DIR}/medisxime-landing/dist" -type f | wc -l
+'@) -replace '__APP_DIR__', $APP_DIR
+
+    Invoke-RemoteBash -Label "swap-frontend" -Script $sFrontend
+    Write-OK "Frontend reemplazado en la VM (sin tocar backend/DB/nginx)"
+
+    Start-Sleep -Seconds 2
+    Invoke-RemoteBash -Label "verify" -Script (@'
+#!/bin/bash
+HTTP_WEB=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:__WEB_PORT__ 2>/dev/null || echo "000")
+echo "nginx puerto __WEB_PORT__: HTTP $HTTP_WEB"
+'@ -replace '__WEB_PORT__', $WEB_PORT)
+
+    Write-Host ""
+    Write-Host ("=" * 62) -ForegroundColor Green
+    Write-Host "  FRONTEND DESPLEGADO" -ForegroundColor Green
+    Write-Host ("=" * 62) -ForegroundColor Green
+    Write-Host "  App: https://$SITE_HOST" -ForegroundColor White
+    exit 0
+}
+
+# ── PASO 3: Empaquetar proyecto ───────────────────────────────
+# En este punto $Target ya es "all" o "backend" — "frontend" salio arriba
+# por su propio atajo.
+if (-not $SkipUpload) {
+    $landingDir = Join-Path $PROJ_ROOT "medisxime-landing"
+
+    if ($Target -eq "all") {
+        # Compilar el frontend AQUI, en la maquina local (mas rapida y sin
+        # pelear por CPU/memoria con el resto de la VM) en vez de subir el
+        # codigo fuente y correr "vite build" remoto. Solo se sube el dist/
+        # ya compilado. Se omite por completo con -Target backend, donde el
+        # dist/ que ya esta en la VM de un deploy anterior queda intacto
+        # (ver PASO 8, que ya no borra todo el APP_DIR).
+        Write-Step "PASO 3/12  Compilando frontend localmente"
+        if (-not (Test-Path (Join-Path $landingDir "node_modules"))) {
+            Write-Host "  node_modules no encontrado, instalando dependencias del workspace..."
+            Push-Location $PROJ_ROOT
+            pnpm install
+            if ($LASTEXITCODE -ne 0) { Pop-Location; throw "pnpm install (local) fallo" }
+            Pop-Location
+        }
+        Push-Location $landingDir
+        pnpm run build
+        if ($LASTEXITCODE -ne 0) { Pop-Location; throw "Build local del frontend fallo" }
+        Pop-Location
+        Write-OK "Frontend compilado en medisxime-landing/dist"
+    } else {
+        Write-Step "PASO 3/12  Build de frontend omitido (-Target backend)"
+    }
+
+    Write-Step "PASO 4/12  Creando paquete de despliegue"
+
+    $staging = "$env:TEMP\xime-staging"
+    $zipPath = "$env:TEMP\xime-deploy.zip"
 
     if (Test-Path $staging) { Remove-Item $staging -Recurse -Force }
     New-Item -ItemType Directory -Path $staging | Out-Null
@@ -159,29 +281,57 @@ if (-not $SkipUpload) {
     # robocopy exit 0-7 = OK (no error)
     if ($LASTEXITCODE -gt 7) { throw "robocopy fallo: $LASTEXITCODE" }
 
+    if ($Target -eq "all") {
+        # El robocopy de arriba excluye CUALQUIER carpeta "dist" (para no
+        # subir basura de builds viejos, ej. apps/backend/dist de un tsc
+        # suelto) — incluido el dist/ recien compilado del frontend. Se
+        # copia aparte.
+        Write-Host "  Copiando medisxime-landing/dist (build local)..."
+        Copy-Item -Path (Join-Path $landingDir "dist") -Destination (Join-Path $staging "medisxime-landing\dist") -Recurse
+    }
+
     if (Test-Path $zipPath) { Remove-Item $zipPath }
     Compress-Archive -Path "$staging\*" -DestinationPath $zipPath
     $mb = [math]::Round((Get-Item $zipPath).Length / 1MB, 1)
-    Write-OK "Paquete: acari-deploy.zip ($mb MB)"
+    Write-OK "Paquete: xime-deploy.zip ($mb MB)"
     Remove-Item $staging -Recurse -Force
 
-    # ── PASO 4: Subir archivo ─────────────────────────────────
-    Write-Step "PASO 4/11  Subiendo paquete a la VM"
-    gcloud compute scp $zipPath "${VM_NAME}:/tmp/acari-deploy.zip" `
+    # ── PASO 5: Subir archivo ─────────────────────────────────
+    Write-Step "PASO 5/12  Subiendo paquete a la VM"
+    gcloud compute scp $zipPath "${VM_NAME}:/tmp/xime-deploy.zip" `
         --zone=$ZONE --project=$PROJECT_ID --quiet
     if ($LASTEXITCODE -ne 0) { throw "gcloud scp fallo" }
-    Write-OK "Paquete subido a /tmp/acari-deploy.zip"
+    Write-OK "Paquete subido a /tmp/xime-deploy.zip"
 } else {
-    Write-Step "PASO 3-4/11  Upload omitido (-SkipUpload)"
+    Write-Step "PASO 3-5/12  Build + upload omitidos (-SkipUpload)"
 }
 
-# ── PASO 5: Instalar dependencias ────────────────────────────
-Write-Step "PASO 5/11  Instalando dependencias en VM"
+# ── PASO 6: Instalar dependencias ────────────────────────────
+# Solo en -Target all — asume que -Target backend se usa en una VM ya
+# provisionada (ver cabecera del script).
+if ($Target -eq "all") {
+Write-Step "PASO 6/12  Instalando dependencias en VM"
 
 # Nota: @'...'@ es literal — bash usa sus propias variables $()
 Invoke-RemoteBash -Label "install-deps" -Script @'
 #!/bin/bash
 set -euo pipefail
+
+# Si ya esta todo instalado (deploys despues del primero), nos saltamos
+# apt-get update y todas las instalaciones — es la unica parte de este paso
+# que no tenia guard y corria siempre sin necesidad.
+if command -v node &>/dev/null && command -v pnpm &>/dev/null \
+    && command -v pm2 &>/dev/null && command -v psql &>/dev/null \
+    && (command -v nginx &>/dev/null || [ -x /usr/sbin/nginx ]) \
+    && command -v certbot &>/dev/null; then
+    echo "--- Dependencias ya instaladas, omitiendo apt-get update ---"
+    echo "Node: $(node --version)"
+    echo "pnpm: $(pnpm --version)"
+    echo "Postgres: $(psql --version)"
+    echo "=== Dependencias OK (sin cambios) ==="
+    exit 0
+fi
+
 echo "--- Actualizando sistema ---"
 sudo apt-get update -qq
 
@@ -238,7 +388,7 @@ echo "=== Dependencias OK ==="
 Write-OK "Dependencias instaladas (Node/pnpm/PM2/PostgreSQL/nginx)"
 
 # ── PASO 6: Configurar PostgreSQL ────────────────────────────
-Write-Step "PASO 6/11  Configurando PostgreSQL"
+Write-Step "PASO 7/12  Configurando PostgreSQL"
 
 # Usamos placeholders __VAR__ que PowerShell reemplaza antes de subir
 $s06 = (@'
@@ -292,9 +442,12 @@ echo "=== PostgreSQL OK ==="
 
 Invoke-RemoteBash -Label "setup-db" -Script $s06
 Write-OK "Base de datos '$DB_NAME' lista"
+} else {
+    Write-Step "PASO 6-7/12  Dependencias + PostgreSQL omitidos (-Target backend)"
+}
 
 # ── PASO 7: Extraer y configurar proyecto ────────────────────
-Write-Step "PASO 7/11  Configurando proyecto en VM"
+Write-Step "PASO 8/12  Configurando proyecto en VM"
 
 $s07 = (@'
 #!/bin/bash
@@ -312,11 +465,17 @@ EMAIL_PASS="***REMOVED-EMAIL-APP-PASSWORD***"
 ADMIN_PW="***REMOVED-ADMIN-PASSWORD***"
 
 echo "--- Extrayendo proyecto ---"
-sudo rm -rf "${APP_DIR}"
+# Ya no se borra todo APP_DIR antes de extraer: un -Target backend no
+# incluye medisxime-landing/dist en el ZIP (el frontend no se toco), y un
+# rm -rf aca borraria el dist ya desplegado. unzip -o sobreescribe en el
+# lugar lo que SI viene en el ZIP y deja el resto intacto -- el unico costo
+# es que un archivo borrado del repo local no se borra solo en la VM hasta
+# el proximo -Target all (o una limpieza manual), aceptable frente al riesgo
+# de tumbar el frontend en un deploy de solo-backend.
 sudo mkdir -p "${APP_DIR}"
 sudo chown "$USER" "${APP_DIR}"
 set +e
-unzip -o /tmp/acari-deploy.zip -d "${APP_DIR}" > /dev/null
+unzip -o /tmp/xime-deploy.zip -d "${APP_DIR}" > /dev/null
 UNZIP_RC=$?
 set -e
 [ $UNZIP_RC -le 1 ] || { echo "ERROR: unzip fallo con codigo $UNZIP_RC"; exit $UNZIP_RC; }
@@ -341,12 +500,16 @@ EMAIL_HOST=smtp.gmail.com
 ADMINPW=${ADMIN_PW}
 ENVEOF
 
-echo "--- Instalando dependencias npm ---"
+echo "--- Instalando dependencias npm (solo backend, el frontend ya viene compilado) ---"
 cd "${APP_DIR}"
 # Limpiar cache de pnpm para evitar conflictos con módulos del ZIP
 pnpm store prune 2>/dev/null || true
-# Instalar todas las dependencias del monorepo (frozen=false para evitar errores de lockfile)
-pnpm install --no-frozen-lockfile 2>&1
+# El frontend se compila localmente antes de empaquetar (ver PASO 3) y su
+# dist/ ya viaja listo en el ZIP — no hace falta instalar react/vite/
+# tailwind/framer-motion/etc en la VM. Se filtra el install al backend y
+# sus dependencias de workspace (@medisxime/shared-types), evitando bajar
+# todo el arbol de dependencias del monorepo.
+pnpm install --no-frozen-lockfile --filter "@medisxime/backend..." 2>&1
 
 echo ""
 echo "=== Proyecto configurado en ${APP_DIR} ==="
@@ -365,29 +528,11 @@ ls -la "${APP_DIR}"
 Invoke-RemoteBash -Label "setup-project" -Script $s07
 Write-OK "Proyecto extraido + .env creado + npm install completado"
 
-# ── PASO 8: Build frontend ────────────────────────────────────
-Write-Step "PASO 8/11  Compilando frontend (Vite/React)"
-
-$s08 = (@'
-#!/bin/bash
-set -euo pipefail
-APP_DIR="__APP_DIR__"
-echo "--- Build frontend ---"
-cd "${APP_DIR}/medisxime-landing"
-# NODE_OPTIONS para dar suficiente memoria al proceso de Node/Vite
-export NODE_OPTIONS="--max-old-space-size=2048"
-NODE_OPTIONS="--max-old-space-size=2048" pnpm exec vite build 2>&1
-echo ""
-echo "=== Frontend compilado ==="
-echo "Archivos en dist/: $(find dist -type f | wc -l)"
-ls -lh dist/
-'@) -replace '__APP_DIR__', $APP_DIR
-
-Invoke-RemoteBash -Label "build-frontend" -Script $s08
-Write-OK "Frontend compilado en $APP_DIR/medisxime-landing/dist"
+# El frontend ya viene compilado en el ZIP (PASO 3, build local) — el paso
+# remoto "vite build" que antes iba aqui ya no hace falta.
 
 # ── PASO 9: Migraciones SQL ───────────────────────────────────
-Write-Step "PASO 9/11  Ejecutando migraciones de base de datos (13 archivos)"
+Write-Step "PASO 9/12  Ejecutando migraciones de base de datos (13 archivos)"
 
 $s09 = (@'
 #!/bin/bash
@@ -429,8 +574,13 @@ PGPASSWORD="${DB_PASS}" psql -h 127.0.0.1 -U "${DB_USER}" -d "${DB_NAME}" -c "\d
 Invoke-RemoteBash -Label "migrations" -Script $s09
 Write-OK "Migraciones aplicadas"
 
+# ── PASO 10-11: nginx + Certbot ────────────────────────────────
+# Solo en -Target all — la config de nginx y el certificado SSL no cambian
+# entre deploys de codigo, solo cuando cambia la infraestructura.
+if ($Target -eq "all") {
+
 # ── PASO 10: Configurar nginx ─────────────────────────────────
-Write-Step "PASO 10/11  Configurando nginx"
+Write-Step "PASO 10/12  Configurando nginx"
 
 # El bloque nginx usa $uri, $http_upgrade etc. (variables nginx, no PS)
 # Con @'...'@ estas se preservan literales; solo reemplazamos __PLACEHOLDERS__
@@ -526,6 +676,15 @@ set -euo pipefail
 SITE_HOST="__SITE_HOST__"
 CERTBOT_EMAIL="__CERTBOT_EMAIL__"
 
+# Si ya existe un certificado para el dominio, Certbot no hace falta en
+# cada deploy — sudo certbot renew (via el timer systemd que el paquete ya
+# instala) se encarga de renovarlo antes de que expire.
+if sudo test -d "/etc/letsencrypt/live/${SITE_HOST}"; then
+    echo "--- Certificado ya existe para ${SITE_HOST}, omitiendo Certbot ---"
+    sudo certbot certificates 2>/dev/null | grep -A2 "${SITE_HOST}" || true
+    exit 0
+fi
+
 echo "--- Solicitando certificado SSL ---"
 if sudo certbot --nginx -d "${SITE_HOST}" --non-interactive --agree-tos -m "${CERTBOT_EMAIL}" --redirect; then
     echo "=== Certbot OK ==="
@@ -541,6 +700,10 @@ fi
 
 Invoke-RemoteBash -Label "certbot" -Script $s11Cert
 Write-OK "Certificado SSL solicitado"
+
+} else {
+    Write-Step "PASO 10-11/12  nginx + Certbot omitidos (-Target backend)"
+}
 
 # ── PASO 12: Iniciar backend con PM2 + tsx ────────────────────
 Write-Step "PASO 12/12  Iniciando backend con PM2"
