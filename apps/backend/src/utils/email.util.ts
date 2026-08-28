@@ -20,6 +20,24 @@ const MUTED  = '#B0A08C';
 const fmt = (n: number) =>
   new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n);
 
+// Los campos interpolados abajo (userName, planName, serviceName, ...) vienen
+// de datos de registro/catálogo controlados por el usuario o el admin — sin
+// escapar, permitirían HTML injection en el correo (al admin o al paciente).
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Los asuntos de correo también interpolan estos campos — CRLF los sacaría
+// de la línea Subject hacia otras cabeceras si nodemailer no los filtrara.
+function sanitizeForHeader(s: string): string {
+  return s.replace(/[\r\n]/g, ' ');
+}
+
 const TYPE_LABELS: Record<string, string> = {
   per_class: 'Por Consulta',
   monthly:   'Mensual',
@@ -93,11 +111,12 @@ interface AdminNotifParams {
   appUrl?: string;
 }
 
-function adminNotifHtml(p: AdminNotifParams): string {
+function adminNotifHtml(rawParams: AdminNotifParams): string {
+  const p = { ...rawParams, userName: escapeHtml(rawParams.userName), userEmail: escapeHtml(rawParams.userEmail), planName: escapeHtml(rawParams.planName) };
   const methodLabel = p.paymentMethod === 'cash' ? '💵 Efectivo' : '💳 Wompi';
   const methodColor = p.paymentMethod === 'cash' ? GOLD : '#7C3AED';
   const url = (p.appUrl ?? 'http://localhost:5173') + '/admin/finances';
-  const typeLabel = TYPE_LABELS[p.planType] ?? p.planType;
+  const typeLabel = escapeHtml(TYPE_LABELS[rawParams.planType] ?? rawParams.planType);
 
   return base(`
     <!-- Icon + title -->
@@ -174,10 +193,11 @@ interface UserConfirmParams {
   appUrl?: string;
 }
 
-function userConfirmHtml(p: UserConfirmParams): string {
+function userConfirmHtml(rawParams: UserConfirmParams): string {
+  const p = { ...rawParams, userName: escapeHtml(rawParams.userName), planName: escapeHtml(rawParams.planName) };
   const url = (p.appUrl ?? 'http://localhost:5173') + '/user/classes';
-  const typeLabel = TYPE_LABELS[p.planType] ?? p.planType;
-  const typeColor = TYPE_COLORS[p.planType] ?? GOLD;
+  const typeLabel = escapeHtml(TYPE_LABELS[rawParams.planType] ?? rawParams.planType);
+  const typeColor = TYPE_COLORS[rawParams.planType] ?? GOLD;
 
   const durLine = p.durationDays != null
     ? `Vigencia de ${p.durationDays} días`
@@ -266,7 +286,13 @@ interface ServiceConfirmParams {
   appUrl?: string;
 }
 
-function serviceConfirmHtml(p: ServiceConfirmParams): string {
+function serviceConfirmHtml(rawParams: ServiceConfirmParams): string {
+  const p = {
+    ...rawParams,
+    userName: escapeHtml(rawParams.userName),
+    serviceName: escapeHtml(rawParams.serviceName),
+    locationName: rawParams.locationName ? escapeHtml(rawParams.locationName) : rawParams.locationName,
+  };
   const url = (p.appUrl ?? 'http://localhost:5173') + '/user/services';
   const methodLabel = p.paymentMethod === 'cash' ? '💵 Efectivo' : '💳 Wompi';
   const dateLabel = p.scheduledAt
@@ -351,7 +377,7 @@ export async function sendServicePaymentConfirmation(
   await transporter.sendMail({
     from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: toEmail,
-    subject: `✅ ¡Tu inscripción a ${params.serviceName} está confirmada! — MedisXime`,
+    subject: `✅ ¡Tu inscripción a ${sanitizeForHeader(params.serviceName)} está confirmada! — MedisXime`,
     html: serviceConfirmHtml(params),
   });
 }
@@ -361,7 +387,7 @@ export async function sendAdminPaymentNotification(params: AdminNotifParams): Pr
   await transporter.sendMail({
     from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: env.ADMIN_EMAIL,
-    subject: `🔔 Nuevo pago pendiente — ${params.planName} (${params.userName})`,
+    subject: `🔔 Nuevo pago pendiente — ${sanitizeForHeader(params.planName)} (${sanitizeForHeader(params.userName)})`,
     html: adminNotifHtml(params),
   });
 }
@@ -374,7 +400,7 @@ export async function sendUserPaymentConfirmation(
   await transporter.sendMail({
     from: `"MedisXime Consultorio" <${env.EMAIL_FROM}>`,
     to: toEmail,
-    subject: `✅ ¡Tu plan ${params.planName} está activo! — MedisXime`,
+    subject: `✅ ¡Tu plan ${sanitizeForHeader(params.planName)} está activo! — MedisXime`,
     html: userConfirmHtml(params),
   });
 }

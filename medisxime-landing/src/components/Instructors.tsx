@@ -5,7 +5,7 @@ const CREDENTIALS = [
   'Médica Cirujana',
   'Esp. en Salud Ocupacional y SGSST',
   'Medicina Bioreguladora',
-  '[Universidad / Institución]',
+  'Universidad del Rosario',
 ]
 
 export default function Instructors() {

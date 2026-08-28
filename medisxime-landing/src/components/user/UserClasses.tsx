@@ -110,7 +110,7 @@ export const UserClasses: React.FC = () => {
                     <span style={{ display: 'inline-block', padding: '4px 12px', background: C.bgPanel, color: C.gold, borderRadius: 100, fontSize: 12, fontWeight: 600, letterSpacing: '0.05em', marginBottom: 12 }}>{cls.discipline.name}</span>
                     <h3 style={{ fontFamily: FONT_BODONI, fontSize: 20, margin: '0 0 8px 0', color: C.text }}>Nivel {cls.discipline.level}</h3>
                     <p style={{ color: C.textMedium, fontSize: 14, margin: 0, display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <UserIcon size={14} /> Instructora: {cls.instructor.firstName}
+                      <UserIcon size={14} /> Profesional: {cls.instructor.firstName}
                     </p>
                   </div>
 

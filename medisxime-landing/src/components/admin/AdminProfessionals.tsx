@@ -167,10 +167,10 @@ export const AdminProfessionals: React.FC = () => {
   })
 
   const metricCards = [
-    { value: stats ? String(stats.activeProfessionals) : '—', label: 'Instructoras Activas', icon: Users },
+    { value: stats ? String(stats.activeProfessionals) : '—', label: 'Profesionales Activos', icon: Users },
     { value: stats ? `${Math.round(stats.avgSatisfaction)}%` : '—', label: 'Satisfacción de Clases', icon: Star },
     { value: stats ? String(stats.weeklyBookings) : '—', label: 'Reservas esta Semana', icon: Calendar },
-    { value: stats ? String(stats.totalDisciplines) : '—', label: 'Disciplinas', icon: CheckCircle2 },
+    { value: stats ? String(stats.totalDisciplines) : '—', label: 'Especialidades', icon: CheckCircle2 },
   ]
 
   return (

@@ -15,11 +15,20 @@ function timeStr(d: Date): string {
   return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`
 }
 
+// GET /api/professionals y GET /api/professionals/:id no requieren rol ADMIN
+// (el primero ni siquiera exige login — lo usa el directorio público de
+// reserva de citas). idNumber/phone son PII del profesional sin uso en esas
+// vistas — el detalle completo vive en GET /:id/admin-details (ADMIN-only).
+function redactPII<T extends { idNumber?: unknown; phone?: unknown }>(p: T): Omit<T, 'idNumber' | 'phone'> {
+  const { idNumber: _idNumber, phone: _phone, ...rest } = p
+  return rest
+}
+
 // ─── GET /api/professionals ───────────────────────────────────────────────────
 export async function listProfessionals(_req: Request, res: Response): Promise<void> {
   try {
     const professionals = await ProfessionalService.list()
-    res.status(200).json({ success: true, data: { professionals } })
+    res.status(200).json({ success: true, data: { professionals: professionals.map(redactPII) } })
   } catch (err: any) {
     res.status(err.statusCode ?? 500).json({ success: false, error: err.message })
   }
@@ -39,7 +48,7 @@ export async function getStats(_req: Request, res: Response): Promise<void> {
 export async function getProfessional(req: Request, res: Response): Promise<void> {
   try {
     const professional = await ProfessionalService.getById(req.params.id)
-    res.status(200).json({ success: true, data: { professional } })
+    res.status(200).json({ success: true, data: { professional: redactPII(professional) } })
   } catch (err: any) {
     res.status(err.statusCode ?? 500).json({ success: false, error: err.message })
   }

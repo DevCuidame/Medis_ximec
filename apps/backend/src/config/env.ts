@@ -30,6 +30,13 @@ requiredEnvVars.forEach((envVar) => {
   }
 });
 
+// JWT_SECRET firma tokens que dan acceso a datos de pacientes — un secreto
+// corto/trivial es crackeable offline si el .env se filtra. 32 chars es el
+// mínimo razonable para HMAC-SHA256 (256 bits si es hex/base64 denso).
+if (process.env.JWT_SECRET!.length < 32) {
+  throw new Error('JWT_SECRET debe tener al menos 32 caracteres.');
+}
+
 export const env: Env = {
   DATABASE_URL: process.env.DATABASE_URL || '',
   NODE_ENV: (process.env.NODE_ENV as Env['NODE_ENV']) || 'development',

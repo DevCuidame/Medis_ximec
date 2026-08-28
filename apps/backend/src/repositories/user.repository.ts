@@ -50,12 +50,16 @@ export const UserRepository = {
     return rows[0] ?? null;
   },
 
-  /** Create a new user, returns public profile */
+  /** Create a new patient (USER) via public registration. Solo se usa desde
+   * auth.service.ts:register() — PROFESSIONAL/ADMIN se crean vía
+   * ProfessionalRepository.create() (admin-only), nunca aquí. Rol fijo en
+   * 'USER' a propósito: este flujo es público y no debe aceptar un rol
+   * arbitrario del caller. */
   async create(dto: RegisterDTO & { passwordHash: string }): Promise<UserPublic> {
     const { rows } = await pool.query<UserRecord>(
       `INSERT INTO users
         (email, password_hash, first_name, last_name, phone, role, id_type, id_number)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+       VALUES ($1, $2, $3, $4, $5, 'USER', $6, $7)
        RETURNING *`,
       [
         dto.email.toLowerCase().trim(),
@@ -63,7 +67,6 @@ export const UserRepository = {
         dto.firstName.trim(),
         dto.lastName.trim(),
         dto.phone?.trim() ?? null,
-        dto.role ?? 'USER',
         dto.idType?.trim() ?? null,
         dto.idNumber?.trim() ?? null,
       ]

@@ -1,14 +1,37 @@
 import crypto from 'node:crypto'
 
+// Iteraciones PBKDF2: 600_000 es la recomendación actual de OWASP para
+// PBKDF2-HMAC-SHA256 (310_000 era la de 2021). Los hashes existentes se
+// guardaron como "salt:hash" con 310_000 iteraciones implícitas — el prefijo
+// "pbkdf2$<iter>$" en los hashes nuevos permite subir el costo a futuro sin
+// invalidar cuentas ya creadas (login sigue verificando con el iterCount
+// original de cada hash).
+const CURRENT_ITERATIONS = 600_000
+const LEGACY_ITERATIONS = 310_000
+
 export function hashPassword(password: string): string {
   const salt = crypto.randomBytes(16).toString('hex')
-  const hash = crypto.pbkdf2Sync(password, salt, 310_000, 32, 'sha256').toString('hex')
-  return `${salt}:${hash}`
+  const hash = crypto.pbkdf2Sync(password, salt, CURRENT_ITERATIONS, 32, 'sha256').toString('hex')
+  return `pbkdf2$${CURRENT_ITERATIONS}$${salt}$${hash}`
 }
 
 export function verifyPassword(password: string, stored: string): boolean {
-  const [salt, hash] = stored.split(':')
-  const candidate = crypto.pbkdf2Sync(password, salt, 310_000, 32, 'sha256').toString('hex')
+  let iterations: number
+  let salt: string
+  let hash: string
+
+  if (stored.startsWith('pbkdf2$')) {
+    const parts = stored.split('$')
+    iterations = Number(parts[1])
+    salt = parts[2]
+    hash = parts[3]
+  } else {
+    // Formato legacy sin prefijo: "salt:hash" @ 310_000 iteraciones.
+    iterations = LEGACY_ITERATIONS
+    ;[salt, hash] = stored.split(':')
+  }
+
+  const candidate = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256').toString('hex')
   return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(candidate, 'hex'))
 }
 

@@ -11,6 +11,7 @@ import Testimonials from './components/Testimonials'
 import FinalCTA from './components/FinalCTA'
 import Footer from './components/Footer'
 import ArtistLogin from './components/ArtistLogin'
+import { SEO } from './components/SEO'
 import { UsuariosDashboard } from './components/admin/UsuariosDashboard'
 import { MainDashboard } from './components/admin/MainDashboard'
 import { AdminClasses } from './components/admin/AdminClasses'
@@ -57,10 +58,38 @@ function ScrollProgressBar() {
 
 // ── Route pages ───────────────────────────────────────────────────────────────
 
+// Datos reales confirmados (telefono/instagram/horario/email). Direccion y
+// universidad/institucion siguen pendientes de confirmar con la Dra. Ximena —
+// omitidas aqui en vez de inventadas.
+const PHYSICIAN_JSON_LD = {
+  '@context': 'https://schema.org',
+  '@type': 'Physician',
+  name: 'Dra. Ximena Correa',
+  url: 'https://docxime.cuidame.tech/',
+  image: 'https://docxime.cuidame.tech/Logo_Medis.jpeg',
+  description:
+    'Consultorio de la Dra. Ximena Correa, especialista en Medicina Bioreguladora, exámenes médico-ocupacionales, Medicina Laboral y consultoría en el SGSST.',
+  medicalSpecialty: ['Medicina Laboral y Ocupacional', 'Medicina Bioreguladora', 'Medicina Preventiva'],
+  telephone: '+573133894523',
+  email: 'ximenadoc@gmail.com',
+  sameAs: ['https://www.instagram.com/ximenadoc/'],
+  areaServed: 'CO',
+  alumniOf: { '@type': 'CollegeOrUniversity', name: 'Universidad del Rosario' },
+  openingHoursSpecification: [
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Monday', opens: '08:00', closes: '12:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Monday', opens: '14:00', closes: '17:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Wednesday', opens: '08:00', closes: '12:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Wednesday', opens: '13:00', closes: '17:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Friday', opens: '08:00', closes: '12:00' },
+    { '@type': 'OpeningHoursSpecification', dayOfWeek: 'Friday', opens: '13:00', closes: '17:00' },
+  ],
+}
+
 function LandingPage() {
   const navigate = useNavigate()
   return (
     <>
+      <SEO canonical="https://docxime.cuidame.tech/" jsonLd={PHYSICIAN_JSON_LD} />
       <ScrollProgressBar />
       <Navbar onLoginClick={() => navigate('/login')} />
       <main>
@@ -84,7 +113,7 @@ function LoginPage() {
   return (
     <ArtistLogin
       onBackToHome={() => navigate('/')}
-      onRegisterClick={() => alert('¡El registro de nuevos artistas estará disponible muy pronto!')}
+      onRegisterClick={() => alert('¡El registro de nuevos profesionales estará disponible muy pronto!')}
       onForgotPasswordClick={() => alert('Se ha enviado un enlace de recuperación a tu correo electrónico registrado.')}
       onLoginSuccess={(role) => {
         if (role === 'USER')         navigate(from ?? '/user/dashboard',         { replace: true })

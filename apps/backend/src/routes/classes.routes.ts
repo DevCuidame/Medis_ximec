@@ -1,16 +1,17 @@
 import { Router } from 'express';
 import type { Router as ExpressRouter } from 'express';
 import { listUpcoming, getUserBookings, createBooking, getClassOptions, createClass } from '../controllers/classes.controller.js';
-import { authenticate } from '../middleware/auth.middleware.js';
+import { authenticate, authorize } from '../middleware/auth.middleware.js';
 
 const router: ExpressRouter = Router();
 
 // Public/-ish endpoints
 router.get('/upcoming', listUpcoming);
 
-// Create class options & action (should ideally be admin-only, but using authenticate for now)
-router.get('/options', authenticate, getClassOptions);
-router.post('/', authenticate, createClass);
+// Crear clases: solo ADMIN — antes cualquier usuario autenticado (paciente,
+// empresa) podia crear una clase asignada a cualquier profesional.
+router.get('/options', authenticate, authorize('ADMIN'), getClassOptions);
+router.post('/', authenticate, authorize('ADMIN'), createClass);
 
 // Protected endpoints for users
 router.get('/my-bookings', authenticate, getUserBookings);

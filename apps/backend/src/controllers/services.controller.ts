@@ -408,6 +408,30 @@ export async function createBulkBookingRequests(req: Request, res: Response): Pr
       res.status(400).json({ success: false, error: 'La oferta no está disponible' }); return;
     }
 
+    // Validar CADA sesión del grupo, no solo la lead — un usuario no debe
+    // poder colar IDs de otras ofertas (llenas, sin publicar, o de otro
+    // servicio/precio) en el resto del array y quedar auto-aprobado.
+    const siblingIds = offerIds.slice(1);
+    const uniqueSiblingIds = [...new Set(siblingIds)];
+    if (uniqueSiblingIds.length > 0) {
+      const siblingOffers = await Promise.all(uniqueSiblingIds.map(id => ServiceOfferRepository.findById(id)));
+      for (let i = 0; i < uniqueSiblingIds.length; i++) {
+        const offer = siblingOffers[i];
+        if (!offer) { res.status(404).json({ success: false, error: 'Una de las sesiones no existe' }); return; }
+        if (offer.status !== 'published') {
+          res.status(400).json({ success: false, error: 'Una de las sesiones no está disponible' }); return;
+        }
+        if (offer.enrolledCount >= offer.capacity) {
+          res.status(409).json({ success: false, error: 'Una de las sesiones no tiene cupos disponibles' }); return;
+        }
+        // Misma oferta de catálogo que la lead — evita mezclar sesiones de
+        // servicios/profesionales no relacionados en una sola inscripción.
+        if (lead.catalogId != null && offer.catalogId !== lead.catalogId) {
+          res.status(400).json({ success: false, error: 'Todas las sesiones deben pertenecer al mismo servicio' }); return;
+        }
+      }
+    }
+
     // ── Precio con descuentos (módulo Descuentos) ─────────────────────────
     const sessionCount = offerIds.length;
     const pricePerSession = lead.price ?? 0;

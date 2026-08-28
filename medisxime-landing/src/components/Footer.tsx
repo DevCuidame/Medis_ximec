@@ -216,8 +216,8 @@ export default function Footer() {
               {[
                 { label: 'WhatsApp', value: '313 389 4523' },
                 { label: 'Instagram', value: '@ximenadoc' },
-                { label: 'Email', value: '[correo@consultorio.com]' },
-                { label: 'Horarios', value: '[Lun – Vie · X am – X pm]' },
+                { label: 'Email', value: 'ximenadoc@gmail.com' },
+                { label: 'Horarios', value: 'Lun, Mié y Vie · 8:00 a.m. – 5:00 p.m. (Mar y Jue: cerrado)' },
               ].map(({ label, value }, i) => (
                 <motion.div
                   key={label}

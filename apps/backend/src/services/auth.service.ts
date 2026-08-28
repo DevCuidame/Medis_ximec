@@ -2,6 +2,7 @@ import crypto from 'node:crypto';
 import jwt from 'jsonwebtoken';
 import { env } from '@config/env.js';
 import { UserRepository } from '@repositories/user.repository.js';
+import { hashPassword, verifyPassword } from '@utils/crypto.util.js';
 import type {
   RegisterDTO,
   LoginDTO,
@@ -15,28 +16,15 @@ import type {
 const ACCESS_TOKEN_TTL  = 60 * 60 * 2;        // 2 horas
 const REFRESH_TOKEN_TTL = 60 * 60 * 24 * 30;  // 30 días (segundos)
 
-// ─── Password hashing (Node built-in, no bcrypt needed) ──────────────────────
-
-function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto
-    .pbkdf2Sync(password, salt, 310_000, 32, 'sha256')
-    .toString('hex');
-  return `${salt}:${hash}`;
-}
-
-function verifyPassword(password: string, stored: string): boolean {
-  const [salt, hash] = stored.split(':');
-  const candidate = crypto
-    .pbkdf2Sync(password, salt, 310_000, 32, 'sha256')
-    .toString('hex');
-  return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(candidate, 'hex'));
-}
+// Hash valido (formato pbkdf2$...) pero de una password que nadie conoce —
+// usado solo para gastar el mismo tiempo de CPU que una verificación real
+// cuando el email no existe, ver login(). No corresponde a ninguna cuenta.
+const DUMMY_HASH = hashPassword(crypto.randomBytes(32).toString('hex'));
 
 // ─── JWT helpers ─────────────────────────────────────────────────────────────
 
 function signAccessToken(payload: Omit<JwtPayload, 'iat' | 'exp'>): string {
-  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL });
+  return jwt.sign(payload, env.JWT_SECRET, { expiresIn: ACCESS_TOKEN_TTL, algorithm: 'HS256' });
 }
 
 function signRefreshToken(): string {
@@ -57,7 +45,9 @@ export const AuthService = {
     // 2. Hashear contraseña
     const passwordHash = hashPassword(dto.password);
 
-    // 3. Crear usuario
+    // 3. Crear usuario — el registro público SIEMPRE crea pacientes (USER).
+    // PROFESSIONAL/ADMIN solo se crean vía POST /api/professionals (admin-only,
+    // ver professional.service.ts) — UserRepository.create() fija el rol.
     const user = await UserRepository.create({ ...dto, passwordHash });
 
     // 4. Emitir tokens
@@ -67,16 +57,23 @@ export const AuthService = {
   },
 
   async login(dto: LoginDTO): Promise<{ user: UserPublic; tokens: AuthTokens }> {
+    // Mensaje y forma de fallo IDÉNTICOS exista o no el email — evita que el
+    // endpoint sirva para enumerar pacientes/profesionales registrados. El
+    // hash dummy además absorbe el tiempo de un PBKDF2 real para no filtrar
+    // la diferencia por timing entre "no existe" y "password incorrecta".
+    const INVALID_CREDENTIALS = 'Usuario o contraseña incorrectas.';
+
     // 1. Buscar usuario
     const record = await UserRepository.findByEmail(dto.email);
     if (!record) {
-      throw Object.assign(new Error('El usuario no existe.'), { statusCode: 401 });
+      verifyPassword(dto.password, DUMMY_HASH);
+      throw Object.assign(new Error(INVALID_CREDENTIALS), { statusCode: 401 });
     }
 
     // 2. Verificar contraseña
     const valid = verifyPassword(dto.password, record.password_hash);
     if (!valid) {
-      throw Object.assign(new Error('Usuario o contraseña incorrectas.'), { statusCode: 401 });
+      throw Object.assign(new Error(INVALID_CREDENTIALS), { statusCode: 401 });
     }
 
     // 3. Emitir tokens
@@ -110,7 +107,7 @@ export const AuthService = {
   /** Verifica un access token y retorna el payload */
   verifyAccessToken(token: string): JwtPayload {
     try {
-      return jwt.verify(token, env.JWT_SECRET) as JwtPayload;
+      return jwt.verify(token, env.JWT_SECRET, { algorithms: ['HS256'] }) as JwtPayload;
     } catch {
       throw Object.assign(new Error('Token inválido o expirado.'), { statusCode: 401 });
     }

@@ -592,13 +592,13 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
 
               {/* Discipline Select */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>🩰 Disciplina / Especialidad</label>
+                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>🩺 Especialidad</label>
                 <select
                   value={selectedDisciplineId}
                   onChange={e => setSelectedDisciplineId(e.target.value)}
                   style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', fontFamily: FONT_INTER, fontSize: 13, color: C.text, outline: 'none' }}
                 >
-                  <option value="">-- Selecciona Disciplina --</option>
+                  <option value="">-- Selecciona Especialidad --</option>
                   {disciplines.map(d => (
                     <option key={d.id} value={d.id}>{d.name} ({d.level === 'all' ? 'Multinivel' : d.level}) - {d.duration} min</option>
                   ))}
@@ -611,7 +611,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>📝 Nombre Personalizado de la Clase</label>
                   <input
                     type="text"
-                    placeholder="ej: Pole Exotic Especial - Coreografía de Halloween"
+                    placeholder="ej: Valoración Ocupacional Empresarial - Sede Norte"
                     value={customClassName}
                     onChange={e => setCustomClassName(e.target.value)}
                     style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', fontFamily: FONT_INTER, fontSize: 13, color: C.text, outline: 'none' }}
@@ -621,7 +621,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
 
               {/* Instructor Select */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>🤸 Instructora / Master Elite</label>
+                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>🩺 Profesional Asignado</label>
                   {loadingData ? (
                   <div style={{ fontFamily: FONT_INTER, fontSize: 12, color: C.textMuted }}>Cargando equipo de profesionales...</div>
                 ) : (
@@ -630,7 +630,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                     onChange={e => setSelectedInstructorId(e.target.value)}
                     style={{ background: C.bg, border: `1px solid ${C.border}`, borderRadius: 10, padding: '12px 14px', fontFamily: FONT_INTER, fontSize: 13, color: C.text, outline: 'none' }}
                   >
-                    <option value="">-- Selecciona Instructora --</option>
+                    <option value="">-- Selecciona Profesional --</option>
                     {instructors.map(i => (
                       <option key={i.id} value={i.id}>{i.firstName} {i.lastName} (Especialidades: {i.specialties.join(', ')})</option>
                     ))}
@@ -715,7 +715,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>👥 Cupo de Alumnas</label>
+                  <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>👥 Cupo de Pacientes</label>
                   <input
                     type="number"
                     min={1}
@@ -816,7 +816,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <DoorOpen size={16} color={C.gold} />
                     <span style={{ fontFamily: FONT_INTER, fontSize: 12.5, color: C.textBrown }}>
-                      <strong>Salón:</strong> {salones.find(s => s.id === selectedSalonId)?.name} (Cupo: {classCapacity} {classCapacity === 1 ? 'alumna' : 'alumnas'})
+                      <strong>Salón:</strong> {salones.find(s => s.id === selectedSalonId)?.name} (Cupo: {classCapacity} {classCapacity === 1 ? 'paciente' : 'pacientes'})
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -828,7 +828,7 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ fontSize: 14, width: 16, display: 'inline-block', textAlign: 'center', color: C.gold, fontWeight: 'bold', fontFamily: FONT_INTER }}>$</span>
                     <span style={{ fontFamily: FONT_INTER, fontSize: 12.5, color: C.textBrown }}>
-                      <strong>Valor de Inscripción:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(registrationPrice)} por alumna
+                      <strong>Valor de Inscripción:</strong> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(registrationPrice)} por paciente
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -862,9 +862,9 @@ export const CreateClassModal: React.FC<CreateClassModalProps> = ({ onClose, onS
 
               {/* Class Notes */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>📝 Notas Especiales para Alumnas</label>
+                <label style={{ fontFamily: FONT_INTER, fontSize: 11, fontWeight: 700, color: C.textBrown, textTransform: 'uppercase', letterSpacing: '0.04em' }}>📝 Notas Especiales para Pacientes</label>
                 <textarea
-                  placeholder="ej: Traer shorts, rodilleras y toalla pequeña para pole"
+                  placeholder="ej: Traer documento de identidad y orden médica si aplica"
                   value={classNotes}
                   onChange={e => setClassNotes(e.target.value)}
                   rows={3}

@@ -54,6 +54,8 @@ export interface UserPublic {
 
 // ─── Auth DTOs ────────────────────────────────────────────────────────────────
 
+// Registro público (POST /api/auth/register): siempre crea pacientes (USER).
+// Deliberadamente sin campo `role` — ver auth.service.ts:register().
 export interface RegisterDTO {
   email: string;
   password: string;
@@ -62,7 +64,6 @@ export interface RegisterDTO {
   idType?: string;
   idNumber?: string;
   phone?: string;
-  role?: 'USER' | 'PROFESSIONAL' | 'ADMIN';
 }
 
 export interface UpdateUserDTO {

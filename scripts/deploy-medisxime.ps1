@@ -17,6 +17,9 @@
 param(
     [string]$DbPass    = "medisXime2024Secure!",
     [string]$JwtSecret = "",
+    [string]$SisproSecret = "",
+    [string]$EmailPassword = "",
+    [string]$AdminPassword = "",
     [string]$CertbotEmail = "admin@medisxime.com",
     [switch]$SkipUpload,
     [ValidateSet("all", "frontend", "backend")]
@@ -40,8 +43,55 @@ $DB_USER     = "medisXime_user"
 $APP_DIR     = "/var/www/medisXime"
 $PROJ_ROOT   = Split-Path $PSScriptRoot -Parent
 
+# ── SECRETOS ──────────────────────────────────────────────────
+# Nunca hardcodear passwords/API keys en este script (esta ya versionado en
+# git). Los secretos viven en scripts/.env.deploy (gitignored via .env.* en
+# .gitignore) y se generan/persisten solos la primera vez. Ver
+# scripts/.env.deploy.example para el formato.
+$secretsFile = Join-Path $PSScriptRoot ".env.deploy"
+$secrets = @{}
+if (Test-Path $secretsFile) {
+    Get-Content $secretsFile | ForEach-Object {
+        if ($_ -match '^\s*([A-Z_]+)\s*=\s*(.*)\s*$') {
+            $secrets[$Matches[1]] = $Matches[2]
+        }
+    }
+}
+
+function New-StrongSecret {
+    $bytes = [byte[]]::new(32)
+    $rng = [System.Security.Cryptography.RNGCryptoServiceProvider]::new()
+    try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
+    return ([System.BitConverter]::ToString($bytes) -replace '-', '').ToLower()
+}
+
+function Get-OrCreateSecret([string]$Name, [string]$ParamValue) {
+    if ($ParamValue) { return $ParamValue }
+    if ($secrets.ContainsKey($Name) -and $secrets[$Name]) { return $secrets[$Name] }
+    throw "Falta '$Name' en $secretsFile (o pasalo con -$Name). Ver scripts/.env.deploy.example."
+}
+
+# JWT_SECRET/SISPRO_SECRET: si no vienen por parametro ni existen ya en
+# .env.deploy, se generan una sola vez (32 bytes aleatorios) y se persisten
+# en el archivo, para que deploys futuros NO los regeneren — regenerarlos en
+# cada deploy invalida todas las sesiones activas y, peor, vuelve
+# irrecuperables las credenciales SISPRO ya cifradas (ver errores-conocidos.md).
+$secretsChanged = $false
 if (-not $JwtSecret) {
-    $JwtSecret = "medisxime-jwt-$(Get-Random -Maximum 999999)-$(Get-Random -Maximum 9999)-prod"
+    $JwtSecret = $secrets['JWT_SECRET']
+    if (-not $JwtSecret) { $JwtSecret = New-StrongSecret; $secrets['JWT_SECRET'] = $JwtSecret; $secretsChanged = $true }
+}
+if (-not $SisproSecret) {
+    $SisproSecret = $secrets['SISPRO_SECRET']
+    if (-not $SisproSecret) { $SisproSecret = New-StrongSecret; $secrets['SISPRO_SECRET'] = $SisproSecret; $secretsChanged = $true }
+}
+$EmailPassword = Get-OrCreateSecret 'EMAIL_PASSWORD' $EmailPassword
+$AdminPassword = Get-OrCreateSecret 'ADMIN_PASSWORD' $AdminPassword
+
+if ($secretsChanged) {
+    ($secrets.GetEnumerator() | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join "`n" |
+        Out-File -FilePath $secretsFile -Encoding utf8 -NoNewline
+    Write-Host "  [OK] JWT_SECRET/SISPRO_SECRET generados y guardados en $secretsFile" -ForegroundColor Green
 }
 
 # ── HELPERS ──────────────────────────────────────────────────
@@ -115,7 +165,7 @@ function Invoke-RemoteBash {
 
         # Log completo + exit code en UNA sola conexion SSH (antes eran 2)
         $output = (gcloud compute ssh $VM_NAME --zone=$ZONE --project=$PROJECT_ID `
-            --command="cat $remoteLog; echo __RC__:$(cat $remoteRc)" --quiet 2>$null) -join "`n"
+            --command="cat $remoteLog; echo __RC__:`$(cat $remoteRc)" --quiet 2>$null) -join "`n"
         $markerIndex = $output.LastIndexOf('__RC__:')
         if ($markerIndex -ge 0) {
             $logText = $output.Substring(0, $markerIndex).TrimEnd("`r", "`n")
@@ -460,9 +510,10 @@ APP_PORT="__APP_PORT__"
 WEB_PORT="__WEB_PORT__"
 SITE_HOST="__SITE_HOST__"
 JWT_SECRET="__JWT_SECRET__"
+SISPRO_SECRET="__SISPRO_SECRET__"
 VM_IP="__VM_IP__"
-EMAIL_PASS="***REMOVED-EMAIL-APP-PASSWORD***"
-ADMIN_PW="***REMOVED-ADMIN-PASSWORD***"
+EMAIL_PASS="__EMAIL_PASS__"
+ADMIN_PW="__ADMIN_PW__"
 
 echo "--- Extrayendo proyecto ---"
 # Ya no se borra todo APP_DIR antes de extraer: un -Target backend no
@@ -491,7 +542,8 @@ DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@127.0.0.1:5432/${DB_NAME}
 NODE_ENV=production
 PORT=${APP_PORT}
 JWT_SECRET=${JWT_SECRET}
-CORS_ORIGIN=http://${SITE_HOST}:${WEB_PORT}
+SISPRO_SECRET=${SISPRO_SECRET}
+CORS_ORIGIN=https://${SITE_HOST}
 EMAIL_PASSWORD=${EMAIL_PASS}
 EMAIL_USER=contacto@esmart-tek.com
 EMAIL_SECURE=true
@@ -523,6 +575,9 @@ ls -la "${APP_DIR}"
     -replace '__WEB_PORT__',   $WEB_PORT `
     -replace '__SITE_HOST__',  $SITE_HOST `
     -replace '__JWT_SECRET__', $JwtSecret `
+    -replace '__SISPRO_SECRET__', $SisproSecret `
+    -replace '__EMAIL_PASS__', $EmailPassword `
+    -replace '__ADMIN_PW__',   $AdminPassword `
     -replace '__VM_IP__',      $VM_IP
 
 Invoke-RemoteBash -Label "setup-project" -Script $s07
@@ -554,9 +609,9 @@ done
 
 echo ""
 echo "--- Creando/actualizando usuario admin ---"
-ADMIN_PW="***REMOVED-ADMIN-PASSWORD***"
+ADMIN_PW="__ADMIN_PW__"
 export ADMIN_PW
-ADMIN_HASH=$(node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');const h=c.pbkdf2Sync(process.env.ADMIN_PW,s,310000,32,'sha256').toString('hex');process.stdout.write(s+':'+h)")
+ADMIN_HASH=$(node -e "const c=require('crypto');const s=c.randomBytes(16).toString('hex');const it=600000;const h=c.pbkdf2Sync(process.env.ADMIN_PW,s,it,32,'sha256').toString('hex');process.stdout.write('pbkdf2\$'+it+'\$'+s+'\$'+h)")
 
 printf "INSERT INTO users (email, password_hash, first_name, last_name, role, is_active, is_verified)\nVALUES ('admin@medisxime.com', '%s', 'medisXime', 'Admin', 'ADMIN', TRUE, TRUE)\nON CONFLICT (email) DO UPDATE SET password_hash = EXCLUDED.password_hash, is_active = TRUE, is_verified = TRUE;\n" "${ADMIN_HASH}" | \
   PGPASSWORD="${DB_PASS}" psql -h 127.0.0.1 -U "${DB_USER}" -d "${DB_NAME}"
@@ -569,7 +624,8 @@ PGPASSWORD="${DB_PASS}" psql -h 127.0.0.1 -U "${DB_USER}" -d "${DB_NAME}" -c "\d
     -replace '__APP_DIR__', $APP_DIR `
     -replace '__DB_USER__', $DB_USER `
     -replace '__DB_PASS__', $DbPassword `
-    -replace '__DB_NAME__', $DB_NAME
+    -replace '__DB_NAME__', $DB_NAME `
+    -replace '__ADMIN_PW__', $AdminPassword
 
 Invoke-RemoteBash -Label "migrations" -Script $s09
 Write-OK "Migraciones aplicadas"

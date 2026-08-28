@@ -20,7 +20,7 @@ const FONT_BODONI = '"Cormorant Garamond", Georgia, serif'
 const FONT_INTER  = 'Inter, system-ui, sans-serif'
 
 const OFFER_TYPE_LABEL: Record<string, string> = {
-  class: 'Clase', open_pole: 'Práctica Libre', event: 'Evento', workshop: 'Taller', appointment: 'Cita Individual',
+  class: 'Clase', open_pole: 'Valoración', event: 'Evento', workshop: 'Taller', appointment: 'Cita Individual',
 }
 const OFFER_COLORS = ['#5C3A28', '#9C4A2E', '#7A6452', '#C97B5A', '#D4B896', '#3D2418']
 const TYPE_COLORS: Record<string, string> = {

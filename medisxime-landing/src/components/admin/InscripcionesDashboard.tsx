@@ -209,7 +209,7 @@ export const InscripcionesDashboard: React.FC = () => {
               {/* Search */}
               <div style={{ position: 'relative', flex: 1, minWidth: 200 }}>
                 <User size={14} color={C.textMuted} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por alumna, email o servicio…"
+                <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar por paciente, email o servicio…"
                   style={{ width: '100%', padding: '10px 14px 10px 34px', borderRadius: 10, border: `1.5px solid ${C.borderLight}`, background: C.white, fontSize: 13, color: C.text, outline: 'none', boxSizing: 'border-box', fontFamily: FONT_INTER }}
                   onFocus={e => e.target.style.borderColor = C.gold} onBlur={e => e.target.style.borderColor = C.borderLight}
                 />

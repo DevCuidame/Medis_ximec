@@ -2,7 +2,7 @@ import { test, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert'
 
 process.env.DATABASE_URL ||= 'postgres://test:test@localhost:5432/test'
-process.env.JWT_SECRET ||= 'clave-de-prueba'
+process.env.JWT_SECRET ||= 'clave-de-prueba-para-tests-32-caracteres-o-mas'
 
 const { createOffer } = await import('./services.controller.js')
 const { ServiceCatalogRepository, ServiceOfferRepository } = await import('../repositories/services.repository.js')

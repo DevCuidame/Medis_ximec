@@ -84,9 +84,16 @@ export const MembershipRepository = {
     const membership = toPublic(rows[0]);
     
     if (dto.services && dto.services.length > 0) {
-      const values = dto.services.map(s => `('${membership.id}', '${s.serviceId}', ${s.quantity})`).join(', ');
+      const placeholders: string[] = [];
+      const values: unknown[] = [];
+      let idx = 1;
+      for (const s of dto.services) {
+        placeholders.push(`($${idx++}, $${idx++}, $${idx++})`);
+        values.push(membership.id, s.serviceId, s.quantity);
+      }
       await pool.query(
-        `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${values}`
+        `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${placeholders.join(', ')}`,
+        values
       );
     }
     
@@ -121,9 +128,16 @@ export const MembershipRepository = {
     if (dto.services !== undefined) {
       await pool.query(`DELETE FROM membership_services WHERE membership_id = $1`, [id]);
       if (dto.services.length > 0) {
-        const insertValues = dto.services.map(s => `('${id}', '${s.serviceId}', ${s.quantity})`).join(', ');
+        const placeholders: string[] = [];
+        const insertValues: unknown[] = [];
+        let idx = 1;
+        for (const s of dto.services) {
+          placeholders.push(`($${idx++}, $${idx++}, $${idx++})`);
+          insertValues.push(id, s.serviceId, s.quantity);
+        }
         await pool.query(
-          `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${insertValues}`
+          `INSERT INTO membership_services (membership_id, service_id, quantity) VALUES ${placeholders.join(', ')}`,
+          insertValues
         );
       }
     }

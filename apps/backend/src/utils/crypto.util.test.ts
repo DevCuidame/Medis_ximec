@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert'
 
-process.env.JWT_SECRET ||= 'clave-de-prueba'
+process.env.JWT_SECRET ||= 'clave-de-prueba-para-tests-32-caracteres-o-mas'
 
 const { encryptSecret, decryptSecret } = await import('./crypto.util.js')
 
