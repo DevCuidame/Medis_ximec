@@ -1,7 +1,8 @@
 import { ProfessionalRepository } from '@repositories/professional.repository.js'
 import { UserRepository } from '@repositories/user.repository.js'
 import { hashPassword, encryptSecret, decryptSecret } from '@utils/index.js'
-import { provisionDocProfessional } from './docProfessionalProvision.service.js'
+import { env } from '@config/env.js'
+import { provisionDocProfessional, syncDocLicense } from './docProfessionalProvision.service.js'
 import type {
   ProfessionalPublic,
   CreateProfessionalDTO,
@@ -101,6 +102,16 @@ export const ProfessionalService = {
     }
     const updated = await ProfessionalRepository.update(id, payload)
     if (!updated) throw Object.assign(new Error('Profesional no encontrado.'), { statusCode: 404 })
+
+    // El registro médico de Medis es la fuente: se refleja en CuidameDoc, que lo imprime en recetas, historias y
+    // consentimientos. Best-effort: un fallo allá nunca revierte la edición local.
+    if (dto.professionalLicense?.trim()) {
+      const docId = (await ProfessionalRepository.getDocProfessionalId(id)) ?? (updated.email === env.DOC_XIMENA_EMAIL ? env.DOC_HEAD_PROFESSIONAL_ID : null)
+      if (docId) {
+        const sync = await syncDocLicense(docId, dto.professionalLicense)
+        if (!sync.ok) console.error(`❌ No se pudo sincronizar el registro médico con CuidameDoc (profesional ${docId}):`, sync.error)
+      }
+    }
     return updated
   },
 

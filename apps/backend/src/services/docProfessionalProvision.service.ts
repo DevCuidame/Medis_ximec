@@ -72,6 +72,38 @@ export async function provisionDocProfessional(
   }
 }
 
+export interface SyncDocLicenseResult {
+  ok: boolean;
+  error?: string;
+}
+
+/**
+ * Envía a CuidameDoc el registro médico de un profesional. El de Medis es la fuente: Doc lo imprime tal cual en
+ * recetas, historias y consentimientos, así que un número distinto allá sale en documentos con valor legal.
+ * Nunca lanza, y nunca envía un número vacío (no se borra una licencia).
+ */
+export async function syncDocLicense(docProfessionalId: number, licenseNumber: string): Promise<SyncDocLicenseResult> {
+  const license = licenseNumber?.trim();
+  if (!license) return { ok: false, error: 'Registro médico vacío: no se sincroniza con CuidameDoc.' };
+  try {
+    const res = await withDocAuth((token) =>
+      fetch(`${env.DOC_API_URL}/professionals/${docProfessionalId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ license_number: license }),
+        signal: AbortSignal.timeout(8000),
+      })
+    );
+    const json = (await res.json().catch(() => ({}))) as { success?: boolean; message?: string; error?: string };
+    if (!res.ok || json.success === false) {
+      return { ok: false, error: json.error ?? json.message ?? `CuidameDoc respondió ${res.status}` };
+    }
+    return { ok: true };
+  } catch (err: unknown) {
+    return { ok: false, error: (err as Error).message };
+  }
+}
+
 export interface DeactivateDocProfessionalResult {
   ok: boolean;
   error?: string;

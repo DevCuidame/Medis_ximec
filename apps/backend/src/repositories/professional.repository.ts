@@ -124,6 +124,7 @@ export const ProfessionalRepository = {
     if (dto.lastName    !== undefined) { fields.push(`last_name     = $${idx++}`); values.push(dto.lastName.trim()) }
     if (dto.idType      !== undefined) { fields.push(`id_type       = $${idx++}`); values.push(dto.idType?.trim() ?? null) }
     if (dto.idNumber    !== undefined) { fields.push(`id_number     = $${idx++}`); values.push(dto.idNumber?.trim() ?? null) }
+    if (dto.professionalLicense !== undefined) { fields.push(`professional_license = $${idx++}`); values.push(dto.professionalLicense?.trim() ?? null) }
     if (dto.phone       !== undefined) { fields.push(`phone         = $${idx++}`); values.push(dto.phone?.trim() ?? null) }
     if (dto.bio         !== undefined) { fields.push(`bio           = $${idx++}`); values.push(dto.bio?.trim() ?? null) }
     if (dto.specialties !== undefined) { fields.push(`specialties   = $${idx++}`); values.push(dto.specialties) }

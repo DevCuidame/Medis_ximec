@@ -93,3 +93,54 @@ test('provisionDocProfessional: sin medicalRegistrationNumber → ok:false sin l
   assert.match(result.error ?? '', /registro médico/i);
   assert.equal(calls.length, 0);
 });
+
+// ---- syncDocLicense: el registro médico de Medis es la fuente; Doc lo imprime en sus documentos ----
+import { syncDocLicense } from './docProfessionalProvision.service.js';
+
+const loginOk = () => new Response(JSON.stringify({ success: true, data: { access_token: 'tok1', refresh_token: 'ref1' } }), { status: 200 });
+
+test('syncDocLicense: PUT /professionals/:id con license_number → ok', async (t) => {
+  const calls: Array<{ url: string; method?: string; body?: string }> = [];
+  fetchMock(t, (url, init) => {
+    if (url.endsWith('/auth/login')) return loginOk();
+    calls.push({ url, method: init?.method, body: init?.body });
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  });
+
+  const result = await syncDocLicense(12, ' RM-269108 ');
+
+  assert.equal(result.ok, true);
+  assert.equal(calls.length, 1);
+  assert.ok(calls[0].url.endsWith('/professionals/12'));
+  assert.equal(calls[0].method, 'PUT');
+  assert.deepEqual(JSON.parse(calls[0].body!), { license_number: 'RM-269108' });
+});
+
+test('syncDocLicense: número vacío → ok:false y NO llama a Doc (nunca se borra una licencia)', async (t) => {
+  const f = fetchMock(t, () => loginOk());
+
+  const result = await syncDocLicense(12, '   ');
+
+  assert.equal(result.ok, false);
+  assert.equal(f.mock.callCount(), 0);
+});
+
+test('syncDocLicense: Doc responde error → ok:false con el mensaje; no lanza', async (t) => {
+  fetchMock(t, (url) => {
+    if (url.endsWith('/auth/login')) return loginOk();
+    return new Response(JSON.stringify({ success: false, message: 'Error updating professional' }), { status: 500 });
+  });
+
+  const result = await syncDocLicense(12, 'RM-269108');
+
+  assert.equal(result.ok, false);
+  assert.match(result.error ?? '', /Error updating professional/);
+});
+
+test('syncDocLicense: error de red → ok:false; no lanza', async (t) => {
+  t.mock.method(globalThis, 'fetch', async () => { throw new Error('red caída'); });
+
+  const result = await syncDocLicense(12, 'RM-269108');
+
+  assert.equal(result.ok, false);
+});

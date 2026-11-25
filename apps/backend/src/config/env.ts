@@ -20,6 +20,8 @@ interface Env {
   DOC_API_URL: string;
   DOC_XIMENA_EMAIL: string;
   DOC_XIMENA_PASSWORD: string;
+  /** professional_id de Ximena (la cabeza del sitio) en CuidameDoc: su registro médico se sincroniza ahí. */
+  DOC_HEAD_PROFESSIONAL_ID: number;
 }
 
 const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET'];
@@ -55,4 +57,5 @@ export const env: Env = {
   DOC_API_URL: process.env.DOC_API_URL || '',
   DOC_XIMENA_EMAIL: process.env.DOC_XIMENA_EMAIL || '',
   DOC_XIMENA_PASSWORD: process.env.DOC_XIMENA_PASSWORD || '',
+  DOC_HEAD_PROFESSIONAL_ID: Number(process.env.DOC_HEAD_PROFESSIONAL_ID || 2),
 };
